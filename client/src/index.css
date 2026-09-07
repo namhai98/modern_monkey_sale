@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Jost", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-canvas: #fbfaf7;
+  --color-ivory: #f4f1ea;
+  --color-mist: #e7e2d8;
+  --color-ink: #17140f;
+  --color-charcoal: #2c2822;
+  --color-stone: #8a8378;
+  --color-line: #d9d3c7;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.005em;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+  }
+
+  /* Thin, letter-spaced eyebrow / label text — "N E W   A R R I V A L S" */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 0.6875rem;
+  }
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+/* Respect reduced motion for the scroll reveals */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
