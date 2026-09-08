@@ -10,6 +10,7 @@ import ProductCard from '../components/ProductCard';
 import ProductGallery from '../components/ProductGallery';
 import Button from '../components/Button';
 import { ProductDetailSkeleton } from '../components/Skeleton';
+import { money, isDiscounted, discountPercent } from '../lib/price';
 
 function Accordion({ title, body, open, onToggle }) {
   return (
@@ -147,9 +148,22 @@ export default function ProductDetail() {
               )}
             </div>
             <h1 className="font-display text-4xl md:text-5xl mt-4 leading-tight">{product.name}</h1>
-            <p className="text-lg text-stone mt-4">
-              ${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </p>
+            {isDiscounted(product) ? (
+              <div className="mt-4">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-lg text-ink">{money(product.final_price)}</span>
+                  <s className="text-sm text-stone/50">{money(product.price)}</s>
+                  <span className="eyebrow text-[0.65rem] bg-ink text-canvas px-2 py-0.5">
+                    {t('price.off', { n: discountPercent(product) })}
+                  </span>
+                </div>
+                <p className="text-xs text-stone mt-2">
+                  {t('price.save', { amount: money(product.discount_amount) })}
+                </p>
+              </div>
+            ) : (
+              <p className="text-lg text-stone mt-4">{money(product.price)}</p>
+            )}
 
             <div className="mt-10 flex items-stretch gap-3">
               <div className="inline-flex items-center border border-line">

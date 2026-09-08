@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
+import { money } from '../lib/price';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -62,15 +63,24 @@ export default function OrderDetail() {
                 {it.sku && <span className="text-xs text-stone"> · {it.sku}</span>}
               </td>
               <td className="py-3 text-right">{it.quantity}</td>
-              <td className="py-3 text-right">${it.price.toFixed(2)}</td>
-              <td className="py-3 text-right">${it.line_total.toFixed(2)}</td>
+              <td className="py-3 text-right">
+                {it.discount_amount > 0 ? (
+                  <span className="inline-flex flex-col items-end leading-tight">
+                    <s className="text-xs text-stone/50">{money(it.original_price)}</s>
+                    <span>{money(it.price)}</span>
+                  </span>
+                ) : (
+                  money(it.price)
+                )}
+              </td>
+              <td className="py-3 text-right">{money(it.line_total)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
             <td colSpan={3} className="py-3 text-right font-medium">{t('orderDetail.total')}</td>
-            <td className="py-3 text-right font-medium">${Number(order.total).toFixed(2)}</td>
+            <td className="py-3 text-right font-medium">{money(order.total)}</td>
           </tr>
         </tfoot>
       </table>

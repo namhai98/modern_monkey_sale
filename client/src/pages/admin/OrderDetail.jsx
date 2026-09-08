@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import client from '../../api/client';
 import AdminNav from '../../components/AdminNav';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
+import { money } from '../../lib/price';
 
 const RESTOCKING = new Set(['cancelled', 'refunded']);
 
@@ -141,15 +142,27 @@ export default function AdminOrderDetail() {
                 {it.sku && <span className="text-xs text-gray-400"> · {it.sku}</span>}
               </td>
               <td className="py-2 text-right">{it.quantity}</td>
-              <td className="py-2 text-right">${it.price.toFixed(2)}</td>
-              <td className="py-2 text-right">${it.line_total.toFixed(2)}</td>
+              <td className="py-2 text-right">
+                {it.discount_amount > 0 ? (
+                  <span className="inline-flex flex-col items-end leading-tight">
+                    <s className="text-xs text-gray-400">{money(it.original_price)}</s>
+                    <span>{money(it.price)}</span>
+                    {it.discount_name && (
+                      <span className="text-[10px] text-gray-400">{it.discount_name}</span>
+                    )}
+                  </span>
+                ) : (
+                  money(it.price)
+                )}
+              </td>
+              <td className="py-2 text-right">{money(it.line_total)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
             <td colSpan={3} className="py-2 text-right font-medium">Total</td>
-            <td className="py-2 text-right font-medium">${Number(order.total).toFixed(2)}</td>
+            <td className="py-2 text-right font-medium">{money(order.total)}</td>
           </tr>
         </tfoot>
       </table>

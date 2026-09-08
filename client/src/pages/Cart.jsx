@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import { money } from '../lib/price';
 import Button from '../components/Button';
 
 export default function Cart() {
@@ -35,10 +36,13 @@ export default function Cart() {
                 <div className="flex-1">
                   <div className="flex justify-between">
                     <p className="font-display text-xl">{item.name}</p>
-                    <p className="text-stone">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-stone">{money(item.price * item.quantity)}</p>
                   </div>
                   <p className="text-sm text-stone mt-1">
-                    {t('cart.each', { price: `$${item.price.toFixed(2)}` })}
+                    {item.original_price > item.price && (
+                      <s className="text-stone/50 mr-2">{money(item.original_price)}</s>
+                    )}
+                    {t('cart.each', { price: money(item.price) })}
                   </p>
                   <div className="flex items-center gap-5 mt-4 text-sm">
                     <span className="inline-flex items-center border border-line">
@@ -59,7 +63,7 @@ export default function Cart() {
 
           <div className="flex items-baseline justify-between mt-8">
             <span className="eyebrow">{t('cart.subtotal')}</span>
-            <span className="font-display text-2xl">${total.toFixed(2)}</span>
+            <span className="font-display text-2xl">{money(total)}</span>
           </div>
           <Button full size="lg" className="mt-8" onClick={() => navigate('/checkout')}>
             {t('cart.checkout')}

@@ -20,6 +20,7 @@ import Forbidden from './pages/Forbidden';
 import AdminUsers from './pages/admin/Users';
 import AdminProducts from './pages/admin/Products';
 import AdminCategories from './pages/admin/Categories';
+import AdminDiscounts from './pages/admin/Discounts';
 import AdminOrders from './pages/admin/Orders';
 import AdminOrderDetail from './pages/admin/OrderDetail';
 
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/admin/orders/:id" element={<ProtectedRoute roles={STAFF}><AdminOrderDetail /></ProtectedRoute>} />
                 <Route path="/admin/products" element={<ProtectedRoute roles={MANAGER}><AdminProducts /></ProtectedRoute>} />
                 <Route path="/admin/categories" element={<ProtectedRoute roles={MANAGER}><AdminCategories /></ProtectedRoute>} />
+                <Route path="/admin/discounts" element={<ProtectedRoute roles={MANAGER}><AdminDiscounts /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute roles={MANAGER}><AdminUsers /></ProtectedRoute>} />
                 </Routes>
               </Layout>

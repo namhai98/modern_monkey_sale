@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import categoryRoutes from './routes/categories.js';
+import discountRoutes from './routes/discounts.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { storage, STORAGE_PROVIDER, IMMUTABLE_CACHE_CONTROL } from './storage/index.js';
 
@@ -50,6 +51,7 @@ app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/discounts', discountRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);

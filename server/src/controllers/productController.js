@@ -13,16 +13,31 @@ const MAX_LIMIT = 100;
 const GENDERS = ['women', 'men', 'unisex'];
 
 // Product images are managed via the /api/products/:id/images sub-resource
-// (see productImageController). `SELECT_BASE` just embeds the current set.
+// (see productImageController). `SELECT_BASE` embeds the current image set and,
+// via one LATERAL join (no N+1), the single best currently-active discount for
+// the product — the one leaving the customer paying the least.
 const SELECT_BASE = `
   SELECT p.*, c.name AS category_name, c.slug AS category_slug,
          COALESCE(
            (SELECT jsonb_agg(to_jsonb(pi) ORDER BY pi.sort_order, pi.id)
             FROM product_images pi WHERE pi.product_id = p.id),
            '[]'::jsonb
-         ) AS images
+         ) AS images,
+         CASE WHEN disc.id IS NULL THEN NULL ELSE to_jsonb(disc) END AS discount
   FROM products p
-  LEFT JOIN categories c ON c.id = p.category_id`;
+  LEFT JOIN categories c ON c.id = p.category_id
+  LEFT JOIN LATERAL (
+    SELECT d.id, d.name, d.type, d.value
+    FROM discounts d
+    JOIN discount_products dp ON dp.discount_id = d.id AND dp.product_id = p.id
+    WHERE d.is_active = TRUE
+      AND CURRENT_DATE BETWEEN d.start_date AND d.end_date
+    ORDER BY (CASE d.type
+        WHEN 'percentage' THEN GREATEST(0, p.price - p.price * d.value / 100)
+        WHEN 'fixed' THEN GREATEST(0, p.price - d.value)
+        ELSE p.price END) ASC, d.id ASC
+    LIMIT 1
+  ) disc ON TRUE`;
 
 function isStaff(req) {
   return req.user && ['manager', 'admin'].includes(req.user.role);
@@ -78,6 +93,15 @@ export async function listProducts(req, res) {
       const cat = String(req.query.category);
       params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
       where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
+    }
+    if (req.query.ids) {
+      const ids = String(req.query.ids)
+        .split(',')
+        .map((n) => Number(n.trim()))
+        .filter(Number.isInteger);
+      if (ids.length === 0) return res.json({ items: [], total: 0, page: 1, limit: 0 });
+      params.push(ids);
+      where.push(`p.id = ANY($${params.length})`);
     }
     if (req.query.brand) {
       params.push(String(req.query.brand));

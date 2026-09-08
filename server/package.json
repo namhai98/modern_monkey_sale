@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "test": "node --test \"src/**/*.test.js\"",
     "db:setup": "node src/scripts/setupDb.js",
     "create-admin": "node src/scripts/createAdmin.js",
     "seed:catalog": "node src/scripts/seedCatalog.js"

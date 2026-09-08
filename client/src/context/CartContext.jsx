@@ -25,7 +25,10 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           name: product.name,
-          price: product.price,
+          // capture the discounted price shown at add-time; the backend
+          // re-validates it again at checkout (source of truth for orders).
+          price: Number(product.final_price ?? product.price),
+          original_price: Number(product.price),
           image_url: product.image_url || '',
           quantity,
         },

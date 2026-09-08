@@ -9,6 +9,7 @@ export default function AdminNav() {
     { to: '/admin/orders', label: 'Orders', show: true },
     { to: '/admin/products', label: 'Products', show: isManager },
     { to: '/admin/categories', label: 'Categories', show: isManager },
+    { to: '/admin/discounts', label: 'Discounts', show: isManager },
     { to: '/admin/users', label: 'Users', show: isManager },
   ].filter((t) => t.show);
 

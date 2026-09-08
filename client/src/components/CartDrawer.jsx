@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import { money } from '../lib/price';
 import Button from './Button';
 
 // CSS-transition drawer — always mounted, toggled by class. Cannot get stuck
@@ -71,7 +72,12 @@ export default function CartDrawer() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-display text-lg leading-tight">{item.name}</p>
-                    <p className="text-sm text-stone mt-1">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-stone mt-1">
+                      {item.original_price > item.price && (
+                        <s className="text-stone/50 mr-1.5">{money(item.original_price)}</s>
+                      )}
+                      {money(item.price)}
+                    </p>
                     <div className="flex items-center gap-4 mt-3 text-sm">
                       <span className="inline-flex items-center border border-line">
                         <button
@@ -105,7 +111,7 @@ export default function CartDrawer() {
             <div className="border-t border-line px-6 py-6 space-y-4">
               <div className="flex items-baseline justify-between">
                 <span className="eyebrow">{t('cart.subtotal')}</span>
-                <span className="font-display text-xl">${total.toFixed(2)}</span>
+                <span className="font-display text-xl">{money(total)}</span>
               </div>
               <p className="text-xs text-stone">{t('cart.calcNote')}</p>
               <Button full size="lg" onClick={() => go('/checkout')}>

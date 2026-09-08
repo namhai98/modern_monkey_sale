@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
+import { money, isDiscounted, discountPercent } from '../lib/price';
 
 export default function ProductCard({ product }) {
   const { t, locale } = useLocale();
   const soldOut = product.stock <= 0;
+  const onSale = isDiscounted(product);
 
   const primary = product.images?.[0];
   const secondary = product.images?.[1];
@@ -54,6 +56,11 @@ export default function ProductCard({ product }) {
             {t('product.soldOut')}
           </span>
         )}
+        {onSale && !soldOut && (
+          <span className="absolute top-3 right-3 eyebrow text-[0.6rem] bg-ink text-canvas px-2 py-1">
+            −{discountPercent(product)}%
+          </span>
+        )}
       </div>
 
       <div className="pt-4 text-center">
@@ -63,9 +70,14 @@ export default function ProductCard({ product }) {
           </p>
         )}
         <h3 className="font-display text-xl leading-snug">{product.name}</h3>
-        <p className="text-sm text-stone mt-1">
-          ${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-        </p>
+        {onSale ? (
+          <p className="text-sm mt-1 flex items-center justify-center gap-2">
+            <s className="text-stone/50">{money(product.price)}</s>
+            <span className="text-ink">{money(product.final_price)}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-stone mt-1">{money(product.price)}</p>
+        )}
         {!soldOut && product.low_stock && (
           <p className="text-[0.6rem] uppercase tracking-[0.2em] text-champagne mt-1">
             {t('product.lowStock')}

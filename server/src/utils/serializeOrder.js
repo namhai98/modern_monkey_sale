@@ -15,14 +15,20 @@ export function serializeOrderRow(row) {
 }
 
 export function serializeOrderItem(row) {
+  const price = Number(row.price); // final unit price actually paid
+  const originalPrice = row.original_price != null ? Number(row.original_price) : price;
+  const discountAmount = Number(row.discount_amount || 0);
   return {
     id: row.id,
     product_id: row.product_id,
     name: row.product_name ?? null,
     sku: row.product_sku ?? null,
     quantity: row.quantity,
-    price: Number(row.price),
-    line_total: Number(row.price) * row.quantity,
+    price,
+    original_price: originalPrice,
+    discount_amount: discountAmount,
+    discount_name: row.discount_name ?? null,
+    line_total: price * row.quantity,
   };
 }
 

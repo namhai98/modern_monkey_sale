@@ -1,5 +1,6 @@
 import { query, pool } from '../config/db.js';
 import { ORDER_STATUSES, TRANSITIONS, RESTOCKING, canTransition } from '../utils/orderStatus.js';
+import { computeDiscountedPrice, pickBestActiveDiscount } from '../utils/discount.js';
 import {
   serializeOrderRow,
   serializeOrderItem,
@@ -56,7 +57,7 @@ async function loadOrderDetail(orderId, req, res) {
   }
 
   const items = await query(
-    `SELECT i.*, p.name AS product_name, p.sku AS product_sku
+    `SELECT i.*, COALESCE(i.product_name, p.name) AS product_name, p.sku AS product_sku
      FROM order_items i LEFT JOIN products p ON p.id = i.product_id
      WHERE i.order_id = $1 ORDER BY i.id`,
     [orderId]
@@ -88,6 +89,27 @@ export async function createOrder(req, res) {
 
     await client.query('BEGIN');
 
+    // The client only sends { product_id, quantity }. The backend is the sole
+    // authority on price: it re-reads each product and re-applies the current
+    // best active discount. Prices from the client are never trusted.
+    const productIds = items.map((i) => i.product_id);
+    const discRows = await client.query(
+      `SELECT dp.product_id, d.id, d.name, d.type, d.value, d.is_active,
+              to_char(d.start_date, 'YYYY-MM-DD') AS start_date,
+              to_char(d.end_date, 'YYYY-MM-DD') AS end_date
+       FROM discounts d
+       JOIN discount_products dp ON dp.discount_id = d.id
+       WHERE dp.product_id = ANY($1)
+         AND d.is_active = TRUE
+         AND CURRENT_DATE BETWEEN d.start_date AND d.end_date`,
+      [productIds]
+    );
+    const discountsByProduct = new Map();
+    for (const r of discRows.rows) {
+      if (!discountsByProduct.has(r.product_id)) discountsByProduct.set(r.product_id, []);
+      discountsByProduct.get(r.product_id).push(r);
+    }
+
     let total = 0;
     const priced = [];
     for (const item of items) {
@@ -95,7 +117,7 @@ export async function createOrder(req, res) {
         throw Object.assign(new Error('Each item needs a positive integer quantity'), { status: 400 });
       }
       const { rows } = await client.query(
-        'SELECT price, is_active FROM products WHERE id = $1',
+        'SELECT id, name, price, is_active FROM products WHERE id = $1',
         [item.product_id]
       );
       if (rows.length === 0) {
@@ -104,10 +126,21 @@ export async function createOrder(req, res) {
       if (!rows[0].is_active) {
         throw Object.assign(new Error(`Product ${item.product_id} is not available`), { status: 400 });
       }
-      const price = parseFloat(rows[0].price);
-      total += price * item.quantity;
-      priced.push({ ...item, price });
+      const originalPrice = parseFloat(rows[0].price);
+      const best = pickBestActiveDiscount(originalPrice, discountsByProduct.get(item.product_id) || []);
+      const { finalPrice, discountAmount, discount } = computeDiscountedPrice(originalPrice, best);
+      total += finalPrice * item.quantity;
+      priced.push({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: finalPrice,
+        original_price: originalPrice,
+        discount_amount: discountAmount,
+        discount_name: discount?.name ?? null,
+        product_name: rows[0].name,
+      });
     }
+    total = Math.round((total + Number.EPSILON) * 100) / 100;
 
     const orderResult = await client.query(
       'INSERT INTO orders (user_id, status, total, shipping_address) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -123,8 +156,19 @@ export async function createOrder(req, res) {
 
     for (const item of priced) {
       await client.query(
-        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
-        [order.id, item.product_id, item.quantity, item.price]
+        `INSERT INTO order_items
+           (order_id, product_id, quantity, price, original_price, discount_amount, discount_name, product_name)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          order.id,
+          item.product_id,
+          item.quantity,
+          item.price,
+          item.original_price,
+          item.discount_amount,
+          item.discount_name,
+          item.product_name,
+        ]
       );
       // Atomic guarded decrement — two concurrent orders can't oversell
       const upd = await client.query(

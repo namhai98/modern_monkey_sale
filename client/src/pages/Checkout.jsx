@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import client from '../api/client';
 import { resizeUnsplash } from '../lib/media';
+import { money } from '../lib/price';
 import Button from '../components/Button';
 
 const field =
@@ -105,14 +106,19 @@ export default function Checkout() {
               <div className="flex-1 text-sm">
                 <p className="font-display text-base">{i.name}</p>
                 <p className="text-stone">{t('checkout.qty', { n: i.quantity })}</p>
+                {i.original_price > i.price && (
+                  <p className="text-xs text-stone/60">
+                    <s>{money(i.original_price)}</s> {money(i.price)}
+                  </p>
+                )}
               </div>
-              <p className="text-sm text-stone">${(i.price * i.quantity).toFixed(2)}</p>
+              <p className="text-sm text-stone">{money(i.price * i.quantity)}</p>
             </div>
           ))}
         </div>
         <div className="flex items-baseline justify-between border-t border-line mt-8 pt-6">
           <span className="eyebrow">{t('checkout.total')}</span>
-          <span className="font-display text-2xl">${total.toFixed(2)}</span>
+          <span className="font-display text-2xl">{money(total)}</span>
         </div>
         <p className="mt-6 text-xs text-stone">{t('checkout.trust')}</p>
       </aside>

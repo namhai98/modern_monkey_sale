@@ -73,7 +73,11 @@ CREATE TABLE IF NOT EXISTS order_items (
   order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
   product_id INTEGER REFERENCES products(id),
   quantity INTEGER NOT NULL,
-  price NUMERIC(10, 2) NOT NULL -- price at time of purchase
+  price NUMERIC(10, 2) NOT NULL,          -- final unit price paid
+  original_price NUMERIC(10, 2),          -- unit price before any discount
+  discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  discount_name VARCHAR(120),
+  product_name VARCHAR(255)               -- snapshot: name at time of purchase
 );
 
 CREATE TABLE IF NOT EXISTS order_status_history (
@@ -125,6 +129,29 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 );
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product
   ON stock_movements (product_id, created_at DESC);
+
+-- Simple discount system (see migration 008)
+CREATE TABLE IF NOT EXISTS discounts (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  type VARCHAR(16) NOT NULL CHECK (type IN ('percentage', 'fixed')),
+  value NUMERIC(12, 2) NOT NULL CHECK (value > 0),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT discounts_dates_chk CHECK (end_date >= start_date),
+  CONSTRAINT discounts_percent_chk CHECK (type <> 'percentage' OR value <= 100)
+);
+
+CREATE TABLE IF NOT EXISTS discount_products (
+  discount_id INTEGER NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  PRIMARY KEY (discount_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS idx_discount_products_product ON discount_products (product_id);
+CREATE INDEX IF NOT EXISTS idx_discounts_active ON discounts (is_active, start_date, end_date);
 
 -- Sample seed data — a small luxury demo catalogue (bags, watches, apparel)
 INSERT INTO categories (name, slug) VALUES
