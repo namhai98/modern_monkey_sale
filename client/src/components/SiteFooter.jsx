@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLocale } from '../context/LocaleContext';
+import LangSwitch from './LangSwitch';
 
 export default function SiteFooter() {
+  const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
   return (
-    <footer className="bg-ink text-canvas mt-32">
-      <div className="max-w-6xl mx-auto px-6 py-20">
+    <footer className="bg-ink text-canvas mt-20 md:mt-32">
+      <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
         <div className="max-w-md">
-          <p className="eyebrow text-canvas/60">The Maison Letter</p>
-          <h3 className="font-display text-3xl mt-3 mb-6">
-            Collections, before anyone else.
-          </h3>
+          <p className="eyebrow text-canvas/60">{t('footer.letter.eyebrow')}</p>
+          <h3 className="font-display text-3xl mt-3 mb-6">{t('footer.letter.title')}</h3>
           {done ? (
-            <p className="text-canvas/70 text-sm">Thank you — you’re on the list.</p>
+            <p className="text-canvas/70 text-sm">{t('footer.letter.thanks')}</p>
           ) : (
             <form
               onSubmit={(e) => {
@@ -28,45 +29,46 @@ export default function SiteFooter() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
+                placeholder={t('footer.letter.placeholder')}
                 className="flex-1 bg-transparent text-sm placeholder:text-canvas/40 focus:outline-none"
               />
               <button type="submit" className="eyebrow text-canvas/80 hover:text-canvas">
-                Subscribe
+                {t('footer.letter.subscribe')}
               </button>
             </form>
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 text-sm text-canvas/60">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-14 md:mt-20 text-sm text-canvas/60">
           <div className="space-y-2">
-            <p className="eyebrow text-canvas/40 mb-3">Shop</p>
-            <Link to="/shop?category=bags" className="block hover:text-canvas">Bags</Link>
-            <Link to="/shop?category=watches" className="block hover:text-canvas">Watches</Link>
-            <Link to="/shop?category=apparel" className="block hover:text-canvas">Apparel</Link>
+            <p className="eyebrow text-canvas/40 mb-3">{t('footer.col.shop')}</p>
+            <Link to="/shop?category=bags" className="block hover:text-canvas">{t('nav.bags')}</Link>
+            <Link to="/shop?category=watches" className="block hover:text-canvas">{t('nav.watches')}</Link>
+            <Link to="/shop?category=apparel" className="block hover:text-canvas">{t('nav.apparel')}</Link>
           </div>
           <div className="space-y-2">
-            <p className="eyebrow text-canvas/40 mb-3">Client Care</p>
-            <span className="block">Shipping &amp; Returns</span>
-            <span className="block">Product Care</span>
-            <span className="block">Contact</span>
+            <p className="eyebrow text-canvas/40 mb-3">{t('footer.col.care')}</p>
+            <span className="block">{t('footer.care.shipping')}</span>
+            <span className="block">{t('footer.care.product')}</span>
+            <span className="block">{t('footer.care.contact')}</span>
           </div>
           <div className="space-y-2">
-            <p className="eyebrow text-canvas/40 mb-3">The House</p>
-            <span className="block">Our Story</span>
-            <span className="block">Craftsmanship</span>
-            <span className="block">Sustainability</span>
+            <p className="eyebrow text-canvas/40 mb-3">{t('footer.col.house')}</p>
+            <span className="block">{t('footer.house.story')}</span>
+            <span className="block">{t('footer.house.craft')}</span>
+            <span className="block">{t('footer.house.sustain')}</span>
           </div>
           <div className="space-y-2">
-            <p className="eyebrow text-canvas/40 mb-3">Account</p>
-            <Link to="/orders" className="block hover:text-canvas">Orders</Link>
-            <Link to="/profile" className="block hover:text-canvas">Profile</Link>
+            <p className="eyebrow text-canvas/40 mb-3">{t('footer.col.account')}</p>
+            <Link to="/orders" className="block hover:text-canvas">{t('nav.orders')}</Link>
+            <Link to="/profile" className="block hover:text-canvas">{t('nav.profile')}</Link>
           </div>
         </div>
 
-        <p className="mt-20 text-xs text-canvas/40">
-          © {new Date().getFullYear()} Modern Monkey Maison. All rights reserved.
-        </p>
+        <div className="mt-14 md:mt-20 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-xs text-canvas/40">{t('footer.copyright', { year: new Date().getFullYear() })}</p>
+          <LangSwitch className="text-canvas" />
+        </div>
       </div>
     </footer>
   );

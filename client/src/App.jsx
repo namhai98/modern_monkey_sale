@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
+import { LocaleProvider } from './context/LocaleContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -27,11 +28,12 @@ const MANAGER = ['manager', 'admin'];
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <UIProvider>
-            <Layout>
+    <LocaleProvider>
+      <AuthProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <UIProvider>
+              <Layout>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
@@ -50,11 +52,12 @@ export default function App() {
                 <Route path="/admin/products" element={<ProtectedRoute roles={MANAGER}><AdminProducts /></ProtectedRoute>} />
                 <Route path="/admin/categories" element={<ProtectedRoute roles={MANAGER}><AdminCategories /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute roles={MANAGER}><AdminUsers /></ProtectedRoute>} />
-              </Routes>
-            </Layout>
-          </UIProvider>
-        </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
+                </Routes>
+              </Layout>
+            </UIProvider>
+          </BrowserRouter>
+        </CartProvider>
+      </AuthProvider>
+    </LocaleProvider>
   );
 }

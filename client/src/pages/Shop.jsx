@@ -1,89 +1,125 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
+import { media, resizeUnsplash } from '../lib/media';
+import { useLocale } from '../context/LocaleContext';
+import { categoryLabel } from '../lib/i18n';
 
-const SORTS = [
-  { value: 'created_at:desc', label: 'Newest' },
-  { value: 'price:asc', label: 'Price · low to high' },
-  { value: 'price:desc', label: 'Price · high to low' },
-  { value: 'name:asc', label: 'Alphabetical' },
-];
-const LIMIT = 9;
+const LIMIT = 15;
 
-export default function Shop() {
-  const [params, setParams] = useSearchParams();
-  const category = params.get('category') || '';
+function categoryImage(slug) {
+  return media.bands[slug] || media.editorialRight;
+}
 
+/* ── "All" landing: pick a category ───────────────────────────── */
+function CategoryChooser({ categories }) {
+  const { t, locale } = useLocale();
+  return (
+    <div className="bg-canvas">
+      <div className="px-4 md:px-8 pt-16 pb-10 text-center">
+        <p className="eyebrow text-stone">{t('shop.allPieces')}</p>
+        <h1 className="font-display text-4xl md:text-5xl mt-3">{t('shop.collection')}</h1>
+        <p className="text-stone text-sm mt-4">{t('shop.choose')}</p>
+      </div>
+
+      <div className="grid md:grid-cols-3">
+        {categories.map((c, i) => (
+          <Reveal key={c.id} delay={i * 0.08}>
+            <Link
+              to={`/shop?category=${c.slug}`}
+              className="group relative block aspect-[3/4] md:aspect-auto md:h-[78vh] overflow-hidden"
+            >
+              <img
+                src={resizeUnsplash(categoryImage(c.slug), 1200)}
+                alt={categoryLabel(locale, c)}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-ink/25 group-hover:bg-ink/35 transition-colors duration-500" />
+              <div className="relative h-full flex flex-col items-center justify-center text-canvas text-center">
+                <p className="eyebrow">{`0${i + 1}`}</p>
+                <h2 className="font-display text-4xl md:text-5xl mt-2">{categoryLabel(locale, c)}</h2>
+                <p className="eyebrow mt-4 text-canvas/70">{t('shop.pieces', { n: c.product_count })}</p>
+                <span className="mt-6 eyebrow link-underline">{t('shop.explore')}</span>
+              </div>
+            </Link>
+          </Reveal>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Category view: the product grid ──────────────────────────── */
+function CategoryProducts({ slug, categories }) {
+  const { t, locale } = useLocale();
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState('created_at:desc');
-  const [categories, setCategories] = useState([]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    client.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
-  }, []);
+  const SORTS = useMemo(
+    () => [
+      { value: 'created_at:desc', label: t('sort.newest') },
+      { value: 'price:asc', label: t('sort.priceAsc') },
+      { value: 'price:desc', label: t('sort.priceDesc') },
+      { value: 'name:asc', label: t('sort.name') },
+    ],
+    [t]
+  );
+
+  const activeCat = categories.find((c) => c.slug === slug);
 
   useEffect(() => {
     setPage(1);
-  }, [category, sort]);
+  }, [slug, sort]);
 
   useEffect(() => {
     const [field, order] = sort.split(':');
     setLoading(true);
     client
-      .get('/products', {
-        params: {
-          ...(category ? { category } : {}),
-          sort: field,
-          order,
-          page,
-          limit: LIMIT,
-        },
-      })
+      .get('/products', { params: { category: slug, sort: field, order, page, limit: LIMIT } })
       .then((res) => {
         setProducts(res.data.items);
         setTotal(res.data.total);
       })
       .finally(() => setLoading(false));
-  }, [category, sort, page]);
+  }, [slug, sort, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-  const activeCat = categories.find((c) => c.slug === category);
-
-  function setCategory(slug) {
-    const next = new URLSearchParams(params);
-    if (slug) next.set('category', slug);
-    else next.delete('category');
-    setParams(next);
-  }
 
   return (
     <div className="bg-canvas">
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-8 text-center">
-        <p className="eyebrow text-stone">{activeCat ? activeCat.name : 'All Pieces'}</p>
+      <div className="px-4 md:px-8 pt-16 pb-8 text-center">
+        <p className="eyebrow text-stone">{activeCat ? categoryLabel(locale, activeCat) : t('shop.collection')}</p>
         <h1 className="font-display text-4xl md:text-5xl mt-3">
-          {activeCat ? activeCat.name : 'The Collection'}
+          {activeCat ? categoryLabel(locale, activeCat) : t('shop.collection')}
         </h1>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between border-y border-line py-4 text-sm">
-        <button
-          onClick={() => setFiltersOpen((v) => !v)}
-          className="eyebrow link-underline"
-        >
-          {filtersOpen ? 'Hide filters' : 'Filters'}
-        </button>
-        <span className="text-stone">{total} pieces</span>
+      <div className="px-4 md:px-8 border-y border-line py-4 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto -mx-1 px-1">
+          <Link to="/shop" className="eyebrow link-underline whitespace-nowrap">
+            {t('shop.backAll')}
+          </Link>
+          {categories.map((c) => (
+            <Link
+              key={c.id}
+              to={`/shop?category=${c.slug}`}
+              className={`eyebrow whitespace-nowrap ${
+                c.slug === slug ? 'text-ink' : 'text-stone hover:text-ink'
+              }`}
+            >
+              {categoryLabel(locale, c)}
+            </Link>
+          ))}
+        </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="bg-transparent eyebrow focus:outline-none cursor-pointer text-right"
+          className="bg-transparent eyebrow focus:outline-none cursor-pointer self-start sm:self-auto sm:text-right shrink-0"
         >
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -91,53 +127,19 @@ export default function Shop() {
         </select>
       </div>
 
-      <AnimatePresence>
-        {filtersOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-b border-line"
-          >
-            <div className="max-w-7xl mx-auto px-6 py-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => setCategory('')}
-                className={`px-4 py-2 text-sm border ${
-                  !category ? 'border-ink text-ink' : 'border-line text-stone hover:border-ink'
-                }`}
-              >
-                All
-              </button>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCategory(c.slug)}
-                  className={`px-4 py-2 text-sm border ${
-                    category === c.slug ? 'border-ink text-ink' : 'border-line text-stone hover:border-ink'
-                  }`}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="max-w-7xl mx-auto px-6 py-16">
+      <div className="px-4 md:px-8 py-16">
         {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-x-6 gap-y-12">
+            {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="aspect-[4/5] bg-ivory animate-pulse" />
             ))}
           </div>
         ) : products.length === 0 ? (
-          <p className="text-center text-stone py-20">Nothing here yet.</p>
+          <p className="text-center text-stone py-20">{t('shop.empty')}</p>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-x-6 gap-y-12">
             {products.map((p, i) => (
-              <Reveal key={p.id} delay={(i % 3) * 0.05}>
+              <Reveal key={p.id} delay={(i % 5) * 0.04}>
                 <ProductCard product={p} />
               </Reveal>
             ))}
@@ -151,21 +153,32 @@ export default function Shop() {
               disabled={page <= 1}
               className="link-underline disabled:opacity-30 disabled:no-underline"
             >
-              Prev
+              {t('shop.prev')}
             </button>
-            <span className="text-stone">
-              {page} / {totalPages}
-            </span>
+            <span className="text-stone">{page} / {totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
               className="link-underline disabled:opacity-30"
             >
-              Next
+              {t('shop.next')}
             </button>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+export default function Shop() {
+  const [params] = useSearchParams();
+  const category = params.get('category') || '';
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    client.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
+  }, []);
+
+  if (!category) return <CategoryChooser categories={categories} />;
+  return <CategoryProducts key={category} slug={category} categories={categories} />;
 }

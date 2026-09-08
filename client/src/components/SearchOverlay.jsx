@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useUI } from '../context/UIContext';
+import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
 
 export default function SearchOverlay() {
   const { searchOpen, closeSearch } = useUI();
+  const { t } = useLocale();
   const [q, setQ] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,35 +43,29 @@ export default function SearchOverlay() {
     navigate(`/products/${id}`);
   }
 
+  if (!searchOpen) return null;
+
   return (
-    <AnimatePresence>
-      {searchOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 bg-canvas"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className="max-w-3xl mx-auto px-6 pt-28">
+    <div className="fixed inset-0 z-50 bg-canvas animate-[fadeIn_0.25s_ease-out] overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-6 pt-24 md:pt-28">
             <div className="flex items-center justify-between mb-6">
-              <span className="eyebrow text-stone">Search</span>
-              <button onClick={closeSearch} className="text-sm text-stone hover:text-ink" aria-label="Close search">
-                Close
+              <span className="eyebrow text-stone">{t('nav.search')}</span>
+              <button onClick={closeSearch} className="text-sm text-stone hover:text-ink" aria-label={t('nav.close')}>
+                {t('nav.close')}
               </button>
             </div>
             <input
               ref={inputRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="What are you looking for?"
-              className="w-full bg-transparent border-b border-line pb-4 font-display text-3xl md:text-4xl placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+              placeholder={t('search.placeholder')}
+              className="w-full bg-transparent border-b border-line pb-4 font-display text-2xl md:text-4xl placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
             />
 
             <div className="mt-10 space-y-1">
-              {loading && <p className="text-sm text-stone">Searching…</p>}
+              {loading && <p className="text-sm text-stone">{t('search.searching')}</p>}
               {!loading && q.trim() && results.length === 0 && (
-                <p className="text-sm text-stone">Nothing found for “{q}”.</p>
+                <p className="text-sm text-stone">{t('search.none', { q })}</p>
               )}
               {results.map((p) => (
                 <button
@@ -88,9 +83,7 @@ export default function SearchOverlay() {
                 </button>
               ))}
             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }

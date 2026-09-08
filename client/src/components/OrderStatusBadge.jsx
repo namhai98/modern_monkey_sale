@@ -1,3 +1,5 @@
+import { useLocale } from '../context/LocaleContext';
+
 const STYLES = {
   pending: 'bg-amber-100 text-amber-800',
   paid: 'bg-blue-100 text-blue-800',
@@ -8,13 +10,14 @@ const STYLES = {
 };
 
 export default function OrderStatusBadge({ status }) {
+  const { t } = useLocale();
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${
+      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
         STYLES[status] || 'bg-gray-100 text-gray-700'
       }`}
     >
-      {status}
+      {t(`status.${status}`)}
     </span>
   );
 }

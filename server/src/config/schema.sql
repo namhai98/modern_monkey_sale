@@ -38,7 +38,22 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Upgrading an existing database? Run src/config/migrations/003_products_inventory.sql
+CREATE TABLE IF NOT EXISTS product_images (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  storage_key VARCHAR(255),          -- object-storage prefix for the WebP variants
+  url VARCHAR(500),                  -- legacy / external images (optional)
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  width INTEGER,
+  height INTEGER,
+  mime_type VARCHAR(50),
+  file_size INTEGER,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_product_images_sort ON product_images (product_id, sort_order);
+
+-- Upgrading an existing database? Run migrations 003, 005 and 006 in order.
 
 CREATE TABLE IF NOT EXISTS orders (
   id SERIAL PRIMARY KEY,
@@ -151,3 +166,9 @@ VALUES
    410.00, 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=1400&q=80',
    (SELECT id FROM categories WHERE slug = 'apparel'), 'APP-SCF-03', 30, 5)
 ON CONFLICT DO NOTHING;
+
+INSERT INTO product_images (product_id, url, sort_order)
+SELECT p.id, p.image_url, 0
+FROM products p
+WHERE p.image_url <> ''
+  AND NOT EXISTS (SELECT 1 FROM product_images pi WHERE pi.product_id = p.id);

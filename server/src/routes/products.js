@@ -6,23 +6,22 @@ import {
   updateProduct,
   adjustStock,
   listStockMovements,
-  uploadProductImage,
 } from '../controllers/productController.js';
+import productImageRoutes from './productImages.js';
 import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
-import { uploadImage, handleUploadErrors } from '../middleware/upload.js';
 
 const router = Router();
 const canManage = requireRole('manager', 'admin');
 
 // Public catalog (staff also get inactive products via ?include_inactive=1)
 router.get('/', optionalAuth, listProducts);
+router.post('/', requireAuth, canManage, createProduct);
 
-// Literal path before /:id so "upload" is not read as an id
-router.post('/upload', requireAuth, canManage, uploadImage, handleUploadErrors, uploadProductImage);
+// Image sub-resource: upload / reorder / primary / delete
+router.use('/:id/images', productImageRoutes);
 
 router.get('/:id', optionalAuth, getProduct);
 router.get('/:id/movements', requireAuth, canManage, listStockMovements);
-router.post('/', requireAuth, canManage, createProduct);
 router.patch('/:id', requireAuth, canManage, updateProduct);
 router.patch('/:id/stock', requireAuth, canManage, adjustStock);
 

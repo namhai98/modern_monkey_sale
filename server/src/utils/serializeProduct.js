@@ -1,12 +1,21 @@
-// Shape a products row (joined with categories) for API responses.
+import { serializeProductImage } from './serializeProductImage.js';
+
+// Shape a products row (joined with categories; `images` is a jsonb array of
+// product_images rows) for API responses.
 export function serializeProduct(row) {
   if (!row) return null;
+
+  const imageRows = Array.isArray(row.images) ? row.images : [];
+  const images = imageRows.map(serializeProductImage).filter(Boolean);
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     price: Number(row.price),
-    image_url: row.image_url || '',
+    // single field used by cards / cart / search — the primary image's `card` url
+    image_url: row.image_url || images[0]?.card || images[0]?.detail || '',
+    images,
     sku: row.sku || null,
     stock: row.stock,
     low_stock_threshold: row.low_stock_threshold,

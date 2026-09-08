@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
+import { useLocale } from '../context/LocaleContext';
 
 export default function OrderDetail() {
   const { id } = useParams();
+  const { t } = useLocale();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
@@ -13,93 +15,95 @@ export default function OrderDetail() {
     client
       .get(`/orders/${id}`)
       .then((res) => { setOrder(res.data); setError(null); })
-      .catch((err) => setError(err.response?.data?.error || 'Could not load this order'));
-  }, [id]);
+      .catch(() => setError(t('orderDetail.gone')));
+  }, [id, t]);
 
   useEffect(() => { load(); }, [load]);
 
   async function cancel() {
-    if (!confirm('Cancel this order?')) return;
+    if (!confirm(t('orderDetail.confirmCancel'))) return;
     setCancelling(true);
     try {
       const res = await client.post(`/orders/${id}/cancel`);
       setOrder(res.data);
     } catch (err) {
-      alert(err.response?.data?.error || 'Could not cancel');
+      alert(err.response?.data?.error || t('checkout.fail'));
     } finally {
       setCancelling(false);
     }
   }
 
-  if (error) return <p className="max-w-3xl mx-auto px-6 py-8 text-gray-500">{error}</p>;
-  if (!order) return <p className="max-w-3xl mx-auto px-6 py-8 text-gray-500">Loading...</p>;
+  if (error) return <p className="max-w-3xl mx-auto px-6 py-24 text-stone">{error}</p>;
+  if (!order) return <p className="max-w-3xl mx-auto px-6 py-24 text-stone">{t('orders.loading')}</p>;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
-      <Link to="/orders" className="text-sm text-gray-500 hover:underline">&larr; Your orders</Link>
+    <div className="max-w-3xl mx-auto px-6 py-20">
+      <Link to="/orders" className="text-sm text-stone link-underline">{t('orderDetail.back')}</Link>
 
-      <div className="flex items-center justify-between mt-2 mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Order #{order.id}</h1>
+      <div className="flex items-center justify-between mt-3 mb-8">
+        <h1 className="font-display text-3xl">{t('orders.order', { id: order.id })}</h1>
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <table className="w-full text-sm mb-4">
+      <table className="w-full text-sm mb-6">
         <thead>
-          <tr className="text-left text-gray-500 border-b border-gray-200">
-            <th className="py-2">Item</th>
-            <th className="py-2 text-right">Qty</th>
-            <th className="py-2 text-right">Price</th>
-            <th className="py-2 text-right">Total</th>
+          <tr className="text-left text-stone border-b border-line">
+            <th className="py-2">{t('orderDetail.item')}</th>
+            <th className="py-2 text-right">{t('orderDetail.qty')}</th>
+            <th className="py-2 text-right">{t('orderDetail.price')}</th>
+            <th className="py-2 text-right">{t('orderDetail.total')}</th>
           </tr>
         </thead>
         <tbody>
           {order.items.map((it) => (
-            <tr key={it.id} className="border-b border-gray-100">
-              <td className="py-2">
-                {it.name || `Product #${it.product_id}`}
-                {it.sku && <span className="text-xs text-gray-400"> · {it.sku}</span>}
+            <tr key={it.id} className="border-b border-line/60">
+              <td className="py-3">
+                {it.name || `#${it.product_id}`}
+                {it.sku && <span className="text-xs text-stone"> · {it.sku}</span>}
               </td>
-              <td className="py-2 text-right">{it.quantity}</td>
-              <td className="py-2 text-right">${it.price.toFixed(2)}</td>
-              <td className="py-2 text-right">${it.line_total.toFixed(2)}</td>
+              <td className="py-3 text-right">{it.quantity}</td>
+              <td className="py-3 text-right">${it.price.toFixed(2)}</td>
+              <td className="py-3 text-right">${it.line_total.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={3} className="py-2 text-right font-medium">Total</td>
-            <td className="py-2 text-right font-medium">${Number(order.total).toFixed(2)}</td>
+            <td colSpan={3} className="py-3 text-right font-medium">{t('orderDetail.total')}</td>
+            <td className="py-3 text-right font-medium">${Number(order.total).toFixed(2)}</td>
           </tr>
         </tfoot>
       </table>
 
-      <div className="text-sm text-gray-600 mb-6">
-        <p className="font-medium text-gray-800">Shipping address</p>
+      <div className="text-sm text-stone mb-8">
+        <p className="eyebrow text-ink mb-1">{t('orderDetail.shippingAddress')}</p>
         <p className="whitespace-pre-line">{order.shipping_address || '—'}</p>
-        <p className="mt-2 text-gray-400">Placed {new Date(order.created_at).toLocaleString()}</p>
+        <p className="mt-3 text-stone/70">
+          {t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() })}
+        </p>
       </div>
 
       {order.status === 'pending' && (
         <button
           onClick={cancel}
           disabled={cancelling}
-          className="text-sm text-red-600 hover:underline disabled:opacity-50"
+          className="text-sm text-red-700 link-underline disabled:opacity-50"
         >
-          {cancelling ? 'Cancelling...' : 'Cancel order'}
+          {cancelling ? t('orderDetail.cancelling') : t('orderDetail.cancel')}
         </button>
       )}
 
       {order.status_history?.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-sm font-medium text-gray-800 mb-2">History</h2>
-          <ol className="space-y-1 text-sm text-gray-500">
+        <div className="mt-10">
+          <h2 className="eyebrow text-ink mb-3">{t('orderDetail.history')}</h2>
+          <ol className="space-y-1.5 text-sm text-stone">
             {order.status_history.map((h) => (
               <li key={h.id}>
-                <span className="text-gray-400">{new Date(h.created_at).toLocaleString()}</span>
+                <span className="text-stone/70">{new Date(h.created_at).toLocaleString()}</span>
                 {' — '}
-                {h.from_status ? `${h.from_status} → ` : ''}
-                <span className="text-gray-700">{h.to_status}</span>
-                {h.note && <span className="text-gray-400"> ({h.note})</span>}
+                {h.from_status ? `${t(`status.${h.from_status}`)} → ` : ''}
+                <span className="text-ink">{t(`status.${h.to_status}`)}</span>
+                {h.note && <span className="text-stone/70"> ({h.note})</span>}
               </li>
             ))}
           </ol>

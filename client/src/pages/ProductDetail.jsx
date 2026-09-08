@@ -1,83 +1,48 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import client from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
+import { useLocale } from '../context/LocaleContext';
+import { categoryLabel } from '../lib/i18n';
 import Reveal from '../components/Reveal';
 import ProductCard from '../components/ProductCard';
-import { resizeUnsplash } from '../lib/media';
-
-const ease = [0.22, 1, 0.36, 1];
-
-const CATEGORY_COPY = {
-  bags: [
-    {
-      title: 'Dimensions & capacity',
-      body: 'Approx. 32 × 26 × 14 cm. Fits a 13-inch laptop, an A5 notebook and the day’s essentials. Interior slip pocket and key leash.',
-    },
-    {
-      title: 'Craftsmanship',
-      body: 'Cut from a single hide, saddle-stitched by hand and finished with hot-burnished edges. Each bag carries the mark of the artisan who made it.',
-    },
-  ],
-  watches: [
-    {
-      title: 'Specifications',
-      body: '40 mm stainless steel case · Sapphire crystal, anti-reflective · In-house automatic movement, 42h reserve · Water resistant to 50 m · Alligator strap with folding clasp.',
-    },
-    {
-      title: 'Service',
-      body: 'Recommended service every 4–5 years. Two-year international warranty. Complimentary strap fitting at any boutique.',
-    },
-  ],
-  apparel: [
-    {
-      title: 'Size & fit',
-      body: 'Cut for a relaxed, straight silhouette. The model is 186 cm and wears a size M. Between sizes? Take the smaller for a closer fit.',
-    },
-    {
-      title: 'Materials & care',
-      body: 'Double-faced cashmere, woven in Italy. Dry clean only. Store folded, away from light. A cashmere comb keeps the surface clear.',
-    },
-  ],
-};
+import ProductGallery from '../components/ProductGallery';
+import Button from '../components/Button';
+import { ProductDetailSkeleton } from '../components/Skeleton';
 
 function Accordion({ title, body, open, onToggle }) {
   return (
     <div className="border-b border-line">
       <button
         onClick={onToggle}
+        aria-expanded={open}
         className="w-full flex items-center justify-between py-5 text-left eyebrow"
       >
         {title}
         <span className="text-stone text-base">{open ? '–' : '+'}</span>
       </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease }}
-            className="overflow-hidden"
-          >
-            <p className="pb-6 text-stone leading-relaxed text-sm max-w-md">{body}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* CSS grid-rows collapse — content always in the DOM, never JS-gated */}
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <p className="pb-6 text-stone leading-relaxed text-sm max-w-md">{body}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const { t, locale } = useLocale();
   const [product, setProduct] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
   const [openSection, setOpenSection] = useState(0);
-  const [zoom, setZoom] = useState(false);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
   const { openCart } = useUI();
@@ -106,30 +71,39 @@ export default function ProductDetail() {
   if (notFound) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-32 text-center">
-        <h1 className="font-display text-3xl">No longer available</h1>
+        <h1 className="font-display text-3xl">{t('pdp.gone')}</h1>
         <Link to="/shop" className="inline-block mt-6 eyebrow link-underline">
-          Return to the collection
+          {t('pdp.backToCollection')}
         </Link>
       </div>
     );
   }
-  if (!product) {
-    return <div className="max-w-3xl mx-auto px-6 py-32 text-center text-stone">Loading…</div>;
-  }
+  if (!product) return <ProductDetailSkeleton />;
 
   const soldOut = product.stock <= 0;
+  const slug = product.category?.slug;
+  const categorySections =
+    slug === 'bags'
+      ? [
+          { title: t('pdp.acc.dimensions'), body: t('pdp.body.bags.dimensions') },
+          { title: t('pdp.acc.craftsmanship'), body: t('pdp.body.bags.craftsmanship') },
+        ]
+      : slug === 'watches'
+      ? [
+          { title: t('pdp.acc.specs'), body: t('pdp.body.watches.specs') },
+          { title: t('pdp.acc.service'), body: t('pdp.body.watches.service') },
+        ]
+      : slug === 'apparel'
+      ? [
+          { title: t('pdp.acc.sizeFit'), body: t('pdp.body.apparel.sizeFit') },
+          { title: t('pdp.acc.materials'), body: t('pdp.body.apparel.materials') },
+        ]
+      : [{ title: t('pdp.acc.materials'), body: t('pdp.body.materialsDefault') }];
+
   const sections = [
-    { title: 'Description', body: product.description || 'A considered piece from the Maison.' },
-    ...(CATEGORY_COPY[product.category?.slug] || [
-      {
-        title: 'Materials & care',
-        body: 'Made from carefully sourced materials. Handle with care to preserve its finish.',
-      },
-    ]),
-    {
-      title: 'Shipping & returns',
-      body: 'Complimentary insured delivery in a signature box. Returns accepted within 14 days, unworn and in original packaging.',
-    },
+    { title: t('pdp.acc.description'), body: product.description || t('pdp.body.default') },
+    ...categorySections,
+    { title: t('pdp.acc.shipping'), body: t('pdp.body.shipping') },
   ];
 
   function addToBag() {
@@ -143,37 +117,27 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-canvas">
-      <div className="lg:grid lg:grid-cols-[58%_42%]">
+      <div className="lg:grid lg:grid-cols-[58%_42%] lg:items-start">
         {/* gallery */}
-        <div className="bg-ivory">
-          <button
-            onClick={() => product.image_url && setZoom(true)}
-            className="block w-full cursor-zoom-in"
-            aria-label="Zoom image"
-          >
-            {product.image_url ? (
-              <img
-                src={resizeUnsplash(product.image_url, 1400)}
-                alt={product.name}
-                className="w-full h-full object-cover lg:min-h-[100vh]"
-              />
-            ) : (
-              <div className="aspect-square flex items-center justify-center">
-                <span className="font-display text-6xl text-mist">MM</span>
-              </div>
-            )}
-          </button>
+        <div className="bg-ivory pb-4 lg:pb-6 lg:sticky lg:top-20">
+          <ProductGallery
+            images={
+              product.images?.length
+                ? product.images
+                : product.image_url
+                ? [{ detail: product.image_url, card: product.image_url, thumbnail: product.image_url }]
+                : []
+            }
+            alt={product.name}
+          />
         </div>
 
         {/* info */}
-        <div className="px-6 md:px-14 py-16 lg:py-24">
-          <div className="lg:sticky lg:top-28">
+        <div className="px-6 md:px-14 py-12 md:py-16 lg:py-14">
+          <div className="lg:sticky lg:top-24">
             {product.category && (
-              <Link
-                to={`/shop?category=${product.category.slug}`}
-                className="eyebrow text-stone link-underline"
-              >
-                {product.category.name}
+              <Link to={`/shop?category=${product.category.slug}`} className="eyebrow text-stone link-underline">
+                {categoryLabel(locale, product.category)}
               </Link>
             )}
             <h1 className="font-display text-4xl md:text-5xl mt-4 leading-tight">{product.name}</h1>
@@ -183,34 +147,21 @@ export default function ProductDetail() {
 
             <div className="mt-10 flex items-stretch gap-3">
               <div className="inline-flex items-center border border-line">
-                <button
-                  className="px-4 text-stone hover:text-ink"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
+                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="-">−</button>
                 <span className="px-3 tabular-nums text-sm">{qty}</span>
-                <button
-                  className="px-4 text-stone hover:text-ink"
-                  onClick={() => setQty((q) => Math.min(product.stock || 1, q + 1))}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
+                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.min(product.stock || 1, q + 1))} aria-label="+">+</button>
               </div>
-              <button
+              <Button
                 onClick={addToBag}
                 disabled={soldOut}
-                className="flex-1 h-12 bg-ink text-canvas eyebrow border border-ink hover:bg-canvas hover:text-ink transition-colors duration-500 disabled:opacity-40 disabled:hover:bg-ink disabled:hover:text-canvas"
+                size="lg"
+                className="flex-1"
               >
-                {soldOut ? 'Sold out' : added ? 'Added' : 'Add to bag'}
-              </button>
+                {soldOut ? t('product.soldOut') : added ? t('pdp.added') : t('pdp.addToBag')}
+              </Button>
             </div>
 
-            {!soldOut && product.low_stock && (
-              <p className="mt-4 text-xs text-stone">Only a few remain.</p>
-            )}
+            {!soldOut && product.low_stock && <p className="mt-4 text-xs text-stone">{t('pdp.fewRemain')}</p>}
 
             <div className="mt-14">
               {sections.map((s, i) => (
@@ -228,9 +179,9 @@ export default function ProductDetail() {
       </div>
 
       {related.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-28">
-          <Reveal className="text-center mb-14">
-            <p className="eyebrow text-stone">You may also like</p>
+        <section className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+          <Reveal className="text-center mb-12 md:mb-14">
+            <p className="eyebrow text-stone">{t('pdp.related')}</p>
           </Reveal>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {related.map((p, i) => (
@@ -242,23 +193,6 @@ export default function ProductDetail() {
         </section>
       )}
 
-      <AnimatePresence>
-        {zoom && (
-          <motion.div
-            className="fixed inset-0 z-50 bg-ink/95 flex items-center justify-center p-6 cursor-zoom-out"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setZoom(false)}
-          >
-            <img
-              src={resizeUnsplash(product.image_url, 2000)}
-              alt={product.name}
-              className="max-h-full max-w-full object-contain"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

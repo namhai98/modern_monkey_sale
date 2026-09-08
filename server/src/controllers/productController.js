@@ -11,8 +11,15 @@ const SORTABLE = {
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
+// Product images are managed via the /api/products/:id/images sub-resource
+// (see productImageController). `SELECT_BASE` just embeds the current set.
 const SELECT_BASE = `
-  SELECT p.*, c.name AS category_name, c.slug AS category_slug
+  SELECT p.*, c.name AS category_name, c.slug AS category_slug,
+         COALESCE(
+           (SELECT jsonb_agg(to_jsonb(pi) ORDER BY pi.sort_order, pi.id)
+            FROM product_images pi WHERE pi.product_id = p.id),
+           '[]'::jsonb
+         ) AS images
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id`;
 
@@ -32,9 +39,6 @@ function validateProductInput(body, { partial }) {
   }
   if (has('low_stock_threshold') && !isNonNegativeInt(body.low_stock_threshold)) {
     errs.push('low_stock_threshold must be an integer >= 0');
-  }
-  if (has('image_url') && body.image_url !== '' && typeof body.image_url !== 'string') {
-    errs.push('image_url must be a string');
   }
   if (has('is_active') && typeof body.is_active !== 'boolean') {
     errs.push('is_active must be a boolean');
@@ -135,14 +139,14 @@ export async function createProduct(req, res) {
     await client.query('BEGIN');
     let id;
     try {
+      // image_url starts empty; the first image upload sets it (see productImageController.syncPrimary)
       const ins = await client.query(
         `INSERT INTO products (name, description, price, image_url, category_id, sku, stock, low_stock_threshold)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+         VALUES ($1, $2, $3, '', $4, $5, $6, $7) RETURNING id`,
         [
           b.name.trim(),
           b.description ?? null,
           b.price,
-          b.image_url || '',
           b.category_id ?? null,
           (b.sku && String(b.sku).trim()) || null,
           stock,
@@ -201,7 +205,6 @@ export async function updateProduct(req, res) {
     if (b.name !== undefined) put('name', b.name.trim());
     if (b.description !== undefined) put('description', b.description);
     if (b.price !== undefined) put('price', b.price);
-    if (b.image_url !== undefined) put('image_url', b.image_url || '');
     if (b.category_id !== undefined) put('category_id', b.category_id);
     if (b.sku !== undefined) put('sku', (b.sku && String(b.sku).trim()) || null);
     if (b.low_stock_threshold !== undefined) put('low_stock_threshold', b.low_stock_threshold);
@@ -210,9 +213,9 @@ export async function updateProduct(req, res) {
     if (sets.length === 0) {
       return res.status(400).json({ error: 'No fields to update', code: 'VALIDATION_ERROR' });
     }
+
     sets.push('updated_at = NOW()');
     params.push(req.params.id);
-
     try {
       await query(`UPDATE products SET ${sets.join(', ')} WHERE id = $${params.length}`, params);
     } catch (e) {
@@ -312,9 +315,3 @@ export async function listStockMovements(req, res) {
   }
 }
 
-export function uploadProductImage(req, res) {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No image uploaded', code: 'VALIDATION_ERROR' });
-  }
-  res.status(201).json({ url: `/uploads/${req.file.filename}` });
-}

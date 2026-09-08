@@ -11,6 +11,11 @@
   --color-charcoal: #2c2822;
   --color-stone: #8a8378;
   --color-line: #d9d3c7;
+  /* Restrained accent — muted champagne. Used only for small signals
+     (focus ring, active language, cart count, low-stock), never for surfaces. */
+  --color-champagne: #b6a074;
+
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
@@ -40,6 +45,12 @@
     color: var(--color-canvas);
   }
 
+  /* One consistent, visible focus treatment across the whole storefront */
+  :focus-visible {
+    outline: 2px solid var(--color-champagne);
+    outline-offset: 3px;
+  }
+
   /* Thin, letter-spaced eyebrow / label text — "N E W   A R R I V A L S" */
   .eyebrow {
     font-family: var(--font-sans);
@@ -54,17 +65,33 @@
     background-size: 0% 1px;
     background-position: 0 100%;
     background-repeat: no-repeat;
-    transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: background-size 0.32s var(--ease-luxe);
   }
   .link-underline:hover {
     background-size: 100% 1px;
   }
 }
 
-/* Respect reduced motion for the scroll reveals */
+/* Lightweight CSS animations for elements whose *visibility* must not depend
+   on a JS animation loop (which can be throttled on load / background tabs). */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(1.25rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.9s var(--ease-luxe) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

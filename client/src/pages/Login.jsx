@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../context/LocaleContext';
+import Button from '../components/Button';
 
 function safeRedirect(target) {
   return target && target.startsWith('/') && !target.startsWith('//') ? target : '/';
@@ -13,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const { login, register } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = safeRedirect(searchParams.get('redirect'));
@@ -28,7 +31,7 @@ export default function Login() {
       }
       navigate(redirectTo);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || t('login.error'));
     }
   }
 
@@ -37,16 +40,16 @@ export default function Login() {
 
   return (
     <div className="max-w-sm mx-auto px-6 py-24">
-      <p className="eyebrow text-stone">Account</p>
+      <p className="eyebrow text-stone">{t('account.eyebrow')}</p>
       <h1 className="font-display text-4xl mt-3 mb-10">
-        {mode === 'login' ? 'Welcome back' : 'Create an account'}
+        {mode === 'login' ? t('login.welcome') : t('login.create')}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {mode === 'register' && (
           <input
             type="text"
-            placeholder="Full name"
+            placeholder={t('login.fullName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={field}
@@ -55,7 +58,7 @@ export default function Login() {
         )}
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t('login.email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={field}
@@ -63,19 +66,16 @@ export default function Login() {
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t('login.password')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className={field}
           required
         />
         {error && <p className="text-red-700 text-sm">{error}</p>}
-        <button
-          type="submit"
-          className="w-full h-12 bg-ink text-canvas eyebrow border border-ink hover:bg-canvas hover:text-ink transition-colors duration-500"
-        >
-          {mode === 'login' ? 'Sign in' : 'Create account'}
-        </button>
+        <Button as="button" type="submit" full size="lg">
+          {mode === 'login' ? t('login.signIn') : t('login.createBtn')}
+        </Button>
       </form>
 
       <div className="mt-8 flex flex-col gap-3 text-sm text-stone">
@@ -83,11 +83,11 @@ export default function Login() {
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
           className="link-underline text-left w-fit"
         >
-          {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {mode === 'login' ? t('login.toRegister') : t('login.toLogin')}
         </button>
         {mode === 'login' && (
           <Link to="/forgot-password" className="link-underline w-fit">
-            Forgot password?
+            {t('login.forgot')}
           </Link>
         )}
       </div>

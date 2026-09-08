@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import productRoutes from './routes/products.js';
 import authRoutes from './routes/auth.js';
@@ -9,7 +11,7 @@ import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import categoryRoutes from './routes/categories.js';
 import { rateLimit } from './middleware/rateLimit.js';
-import { UPLOAD_DIR } from './middleware/upload.js';
+import { storage, STORAGE_PROVIDER, IMMUTABLE_CACHE_CONTROL } from './storage/index.js';
 
 dotenv.config();
 
@@ -24,8 +26,23 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'modern_monkey_sale API is running' });
 });
 
-// Uploaded product images
-app.use('/uploads', express.static(UPLOAD_DIR));
+// Local object storage (dev): serve optimised image variants with an
+// immutable long cache. In production STORAGE_PROVIDER=s3 serves these via CDN.
+if (STORAGE_PROVIDER === 'local') {
+  app.use(
+    '/media',
+    express.static(storage.root, {
+      immutable: true,
+      maxAge: '365d',
+      setHeaders: (res) => res.setHeader('Cache-Control', IMMUTABLE_CACHE_CONTROL),
+    })
+  );
+}
+// Legacy pre-optimisation uploads, if any still exist on disk
+const legacyUploads = path.resolve('uploads');
+if (fs.existsSync(legacyUploads)) {
+  app.use('/uploads', express.static(legacyUploads, { maxAge: '30d' }));
+}
 
 // Coarse ceiling for all auth traffic (refresh runs often); login / reset get a
 // stricter per-route limit in routes/auth.js

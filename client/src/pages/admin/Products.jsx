@@ -3,6 +3,7 @@ import client from '../../api/client';
 import AdminNav from '../../components/AdminNav';
 
 const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
+const MAX_IMAGES = 5;
 const emptyForm = {
   name: '',
   description: '',
@@ -10,33 +11,113 @@ const emptyForm = {
   category_id: '',
   sku: '',
   low_stock_threshold: 0,
-  image_url: '',
 };
+
+function kb(bytes) {
+  return bytes ? `${Math.round(bytes / 1024)} KB` : '';
+}
+
+// Talks to /api/products/:id/images — upload, delete, reorder, set primary.
+function ProductImageManager({ productId, images: initialImages }) {
+  const [images, setImages] = useState(initialImages || []);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function run(fn) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fn();
+      setImages(res.data.images);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function upload(file) {
+    if (!file) return;
+    const data = new FormData();
+    data.append('image', file);
+    run(() => client.post(`/products/${productId}/images`, data));
+  }
+
+  function move(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= images.length) return;
+    const order = images.map((im) => im.id);
+    [order[i], order[j]] = [order[j], order[i]];
+    run(() => client.patch(`/products/${productId}/images/reorder`, { order }));
+  }
+
+  return (
+    <div className="md:col-span-2 border-t border-gray-100 pt-3">
+      <p className="text-xs text-gray-500 mb-2">
+        Images ({images.length}/{MAX_IMAGES}) — the first is the primary image. JPG or PNG, up to 10&nbsp;MB;
+        stored as optimised WebP.
+      </p>
+
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-3 mb-3">
+          {images.map((im, i) => (
+            <div key={im.id} className="w-24 text-[11px] text-gray-500">
+              <div className="relative">
+                <img
+                  src={im.thumbnail}
+                  alt=""
+                  className={`h-28 w-24 object-cover rounded border ${
+                    i === 0 ? 'border-gray-900' : 'border-gray-200'
+                  }`}
+                />
+                {i === 0 && (
+                  <span className="absolute top-1 left-1 bg-gray-900 text-white px-1 rounded text-[10px]">
+                    Primary
+                  </span>
+                )}
+              </div>
+              <div className="flex justify-between mt-1">
+                <button type="button" disabled={busy || i === 0} onClick={() => move(i, -1)}
+                  className="px-1 disabled:opacity-30">←</button>
+                {i !== 0 && (
+                  <button type="button" disabled={busy}
+                    onClick={() => run(() => client.patch(`/products/${productId}/images/${im.id}/primary`))}
+                    className="hover:underline">Set primary</button>
+                )}
+                <button type="button" disabled={busy || i === images.length - 1} onClick={() => move(i, 1)}
+                  className="px-1 disabled:opacity-30">→</button>
+              </div>
+              <div className="flex justify-between mt-0.5">
+                <span>{im.width && im.height ? `${im.width}×${im.height}` : ''}</span>
+                <button type="button" disabled={busy}
+                  onClick={() => run(() => client.delete(`/products/${productId}/images/${im.id}`))}
+                  className="text-red-500 hover:underline">Delete</button>
+              </div>
+              {im.file_size ? <div>{kb(im.file_size)}</div> : null}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {images.length < MAX_IMAGES && (
+        <label className="inline-block text-sm text-gray-600 cursor-pointer border border-gray-300 rounded-md px-3 py-2 hover:bg-gray-50">
+          {busy ? 'Working…' : 'Upload image'}
+          <input type="file" accept="image/jpeg,image/png" className="hidden" disabled={busy}
+            onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+      )}
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+    </div>
+  );
+}
 
 function ProductForm({ categories, initial, onCancel, onSaved }) {
   const [form, setForm] = useState(initial);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const editing = Boolean(initial.id);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  async function upload(file) {
-    if (!file) return;
-    setUploading(true);
-    setError(null);
-    try {
-      const data = new FormData();
-      data.append('image', file);
-      const res = await client.post('/products/upload', data);
-      set('image_url', res.data.url);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  }
 
   async function submit(e) {
     e.preventDefault();
@@ -49,15 +130,15 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
       category_id: form.category_id ? Number(form.category_id) : null,
       sku: form.sku || null,
       low_stock_threshold: Number(form.low_stock_threshold) || 0,
-      image_url: form.image_url || '',
     };
     try {
       if (editing) {
         await client.patch(`/products/${initial.id}`, payload);
+        onSaved();
       } else {
-        await client.post('/products', { ...payload, stock: Number(form.stock) || 0 });
+        const res = await client.post('/products', { ...payload, stock: Number(form.stock) || 0 });
+        onSaved(res.data); // parent re-opens in edit mode so images can be added
       }
-      onSaved();
     } catch (err) {
       setError(err.response?.data?.error || 'Save failed');
     } finally {
@@ -92,18 +173,15 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
         onChange={(e) => set('low_stock_threshold', e.target.value)} />
       <textarea className={`${inputCls} md:col-span-2`} rows={2} placeholder="Description"
         value={form.description} onChange={(e) => set('description', e.target.value)} />
-      <div className="md:col-span-2 flex flex-wrap items-center gap-2">
-        <input className={`${inputCls} flex-1 min-w-[12rem]`} placeholder="Image URL or upload →"
-          value={form.image_url} onChange={(e) => set('image_url', e.target.value)} />
-        <label className="text-sm text-gray-600 cursor-pointer border border-gray-300 rounded-md px-3 py-2 hover:bg-gray-50">
-          {uploading ? 'Uploading...' : 'Upload'}
-          <input type="file" accept="image/*" className="hidden"
-            onChange={(e) => upload(e.target.files?.[0])} />
-        </label>
-        {form.image_url && (
-          <img src={form.image_url} alt="" className="h-10 w-10 object-cover rounded" />
-        )}
-      </div>
+
+      {editing ? (
+        <ProductImageManager productId={initial.id} images={initial.images || []} />
+      ) : (
+        <p className="md:col-span-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
+          Save the product first, then add its images.
+        </p>
+      )}
+
       {error && <p className="md:col-span-2 text-red-500 text-sm">{error}</p>}
       <div className="md:col-span-2 flex gap-2">
         <button className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-50"
@@ -111,7 +189,7 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
           {saving ? 'Saving...' : editing ? 'Save changes' : 'Create product'}
         </button>
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md text-sm text-gray-600 hover:underline">
-          Cancel
+          {editing ? 'Close' : 'Cancel'}
         </button>
       </div>
     </form>
@@ -217,9 +295,23 @@ export default function AdminProducts() {
     }
   }
 
-  function afterSave() {
-    setFormFor(null);
+  function afterSave(created) {
     load();
+    if (created?.id) {
+      // just created — switch the form to edit mode so images can be attached
+      setFormFor({
+        id: created.id,
+        name: created.name,
+        description: created.description || '',
+        price: String(created.price),
+        category_id: created.category?.id ? String(created.category.id) : '',
+        sku: created.sku || '',
+        low_stock_threshold: created.low_stock_threshold,
+        images: created.images || [],
+      });
+    } else {
+      setFormFor(null);
+    }
   }
 
   return (
@@ -250,6 +342,11 @@ export default function AdminProducts() {
 
       {formFor === 'new' && (
         <ProductForm categories={categories} initial={{ ...emptyForm, stock: 0 }}
+          onCancel={() => setFormFor(null)} onSaved={afterSave} />
+      )}
+      {/* freshly created product not yet in the loaded list — keep the form up so images can be added */}
+      {formFor && formFor.id && !products.some((p) => p.id === formFor.id) && (
+        <ProductForm categories={categories} initial={formFor}
           onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
@@ -306,7 +403,7 @@ export default function AdminProducts() {
                                 category_id: p.category?.id ? String(p.category.id) : '',
                                 sku: p.sku || '',
                                 low_stock_threshold: p.low_stock_threshold,
-                                image_url: p.image_url || '',
+                                images: p.images || [],
                               }
                         )
                       }

@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:5000',
       '/uploads': 'http://localhost:5000',
+      '/media': 'http://localhost:5000', // local object-storage (dev); prod serves via CDN
     },
   },
 })

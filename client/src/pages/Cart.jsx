@@ -1,19 +1,22 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import Button from '../components/Button';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total } = useCart();
+  const { t } = useLocale();
   const navigate = useNavigate();
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-20">
-      <h1 className="font-display text-4xl mb-12">Your Bag</h1>
+      <h1 className="font-display text-4xl mb-12">{t('cart.title')}</h1>
 
       {items.length === 0 ? (
         <p className="text-stone">
-          Your bag is empty.{' '}
-          <Link to="/shop" className="link-underline text-ink">Continue shopping</Link>.
+          {t('cart.empty')}{' '}
+          <Link to="/shop" className="link-underline text-ink">{t('cart.continue')}</Link>.
         </p>
       ) : (
         <>
@@ -34,7 +37,9 @@ export default function Cart() {
                     <p className="font-display text-xl">{item.name}</p>
                     <p className="text-stone">${(item.price * item.quantity).toFixed(2)}</p>
                   </div>
-                  <p className="text-sm text-stone mt-1">${item.price.toFixed(2)} each</p>
+                  <p className="text-sm text-stone mt-1">
+                    {t('cart.each', { price: `$${item.price.toFixed(2)}` })}
+                  </p>
                   <div className="flex items-center gap-5 mt-4 text-sm">
                     <span className="inline-flex items-center border border-line">
                       <button className="px-3 py-1 text-stone hover:text-ink"
@@ -44,7 +49,7 @@ export default function Cart() {
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
                     </span>
                     <button onClick={() => removeItem(item.id)} className="text-stone hover:text-ink link-underline">
-                      Remove
+                      {t('cart.remove')}
                     </button>
                   </div>
                 </div>
@@ -53,15 +58,12 @@ export default function Cart() {
           </div>
 
           <div className="flex items-baseline justify-between mt-8">
-            <span className="eyebrow">Subtotal</span>
+            <span className="eyebrow">{t('cart.subtotal')}</span>
             <span className="font-display text-2xl">${total.toFixed(2)}</span>
           </div>
-          <button
-            onClick={() => navigate('/checkout')}
-            className="w-full mt-8 h-12 bg-ink text-canvas eyebrow border border-ink hover:bg-canvas hover:text-ink transition-colors duration-500"
-          >
-            Proceed to checkout
-          </button>
+          <Button full size="lg" className="mt-8" onClick={() => navigate('/checkout')}>
+            {t('cart.checkout')}
+          </Button>
         </>
       )}
     </div>

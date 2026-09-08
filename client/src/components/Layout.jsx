@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import SiteFooter from './SiteFooter';
@@ -8,9 +9,16 @@ import SearchOverlay from './SearchOverlay';
 const HIDE_FOOTER = ['/admin', '/login', '/forgot-password', '/reset-password', '/checkout'];
 
 export default function Layout({ children }) {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const isHome = pathname === '/';
   const hideFooter = HIDE_FOOTER.some((p) => pathname.startsWith(p));
+
+  // Start every navigation at the top (React Router 7 keeps scroll position by
+  // default). Keyed on location.key so it also fires on ?category= changes.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.key]);
 
   return (
     <>

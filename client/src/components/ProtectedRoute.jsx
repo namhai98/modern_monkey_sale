@@ -1,12 +1,18 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Skeleton from './Skeleton';
 
 export default function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <p className="max-w-3xl mx-auto px-6 py-8 text-gray-500">Loading...</p>;
+    return (
+      <div className="max-w-md mx-auto px-6 py-40 space-y-4">
+        <Skeleton className="h-2 w-24 mx-auto" />
+        <Skeleton className="h-2 w-40 mx-auto" />
+      </div>
+    );
   }
 
   if (!user) {

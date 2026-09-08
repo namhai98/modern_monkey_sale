@@ -1,77 +1,58 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import client from '../api/client';
 import Reveal from '../components/Reveal';
 import ProductCard from '../components/ProductCard';
+import Button from '../components/Button';
 import { media, resizeUnsplash } from '../lib/media';
-
-const ease = [0.22, 1, 0.36, 1];
+import { useLocale } from '../context/LocaleContext';
 
 function Hero() {
+  const { t } = useLocale();
   return (
     <section className="relative h-[100svh] min-h-[560px] w-full overflow-hidden">
-      <motion.img
+      <img
         src={media.hero}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        initial={{ scale: 1.08 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 1.6, ease }}
+        className="absolute inset-0 h-full w-full object-cover motion-safe:animate-[fadeIn_1.4s_ease-out]"
       />
       <div className="absolute inset-0 bg-ink/30" />
       <div className="relative h-full flex flex-col items-center justify-center text-center text-canvas px-6">
-        <motion.p
-          className="eyebrow"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.4, ease }}
+        <p className="eyebrow fade-up" style={{ animationDelay: '0.3s' }}>
+          {t('home.hero.eyebrow')}
+        </p>
+        <h1
+          className="font-display text-5xl md:text-7xl lg:text-8xl mt-4 max-w-4xl leading-[1.05] fade-up"
+          style={{ animationDelay: '0.45s' }}
         >
-          The Autumn Collection
-        </motion.p>
-        <motion.h1
-          className="font-display text-5xl md:text-7xl lg:text-8xl mt-4 max-w-4xl leading-[1.05]"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.55, ease }}
-        >
-          Made to be kept
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.9 }}
-        >
-          <Link
-            to="/shop"
-            className="inline-block mt-10 border border-canvas/70 px-10 py-4 eyebrow hover:bg-canvas hover:text-ink transition-colors duration-500"
-          >
-            Discover
-          </Link>
-        </motion.div>
+          {t('home.hero.title')}
+        </h1>
+        <p className="mt-6 max-w-sm text-sm text-canvas/80 fade-up" style={{ animationDelay: '0.65s' }}>
+          {t('home.hero.support')}
+        </p>
+        <div className="fade-up" style={{ animationDelay: '0.85s' }}>
+          <Button to="/shop" variant="onDark" size="lg" className="mt-10">
+            {t('home.hero.cta')}
+          </Button>
+        </div>
       </div>
     </section>
   );
 }
 
 function Editorial() {
+  const { t } = useLocale();
   return (
-    <section className="max-w-6xl mx-auto px-6 py-28 grid md:grid-cols-2 gap-16 items-center">
+    <section className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 md:gap-16 items-center">
       <Reveal>
         <img src={media.editorialLeft} alt="" className="w-full aspect-[4/5] object-cover" />
       </Reveal>
       <Reveal delay={0.1} className="md:pl-10">
-        <p className="eyebrow text-stone">The House</p>
-        <h2 className="font-display text-4xl md:text-5xl mt-4 mb-6 leading-tight">
-          An object should outlast the season that made it.
-        </h2>
-        <p className="text-stone leading-relaxed max-w-md">
-          Every piece is cut, stitched and finished by a small number of hands. We work in
-          full-grain leathers, double-faced cashmere and Swiss movements — materials chosen
-          because they age well, not because they photograph well.
-        </p>
+        <p className="eyebrow text-stone">{t('home.house.eyebrow')}</p>
+        <h2 className="font-display text-4xl md:text-5xl mt-4 mb-6 leading-tight">{t('home.house.title')}</h2>
+        <p className="text-stone leading-relaxed max-w-md">{t('home.house.body')}</p>
         <Link to="/shop" className="inline-block mt-8 eyebrow link-underline">
-          Explore the collection
+          {t('home.house.cta')}
         </Link>
       </Reveal>
     </section>
@@ -79,10 +60,11 @@ function Editorial() {
 }
 
 function CategoryBands() {
+  const { t } = useLocale();
   const bands = [
-    { slug: 'bags', label: 'Bags', img: media.bands.bags },
-    { slug: 'watches', label: 'Watches', img: media.bands.watches },
-    { slug: 'apparel', label: 'Apparel', img: media.bands.apparel },
+    { slug: 'bags', label: t('nav.bags'), img: media.bands.bags },
+    { slug: 'watches', label: t('nav.watches'), img: media.bands.watches },
+    { slug: 'apparel', label: t('nav.apparel'), img: media.bands.apparel },
   ];
   return (
     <section>
@@ -90,7 +72,7 @@ function CategoryBands() {
         <Reveal key={b.slug} as="div">
           <Link
             to={`/shop?category=${b.slug}`}
-            className="group relative block h-[70vh] min-h-[420px] w-full overflow-hidden"
+            className="group relative block h-[60vh] min-h-[380px] md:h-[70vh] w-full overflow-hidden"
           >
             <img
               src={b.img}
@@ -101,7 +83,7 @@ function CategoryBands() {
             <div className="relative h-full flex flex-col items-center justify-center text-canvas">
               <p className="eyebrow">{`0${i + 1}`}</p>
               <h3 className="font-display text-5xl md:text-6xl mt-2">{b.label}</h3>
-              <span className="mt-6 eyebrow link-underline">Shop {b.label}</span>
+              <span className="mt-6 eyebrow link-underline">{t('home.band.shop', { cat: b.label })}</span>
             </div>
           </Link>
         </Reveal>
@@ -111,6 +93,7 @@ function CategoryBands() {
 }
 
 function Featured() {
+  const { t } = useLocale();
   const [items, setItems] = useState([]);
   useEffect(() => {
     client
@@ -121,10 +104,10 @@ function Featured() {
 
   if (items.length === 0) return null;
   return (
-    <section className="max-w-6xl mx-auto px-6 py-28">
-      <Reveal className="text-center mb-16">
-        <p className="eyebrow text-stone">Newly Added</p>
-        <h2 className="font-display text-4xl md:text-5xl mt-3">This week at the Maison</h2>
+    <section className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+      <Reveal className="text-center mb-12 md:mb-16">
+        <p className="eyebrow text-stone">{t('home.featured.eyebrow')}</p>
+        <h2 className="font-display text-4xl md:text-5xl mt-3">{t('home.featured.title')}</h2>
       </Reveal>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-14">
         {items.map((p, i) => (
@@ -138,19 +121,15 @@ function Featured() {
 }
 
 function Atelier() {
+  const { t } = useLocale();
   return (
     <section className="relative">
-      <img src={resizeUnsplash(media.atelier, 2000)} alt="" className="h-[80vh] w-full object-cover" />
+      <img src={resizeUnsplash(media.atelier, 2000)} alt="" className="h-[65vh] md:h-[80vh] w-full object-cover" />
       <div className="absolute inset-0 bg-ink/40" />
       <Reveal className="absolute inset-0 flex flex-col items-center justify-center text-center text-canvas px-6">
-        <p className="eyebrow">Craftsmanship</p>
-        <h2 className="font-display text-4xl md:text-6xl mt-4 max-w-3xl leading-tight">
-          Forty hours to a single bag
-        </h2>
-        <p className="mt-6 max-w-lg text-canvas/80 leading-relaxed">
-          From the first cut to the final burnished edge, our workshop moves at the pace the
-          material asks for.
-        </p>
+        <p className="eyebrow">{t('home.atelier.eyebrow')}</p>
+        <h2 className="font-display text-4xl md:text-6xl mt-4 max-w-3xl leading-tight">{t('home.atelier.title')}</h2>
+        <p className="mt-6 max-w-lg text-canvas/80 leading-relaxed">{t('home.atelier.body')}</p>
       </Reveal>
     </section>
   );

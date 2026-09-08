@@ -1,0 +1,468 @@
+// Lightweight i18n. t(key, vars) looks up the active locale, falls back to en,
+// then to the key itself; {tokens} in the string are replaced from `vars`.
+
+export const LOCALES = [
+  { code: 'en', label: 'EN' },
+  { code: 'mn', label: 'МОН' },
+];
+
+const en = {
+  // nav
+  'nav.bags': 'Bags',
+  'nav.watches': 'Watches',
+  'nav.apparel': 'Apparel',
+  'nav.all': 'All',
+  'nav.search': 'Search',
+  'nav.account': 'Account',
+  'nav.bag': 'Bag',
+  'nav.menu': 'Menu',
+  'nav.close': 'Close',
+  'nav.profile': 'Profile',
+  'nav.orders': 'Orders',
+  'nav.admin': 'Admin',
+  'nav.signout': 'Sign out',
+  'nav.login': 'Login',
+
+  // home
+  'home.hero.eyebrow': 'The Autumn Collection',
+  'home.hero.title': 'Made to be kept',
+  'home.hero.support': 'Leather goods, watches and ready-to-wear — considered, and made to last.',
+  'home.hero.cta': 'Discover',
+  'home.house.eyebrow': 'The House',
+  'home.house.title': 'An object should outlast the season that made it.',
+  'home.house.body':
+    'Every piece is cut, stitched and finished by a small number of hands. We work in full-grain leathers, double-faced cashmere and Swiss movements — materials chosen because they age well, not because they photograph well.',
+  'home.house.cta': 'Explore the collection',
+  'home.band.shop': 'Shop {cat}',
+  'home.featured.eyebrow': 'Newly Added',
+  'home.featured.title': 'This week at the Maison',
+  'home.atelier.eyebrow': 'Craftsmanship',
+  'home.atelier.title': 'Forty hours to a single bag',
+  'home.atelier.body':
+    'From the first cut to the final burnished edge, our workshop moves at the pace the material asks for.',
+
+  // shop
+  'shop.allPieces': 'All Pieces',
+  'shop.collection': 'The Collection',
+  'shop.choose': 'Choose a category to begin.',
+  'shop.pieces': '{n} pieces',
+  'shop.explore': 'Explore',
+  'shop.backAll': '← All',
+  'shop.empty': 'Nothing here yet.',
+  'shop.prev': 'Prev',
+  'shop.next': 'Next',
+  'sort.newest': 'Newest',
+  'sort.priceAsc': 'Price · low to high',
+  'sort.priceDesc': 'Price · high to low',
+  'sort.name': 'Alphabetical',
+
+  // product card / pdp
+  'product.view': 'View',
+  'product.soldOut': 'Sold out',
+  'product.lowStock': 'Low stock',
+  'pdp.addToBag': 'Add to bag',
+  'pdp.added': 'Added',
+  'pdp.fewRemain': 'Only a few remain.',
+  'pdp.related': 'You may also like',
+  'pdp.gone': 'No longer available',
+  'pdp.backToCollection': 'Return to the collection',
+  'pdp.loading': 'Loading…',
+  'pdp.acc.description': 'Description',
+  'pdp.acc.materials': 'Materials & care',
+  'pdp.acc.shipping': 'Shipping & returns',
+  'pdp.acc.dimensions': 'Dimensions & capacity',
+  'pdp.acc.craftsmanship': 'Craftsmanship',
+  'pdp.acc.specs': 'Specifications',
+  'pdp.acc.service': 'Service',
+  'pdp.acc.sizeFit': 'Size & fit',
+  'pdp.body.default':
+    'A considered piece from the Maison.',
+  'pdp.body.materialsDefault':
+    'Made from carefully sourced materials. Handle with care to preserve its finish.',
+  'pdp.body.shipping':
+    'Complimentary insured delivery in a signature box. Returns accepted within 14 days, unworn and in original packaging.',
+  'pdp.body.bags.dimensions':
+    'Approx. 32 × 26 × 14 cm. Fits a 13-inch laptop, an A5 notebook and the day’s essentials. Interior slip pocket and key leash.',
+  'pdp.body.bags.craftsmanship':
+    'Cut from a single hide, saddle-stitched by hand and finished with hot-burnished edges. Each bag carries the mark of the artisan who made it.',
+  'pdp.body.watches.specs':
+    '40 mm stainless steel case · Sapphire crystal, anti-reflective · In-house automatic movement, 42h reserve · Water resistant to 50 m · Alligator strap with folding clasp.',
+  'pdp.body.watches.service':
+    'Recommended service every 4–5 years. Two-year international warranty. Complimentary strap fitting at any boutique.',
+  'pdp.body.apparel.sizeFit':
+    'Cut for a relaxed, straight silhouette. The model is 186 cm and wears a size M. Between sizes? Take the smaller for a closer fit.',
+  'pdp.body.apparel.materials':
+    'Double-faced cashmere, woven in Italy. Dry clean only. Store folded, away from light. A cashmere comb keeps the surface clear.',
+
+  // cart
+  'cart.title': 'Your Bag',
+  'cart.empty': 'Your bag is empty.',
+  'cart.continue': 'Continue shopping',
+  'cart.remove': 'Remove',
+  'cart.subtotal': 'Subtotal',
+  'cart.each': '{price} each',
+  'cart.calcNote': 'Shipping and duties calculated at checkout.',
+  'cart.checkout': 'Proceed to checkout',
+  'cart.count': 'Your Bag ({n})',
+
+  // search
+  'search.placeholder': 'What are you looking for?',
+  'search.searching': 'Searching…',
+  'search.none': 'Nothing found for “{q}”.',
+
+  // checkout
+  'checkout.step.bag': 'Bag',
+  'checkout.step.details': 'Details',
+  'checkout.step.confirm': 'Confirmation',
+  'checkout.title': 'Checkout',
+  'checkout.signedIn': 'Signed in as {email}',
+  'checkout.shippingAddress': 'Shipping address',
+  'checkout.fullName': 'Full name',
+  'checkout.address': 'Address',
+  'checkout.postcode': 'Postcode',
+  'checkout.city': 'City',
+  'checkout.country': 'Country',
+  'checkout.fail': 'We could not place your order.',
+  'checkout.placing': 'Placing order…',
+  'checkout.place': 'Place order',
+  'checkout.demoNote':
+    'Payment is not collected in this demo — a pending order is created for you to review.',
+  'checkout.yourOrder': 'Your order',
+  'checkout.qty': 'Qty {n}',
+  'checkout.total': 'Total',
+  'checkout.trust': 'Secure checkout · Insured delivery · 14-day returns',
+  'checkout.emptyBag': 'Your bag is empty.',
+
+  // order status
+  'status.pending': 'Pending',
+  'status.paid': 'Paid',
+  'status.shipped': 'Shipped',
+  'status.delivered': 'Delivered',
+  'status.cancelled': 'Cancelled',
+  'status.refunded': 'Refunded',
+
+  // account / orders
+  'account.eyebrow': 'Account',
+  'orders.title': 'Your Orders',
+  'orders.none': 'No orders yet.',
+  'orders.start': 'Start shopping',
+  'orders.order': 'Order #{id}',
+  'orders.items': '{n} item(s)',
+  'orders.loading': 'Loading…',
+  'orderDetail.back': '← Your orders',
+  'orderDetail.item': 'Item',
+  'orderDetail.qty': 'Qty',
+  'orderDetail.price': 'Price',
+  'orderDetail.total': 'Total',
+  'orderDetail.shippingAddress': 'Shipping address',
+  'orderDetail.placed': 'Placed {date}',
+  'orderDetail.cancel': 'Cancel order',
+  'orderDetail.cancelling': 'Cancelling…',
+  'orderDetail.history': 'History',
+  'orderDetail.confirmCancel': 'Cancel this order?',
+  'orderDetail.gone': 'This order could not be loaded.',
+  'orderDetail.notFound': 'This product is no longer available.',
+
+  // login
+  'login.welcome': 'Welcome back',
+  'login.create': 'Create an account',
+  'login.email': 'Email',
+  'login.password': 'Password',
+  'login.signIn': 'Sign in',
+  'login.createBtn': 'Create account',
+  'login.toRegister': "Don't have an account? Sign up",
+  'login.toLogin': 'Already have an account? Sign in',
+  'login.forgot': 'Forgot password?',
+  'login.error': 'Something went wrong',
+  'login.fullName': 'Full name',
+
+  // profile
+  'profile.title': 'Profile',
+  'profile.roleLine': '{email} · {role}',
+  'profile.name': 'Name',
+  'profile.save': 'Save',
+  'profile.saving': 'Saving…',
+  'profile.changePw': 'Change password',
+  'profile.currentPw': 'Current password',
+  'profile.newPw': 'New password (min 8 chars)',
+  'profile.pwNote': 'Changing your password signs out your other devices.',
+  'profile.sessions': 'Sessions',
+  'profile.logoutAll': 'Log out of all devices',
+  'profile.pwChanged': 'Password changed',
+  'profile.saved': 'Saved',
+  'profile.saveFail': 'Failed to save',
+  'profile.pwFail': 'Failed to change password',
+
+  // forbidden
+  'forbidden.title': 'Access denied',
+  'forbidden.body': 'You don’t have permission to view this page.',
+  'forbidden.home': 'Return home',
+
+  // forgot / reset password
+  'forgot.title': 'Reset password',
+  'forgot.lead': 'Enter your email and we’ll send you a link to set a new password.',
+  'forgot.send': 'Send reset link',
+  'forgot.sending': 'Sending…',
+  'forgot.sent': 'If an account exists for {email}, a reset link is on its way. The link is valid for 30 minutes.',
+  'forgot.back': 'Back to log in',
+  'reset.title': 'Set a new password',
+  'reset.confirm': 'Confirm new password',
+  'reset.submit': 'Reset password',
+  'reset.done': 'Password updated. Taking you to the login page…',
+  'reset.mismatch': 'Passwords do not match',
+  'reset.fail': 'Could not reset password',
+  'reset.noToken': 'This reset link is missing its token.',
+  'reset.requestNew': 'Request a new link',
+
+  // footer
+  'footer.letter.eyebrow': 'The Maison Letter',
+  'footer.letter.title': 'Collections, before anyone else.',
+  'footer.letter.placeholder': 'Email address',
+  'footer.letter.subscribe': 'Subscribe',
+  'footer.letter.thanks': 'Thank you — you’re on the list.',
+  'footer.col.shop': 'Shop',
+  'footer.col.care': 'Client Care',
+  'footer.care.shipping': 'Shipping & Returns',
+  'footer.care.product': 'Product Care',
+  'footer.care.contact': 'Contact',
+  'footer.col.house': 'The House',
+  'footer.house.story': 'Our Story',
+  'footer.house.craft': 'Craftsmanship',
+  'footer.house.sustain': 'Sustainability',
+  'footer.col.account': 'Account',
+  'footer.copyright': '© {year} Modern Monkey Maison. All rights reserved.',
+};
+
+const mn = {
+  'nav.bags': 'Цүнх',
+  'nav.watches': 'Цаг',
+  'nav.apparel': 'Хувцас',
+  'nav.all': 'Бүгд',
+  'nav.search': 'Хайх',
+  'nav.account': 'Хаяг',
+  'nav.bag': 'Сагс',
+  'nav.menu': 'Цэс',
+  'nav.close': 'Хаах',
+  'nav.profile': 'Профайл',
+  'nav.orders': 'Захиалга',
+  'nav.admin': 'Админ',
+  'nav.signout': 'Гарах',
+  'nav.login': 'Нэвтрэх',
+
+  'home.hero.eyebrow': 'Намрын цуглуулга',
+  'home.hero.title': 'Үеийг даван үлдэхээр',
+  'home.hero.support': 'Арьсан эдлэл, цаг, бэлэн хувцас — нямбай сонгож, удаан эдлэхээр.',
+  'home.hero.cta': 'Танилцах',
+  'home.house.eyebrow': 'Бидний тухай',
+  'home.house.title': 'Эд зүйл нь бүтээгдсэн улирлаа даван үлдэх учиртай.',
+  'home.house.body':
+    'Бүтээгдэхүүн бүрийг цөөхөн хосгүй гарын урлалаар зүсэж, оёж, өнгөлдөг. Бид бүтэн ширэн арьс, хоёр талын кашемир, Швейцарийн механизмтай ажилладаг — эдгээр нь зурагт биш, жинхэнэ амьдралд сайхан хөгждөг учир сонгосон.',
+  'home.house.cta': 'Цуглуулгыг үзэх',
+  'home.band.shop': '{cat} үзэх',
+  'home.featured.eyebrow': 'Шинээр нэмэгдсэн',
+  'home.featured.title': 'Энэ долоо хоногт',
+  'home.atelier.eyebrow': 'Гар урлал',
+  'home.atelier.title': 'Нэг цүнхэнд дөчин цаг',
+  'home.atelier.body':
+    'Эхний зүслэгээс эцсийн өнгөлгөө хүртэл манай урлан материалынхаа шаардсан хэмнэлээр ажилладаг.',
+
+  'shop.allPieces': 'Бүх бүтээгдэхүүн',
+  'shop.collection': 'Цуглуулга',
+  'shop.choose': 'Эхлэхийн тулд ангилал сонгоно уу.',
+  'shop.pieces': '{n} бүтээгдэхүүн',
+  'shop.explore': 'Үзэх',
+  'shop.backAll': '← Бүгд',
+  'shop.empty': 'Одоогоор энд юу ч алга.',
+  'shop.prev': 'Өмнөх',
+  'shop.next': 'Дараах',
+  'sort.newest': 'Шинэ',
+  'sort.priceAsc': 'Үнэ · багаас их',
+  'sort.priceDesc': 'Үнэ · ихээс бага',
+  'sort.name': 'Цагаан толгойгоор',
+
+  'product.view': 'Үзэх',
+  'product.soldOut': 'Дууссан',
+  'product.lowStock': 'Нөөц бага',
+  'pdp.addToBag': 'Сагслах',
+  'pdp.added': 'Нэмэгдлээ',
+  'pdp.fewRemain': 'Цөөхөн үлдсэн.',
+  'pdp.related': 'Танд бас таалагдаж болзошгүй',
+  'pdp.gone': 'Боломжгүй болсон',
+  'pdp.backToCollection': 'Цуглуулга руу буцах',
+  'pdp.loading': 'Ачаалж байна…',
+  'pdp.acc.description': 'Тайлбар',
+  'pdp.acc.materials': 'Материал ба арчилгаа',
+  'pdp.acc.shipping': 'Хүргэлт ба буцаалт',
+  'pdp.acc.dimensions': 'Хэмжээ ба багтаамж',
+  'pdp.acc.craftsmanship': 'Гар урлал',
+  'pdp.acc.specs': 'Үзүүлэлт',
+  'pdp.acc.service': 'Засвар үйлчилгээ',
+  'pdp.acc.sizeFit': 'Хэмжээ ба тохирц',
+  'pdp.body.default': 'Байшингийн нямбай бүтээл.',
+  'pdp.body.materialsDefault':
+    'Сайтар сонгосон материалаар хийсэн. Өнгө үзэмжийг нь хадгалахын тулд болгоомжтой хэрэглээрэй.',
+  'pdp.body.shipping':
+    'Онцгой хайрцагт даатгалтай, төлбөргүй хүргэнэ. 14 хоногийн дотор, эдэлээгүй, анхны савлагаатай бол буцаалт хүлээн авна.',
+  'pdp.body.bags.dimensions':
+    'Ойролцоогоор 32 × 26 × 14 см. 13 инчийн зөөврийн компьютер, A5 тэмдэглэлийн дэвтэр болон өдрийн хэрэгцээт зүйлс багтана. Дотор нь халаас, түлхүүрийн оосортой.',
+  'pdp.body.bags.craftsmanship':
+    'Нэг арьснаас зүсэж, гараар эмээлийн оёдлоор оёж, ирмэгийг халуунаар өнгөлсөн. Цүнх бүр урласан дархны тэмдгийг агуулна.',
+  'pdp.body.watches.specs':
+    '40 мм зэвэрдэггүй ган хайрцаг · Гэрэл ойлгодоггүй сапфир шил · Дотоод автомат механизм, 42 цагийн нөөц · 50 м хүртэл ус нэвтэрдэггүй · Атираат горхитой матрын арьсан оосор.',
+  'pdp.body.watches.service':
+    '4–5 жил тутам засвар үйлчилгээ хийлгэхийг зөвлөнө. Хоёр жилийн олон улсын баталгаа. Аль ч дэлгүүрт оосор тохируулгыг үнэгүй хийнэ.',
+  'pdp.body.apparel.sizeFit':
+    'Чөлөөт, шулуун загварт зориулж зүссэн. Загвар өмсөгч 186 см өндөр, M размер өмссөн. Хоёр размерын дунд бол ойр тохирцтой байхын тулд жижигийг нь сонго.',
+  'pdp.body.apparel.materials':
+    'Италид сүлжсэн хоёр талын кашемир. Зөвхөн хуурай цэвэрлэгээ. Гэрлээс хол, нугалж хадгална. Кашемир самнуур гадаргууг цэвэрхэн байлгана.',
+
+  'cart.title': 'Таны сагс',
+  'cart.empty': 'Таны сагс хоосон байна.',
+  'cart.continue': 'Дэлгүүр үзэх',
+  'cart.remove': 'Хасах',
+  'cart.subtotal': 'Дүн',
+  'cart.each': 'тус бүр {price}',
+  'cart.calcNote': 'Хүргэлт болон татварыг төлбөрийн үед тооцно.',
+  'cart.checkout': 'Төлбөр рүү шилжих',
+  'cart.count': 'Таны сагс ({n})',
+
+  'search.placeholder': 'Та юу хайж байна вэ?',
+  'search.searching': 'Хайж байна…',
+  'search.none': '«{q}»-д тохирох зүйл олдсонгүй.',
+
+  'checkout.step.bag': 'Сагс',
+  'checkout.step.details': 'Мэдээлэл',
+  'checkout.step.confirm': 'Баталгаажуулалт',
+  'checkout.title': 'Төлбөр',
+  'checkout.signedIn': '{email} нэрээр нэвтэрсэн',
+  'checkout.shippingAddress': 'Хүргэлтийн хаяг',
+  'checkout.fullName': 'Бүтэн нэр',
+  'checkout.address': 'Хаяг',
+  'checkout.postcode': 'Шуудангийн код',
+  'checkout.city': 'Хот',
+  'checkout.country': 'Улс',
+  'checkout.fail': 'Захиалгыг үүсгэж чадсангүй.',
+  'checkout.placing': 'Захиалж байна…',
+  'checkout.place': 'Захиалах',
+  'checkout.demoNote':
+    'Энэ жишээнд төлбөр авахгүй — хянуулахаар хүлээгдэж буй захиалга үүснэ.',
+  'checkout.yourOrder': 'Таны захиалга',
+  'checkout.qty': 'Тоо {n}',
+  'checkout.total': 'Нийт',
+  'checkout.trust': 'Найдвартай төлбөр · Даатгалтай хүргэлт · 14 хоногийн буцаалт',
+  'checkout.emptyBag': 'Таны сагс хоосон байна.',
+
+  'status.pending': 'Хүлээгдэж буй',
+  'status.paid': 'Төлөгдсөн',
+  'status.shipped': 'Илгээгдсэн',
+  'status.delivered': 'Хүргэгдсэн',
+  'status.cancelled': 'Цуцлагдсан',
+  'status.refunded': 'Буцаан олгосон',
+
+  'account.eyebrow': 'Хаяг',
+  'orders.title': 'Таны захиалгууд',
+  'orders.none': 'Одоогоор захиалга алга.',
+  'orders.start': 'Дэлгүүр хэсэх',
+  'orders.order': 'Захиалга #{id}',
+  'orders.items': '{n} бараа',
+  'orders.loading': 'Ачаалж байна…',
+  'orderDetail.back': '← Таны захиалгууд',
+  'orderDetail.item': 'Бараа',
+  'orderDetail.qty': 'Тоо',
+  'orderDetail.price': 'Үнэ',
+  'orderDetail.total': 'Нийт',
+  'orderDetail.shippingAddress': 'Хүргэлтийн хаяг',
+  'orderDetail.placed': '{date}-нд захиалсан',
+  'orderDetail.cancel': 'Захиалга цуцлах',
+  'orderDetail.cancelling': 'Цуцалж байна…',
+  'orderDetail.history': 'Түүх',
+  'orderDetail.confirmCancel': 'Энэ захиалгыг цуцлах уу?',
+  'orderDetail.gone': 'Энэ захиалгыг ачаалж чадсангүй.',
+  'orderDetail.notFound': 'Энэ бараа боломжгүй болсон.',
+
+  'login.welcome': 'Тавтай морил',
+  'login.create': 'Бүртгэл үүсгэх',
+  'login.email': 'Имэйл',
+  'login.password': 'Нууц үг',
+  'login.signIn': 'Нэвтрэх',
+  'login.createBtn': 'Бүртгүүлэх',
+  'login.toRegister': 'Бүртгэлгүй юу? Бүртгүүлэх',
+  'login.toLogin': 'Бүртгэлтэй юу? Нэвтрэх',
+  'login.forgot': 'Нууц үгээ мартсан уу?',
+  'login.error': 'Алдаа гарлаа',
+  'login.fullName': 'Бүтэн нэр',
+
+  'profile.title': 'Профайл',
+  'profile.roleLine': '{email} · {role}',
+  'profile.name': 'Нэр',
+  'profile.save': 'Хадгалах',
+  'profile.saving': 'Хадгалж байна…',
+  'profile.changePw': 'Нууц үг солих',
+  'profile.currentPw': 'Одоогийн нууц үг',
+  'profile.newPw': 'Шинэ нууц үг (доод тал нь 8 тэмдэгт)',
+  'profile.pwNote': 'Нууц үг солиход бусад төхөөрөмжөөс гарна.',
+  'profile.sessions': 'Сешн',
+  'profile.logoutAll': 'Бүх төхөөрөмжөөс гарах',
+  'profile.pwChanged': 'Нууц үг солигдлоо',
+  'profile.saved': 'Хадгаллаа',
+  'profile.saveFail': 'Хадгалж чадсангүй',
+  'profile.pwFail': 'Нууц үг солиж чадсангүй',
+
+  'forbidden.title': 'Хандах эрхгүй',
+  'forbidden.body': 'Танд энэ хуудсыг үзэх эрх байхгүй.',
+  'forbidden.home': 'Нүүр хуудас руу',
+
+  'forgot.title': 'Нууц үг сэргээх',
+  'forgot.lead': 'Имэйлээ оруулбал шинэ нууц үг тохируулах холбоос илгээнэ.',
+  'forgot.send': 'Холбоос илгээх',
+  'forgot.sending': 'Илгээж байна…',
+  'forgot.sent': '{email} хаягтай бүртгэл байвал сэргээх холбоос очно. Холбоос 30 минут хүчинтэй.',
+  'forgot.back': 'Нэвтрэх рүү буцах',
+  'reset.title': 'Шинэ нууц үг тохируулах',
+  'reset.confirm': 'Шинэ нууц үг давтах',
+  'reset.submit': 'Нууц үг сэргээх',
+  'reset.done': 'Нууц үг шинэчлэгдлээ. Нэвтрэх хуудас руу шилжиж байна…',
+  'reset.mismatch': 'Нууц үг таарахгүй байна',
+  'reset.fail': 'Нууц үг сэргээж чадсангүй',
+  'reset.noToken': 'Энэ холбоост token алга байна.',
+  'reset.requestNew': 'Шинэ холбоос авах',
+
+  'footer.letter.eyebrow': 'Мэдээллийн захидал',
+  'footer.letter.title': 'Цуглуулгуудыг хамгийн түрүүнд.',
+  'footer.letter.placeholder': 'Имэйл хаяг',
+  'footer.letter.subscribe': 'Бүртгүүлэх',
+  'footer.letter.thanks': 'Баярлалаа — та жагсаалтад орлоо.',
+  'footer.col.shop': 'Дэлгүүр',
+  'footer.col.care': 'Үйлчлүүлэгчийн тусламж',
+  'footer.care.shipping': 'Хүргэлт ба буцаалт',
+  'footer.care.product': 'Барааны арчилгаа',
+  'footer.care.contact': 'Холбоо барих',
+  'footer.col.house': 'Бидний тухай',
+  'footer.house.story': 'Бидний түүх',
+  'footer.house.craft': 'Гар урлал',
+  'footer.house.sustain': 'Тогтвортой байдал',
+  'footer.col.account': 'Хаяг',
+  'footer.copyright': '© {year} Modern Monkey Maison. Бүх эрх хамгаалагдсан.',
+};
+
+export const dictionaries = { en, mn };
+
+export function translate(locale, key, vars) {
+  const table = dictionaries[locale] || en;
+  let str = table[key] ?? en[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      str = str.replaceAll(`{${k}}`, String(v));
+    }
+  }
+  return str;
+}
+
+// Translate a category by slug when we have a term for it; otherwise use the
+// name straight from the database (custom categories aren't translated).
+export function categoryLabel(locale, category) {
+  if (!category) return '';
+  const key = `nav.${category.slug}`;
+  const localized = translate(locale, key);
+  return localized === key ? category.name : localized;
+}
