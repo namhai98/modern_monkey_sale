@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
+import ImageFallback from '../components/ImageFallback';
 import { media, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
@@ -170,7 +171,7 @@ function CategoryChooser({ categories }) {
               to={`/shop?category=${c.slug}`}
               className="group relative block aspect-[3/4] md:aspect-auto md:h-[78vh] overflow-hidden"
             >
-              <img
+              <ImageFallback
                 src={resizeUnsplash(categoryImage(c.slug), 1200)}
                 alt={categoryLabel(locale, c)}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"

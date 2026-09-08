@@ -4,6 +4,7 @@ import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
 import { money } from '../lib/price';
 import Button from '../components/Button';
+import ImageFallback from '../components/ImageFallback';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total } = useCart();
@@ -25,13 +26,11 @@ export default function Cart() {
             {items.map((item) => (
               <div key={item.id} className="flex gap-6 py-6">
                 <div className="h-32 w-24 bg-ivory shrink-0 overflow-hidden">
-                  {item.image_url && (
-                    <img
-                      src={resizeUnsplash(item.image_url, 200)}
-                      alt={item.name}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
+                  <ImageFallback
+                    src={resizeUnsplash(item.image_url, 200)}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between">

@@ -4,6 +4,7 @@ import client from '../api/client';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import ImageFallback from './ImageFallback';
 
 export default function SearchOverlay() {
   const { searchOpen, closeSearch } = useUI();
@@ -84,9 +85,7 @@ export default function SearchOverlay() {
                   className="w-full flex items-center gap-4 py-3 text-left border-b border-line/60 group"
                 >
                   <div className="h-14 w-12 bg-ivory overflow-hidden shrink-0">
-                    {p.image_url && (
-                      <img src={resizeUnsplash(p.image_url, 120)} alt="" className="h-full w-full object-cover" />
-                    )}
+                    <ImageFallback src={resizeUnsplash(p.image_url, 120)} alt="" className="h-full w-full object-cover" />
                   </div>
                   <span className="flex-1 font-display text-lg group-hover:italic">{p.name}</span>
                   <span className="text-sm text-stone">${p.price.toFixed(2)}</span>

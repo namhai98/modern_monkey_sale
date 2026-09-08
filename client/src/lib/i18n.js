@@ -214,6 +214,12 @@ const en = {
   'forbidden.body': 'You don’t have permission to view this page.',
   'forbidden.home': 'Return home',
 
+  // not found
+  'notFound.title': 'This page has slipped away',
+  'notFound.body': 'The address you followed doesn’t lead anywhere. It may have been moved or mistyped.',
+  'notFound.home': 'Return home',
+  'notFound.shop': 'Browse the collection',
+
   // forgot / reset password
   'forgot.title': 'Reset password',
   'forgot.lead': 'Enter your email and we’ll send you a link to set a new password.',
@@ -443,6 +449,11 @@ const mn = {
   'forbidden.title': 'Хандах эрхгүй',
   'forbidden.body': 'Танд энэ хуудсыг үзэх эрх байхгүй.',
   'forbidden.home': 'Нүүр хуудас руу',
+
+  'notFound.title': 'Энэ хуудас олдсонгүй',
+  'notFound.body': 'Таны нээх гэсэн хаяг байхгүй байна. Устгагдсан эсвэл буруу бичсэн байж магадгүй.',
+  'notFound.home': 'Нүүр хуудас руу',
+  'notFound.shop': 'Цуглуулга үзэх',
 
   'forgot.title': 'Нууц үг сэргээх',
   'forgot.lead': 'Имэйлээ оруулбал шинэ нууц үг тохируулах холбоос илгээнэ.',

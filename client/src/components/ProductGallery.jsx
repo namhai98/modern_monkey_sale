@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import ImageFallback from './ImageFallback';
 
 // `images`: [{ id, thumbnail, card, detail, width, height }]
 export default function ProductGallery({ images = [], alt = '' }) {
@@ -72,14 +73,13 @@ export default function ProductGallery({ images = [], alt = '' }) {
               aria-label={alt}
               tabIndex={i === index ? 0 : -1}
             >
-              <img
+              <ImageFallback
                 src={main(p)}
                 alt={alt}
                 width={p.width || undefined}
                 height={p.height || undefined}
                 className="w-full h-full object-cover"
                 loading={i === 0 ? 'eager' : 'lazy'}
-                decoding="async"
               />
             </button>
           ))}
@@ -126,7 +126,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
               }`}
               aria-label={`View image ${i + 1}`}
             >
-              <img src={thumb(p)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <ImageFallback src={thumb(p)} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

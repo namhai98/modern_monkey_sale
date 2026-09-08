@@ -3,6 +3,7 @@ import { resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
 import { money, isDiscounted, discountPercent } from '../lib/price';
+import ImageFallback from './ImageFallback';
 
 export default function ProductCard({ product }) {
   const { t, locale } = useLocale();
@@ -17,34 +18,25 @@ export default function ProductCard({ product }) {
   return (
     <Link to={`/products/${product.id}`} className="group block">
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-ivory">
-        {cardSrc ? (
-          <>
-            <img
-              src={cardSrc}
-              alt={product.name}
-              loading="lazy"
-              decoding="async"
-              className={`h-full w-full object-cover transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                hoverSrc
-                  ? 'duration-700 group-hover:opacity-0'
-                  : 'duration-700 group-hover:scale-[1.03]'
-              }`}
-            />
-            {hoverSrc && (
-              <img
-                src={hoverSrc}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
-              />
-            )}
-          </>
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <span className="font-display text-3xl text-mist">MM</span>
-          </div>
+        <ImageFallback
+          src={cardSrc}
+          alt={product.name}
+          className={`h-full w-full object-cover transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            hoverSrc ? 'duration-700 group-hover:opacity-0' : 'duration-700 group-hover:scale-[1.03]'
+          }`}
+        />
+        {hoverSrc && (
+          <img
+            src={hoverSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
+          />
         )}
 
         <div className="absolute inset-x-0 bottom-0 flex justify-center pb-5 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">

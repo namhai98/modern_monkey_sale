@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import client from '../../api/client';
 import AdminNav from '../../components/AdminNav';
+import ImageFallback from '../../components/ImageFallback';
 
 const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
 const MAX_IMAGES = 5;
@@ -65,7 +66,7 @@ function ProductImageManager({ productId, images: initialImages }) {
           {images.map((im, i) => (
             <div key={im.id} className="w-24 text-[11px] text-gray-500">
               <div className="relative">
-                <img
+                <ImageFallback
                   src={im.thumbnail}
                   alt=""
                   className={`h-28 w-24 object-cover rounded border ${

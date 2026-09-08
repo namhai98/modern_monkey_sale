@@ -17,6 +17,7 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Profile from './pages/Profile';
 import Forbidden from './pages/Forbidden';
+import NotFound from './pages/NotFound';
 import AdminUsers from './pages/admin/Users';
 import AdminProducts from './pages/admin/Products';
 import AdminCategories from './pages/admin/Categories';
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="/admin/categories" element={<ProtectedRoute roles={MANAGER}><AdminCategories /></ProtectedRoute>} />
                 <Route path="/admin/discounts" element={<ProtectedRoute roles={MANAGER}><AdminDiscounts /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute roles={MANAGER}><AdminUsers /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>
             </UIProvider>

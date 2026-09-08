@@ -7,6 +7,7 @@ import client from '../api/client';
 import { resizeUnsplash } from '../lib/media';
 import { money } from '../lib/price';
 import Button from '../components/Button';
+import ImageFallback from '../components/ImageFallback';
 
 const field =
   'w-full bg-transparent border-b border-line py-3 text-sm placeholder:text-stone focus:outline-none focus:border-ink transition-colors';
@@ -99,9 +100,7 @@ export default function Checkout() {
           {items.map((i) => (
             <div key={i.id} className="flex gap-4">
               <div className="h-20 w-16 bg-ivory shrink-0 overflow-hidden">
-                {i.image_url && (
-                  <img src={resizeUnsplash(i.image_url, 150)} alt="" className="h-full w-full object-cover" />
-                )}
+                <ImageFallback src={resizeUnsplash(i.image_url, 150)} alt={i.name} className="h-full w-full object-cover" />
               </div>
               <div className="flex-1 text-sm">
                 <p className="font-display text-base">{i.name}</p>
