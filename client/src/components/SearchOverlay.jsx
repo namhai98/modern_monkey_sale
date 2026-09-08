@@ -43,6 +43,14 @@ export default function SearchOverlay() {
     navigate(`/products/${id}`);
   }
 
+  function seeAll(e) {
+    e?.preventDefault();
+    const term = q.trim();
+    if (!term) return;
+    closeSearch();
+    navigate(`/shop?q=${encodeURIComponent(term)}`);
+  }
+
   if (!searchOpen) return null;
 
   return (
@@ -54,13 +62,15 @@ export default function SearchOverlay() {
                 {t('nav.close')}
               </button>
             </div>
-            <input
-              ref={inputRef}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t('search.placeholder')}
-              className="w-full bg-transparent border-b border-line pb-4 font-display text-2xl md:text-4xl placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
-            />
+            <form onSubmit={seeAll}>
+              <input
+                ref={inputRef}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t('search.placeholder')}
+                className="w-full bg-transparent border-b border-line pb-4 font-display text-2xl md:text-4xl placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+              />
+            </form>
 
             <div className="mt-10 space-y-1">
               {loading && <p className="text-sm text-stone">{t('search.searching')}</p>}
@@ -82,6 +92,11 @@ export default function SearchOverlay() {
                   <span className="text-sm text-stone">${p.price.toFixed(2)}</span>
                 </button>
               ))}
+              {!loading && results.length > 0 && (
+                <button onClick={seeAll} className="mt-6 inline-block eyebrow link-underline">
+                  {t('shop.viewAll')}
+                </button>
+              )}
             </div>
       </div>
     </div>

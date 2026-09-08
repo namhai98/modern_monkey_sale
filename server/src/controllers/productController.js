@@ -71,7 +71,8 @@ export async function listProducts(req, res) {
 
     if (req.query.search) {
       params.push(`%${req.query.search}%`);
-      where.push(`(p.name ILIKE $${params.length} OR p.brand ILIKE $${params.length})`);
+      const s = `$${params.length}`;
+      where.push(`(p.name ILIKE ${s} OR p.brand ILIKE ${s} OR p.sku ILIKE ${s})`);
     }
     if (req.query.category) {
       const cat = String(req.query.category);
@@ -132,6 +133,11 @@ export async function listProductFacets(req, res) {
       const cat = String(req.query.category);
       params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
       where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
+    }
+    if (req.query.search) {
+      params.push(`%${req.query.search}%`);
+      const s = `$${params.length}`;
+      where.push(`(p.name ILIKE ${s} OR p.brand ILIKE ${s} OR p.sku ILIKE ${s})`);
     }
     const whereSql = `WHERE ${where.join(' AND ')}`;
     const base = `FROM products p LEFT JOIN categories c ON c.id = p.category_id ${whereSql}`;
