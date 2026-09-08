@@ -32,11 +32,85 @@ function Pill({ active, children, onClick }) {
   );
 }
 
-function PillGroup({ label, children }) {
+/* ── the filter rail body — shared by the desktop column and the mobile drawer ── */
+function FilterControls({ t, locale, categories, category, brand, gender, facets, patch }) {
+  const rowCls = (active) =>
+    `flex items-center gap-2.5 w-full text-left py-1 text-sm transition-colors ${
+      active ? 'text-ink' : 'text-stone hover:text-ink'
+    }`;
+  const dot = (on) => (
+    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${on ? 'bg-ink' : 'bg-line'}`} />
+  );
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="eyebrow text-stone mr-1">{label}</span>
-      {children}
+    <div className="space-y-8">
+      <div>
+        <p className="eyebrow text-stone mb-3">{t('shop.category')}</p>
+        <ul>
+          <li>
+            <button
+              onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
+              className={rowCls(category === '')}
+            >
+              {dot(category === '')}
+              {t('nav.all')}
+            </button>
+          </li>
+          {categories.map((c) => (
+            <li key={c.id}>
+              <button
+                onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
+                className={rowCls(c.slug === category)}
+              >
+                {dot(c.slug === category)}
+                {categoryLabel(locale, c)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {facets.genders.length > 0 && (
+        <div>
+          <p className="eyebrow text-stone mb-3">{t('filter.gender')}</p>
+          <div className="flex flex-wrap gap-2">
+            <Pill active={gender === ''} onClick={() => patch({ gender: '' })}>
+              {t('filter.all')}
+            </Pill>
+            {facets.genders.map((g) => (
+              <Pill key={g.value} active={gender === g.value} onClick={() => patch({ gender: g.value })}>
+                {t(`gender.${g.value}`)}
+              </Pill>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {facets.brands.length > 0 && (
+        <div>
+          <p className="eyebrow text-stone mb-3">{t('filter.brand')}</p>
+          <div className="flex flex-wrap gap-2">
+            <Pill active={brand === ''} onClick={() => patch({ brand: '' })}>
+              {t('filter.all')}
+            </Pill>
+            {facets.brands.map((b) => (
+              <Pill key={b.value} active={brand === b.value} onClick={() => patch({ brand: b.value })}>
+                {b.value}
+              </Pill>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(brand || gender) && (
+        <button
+          type="button"
+          onClick={() => patch({ brand: '', gender: '' })}
+          className="eyebrow text-stone hover:text-ink underline underline-offset-4"
+        >
+          {t('shop.clear')}
+        </button>
+      )}
     </div>
   );
 }
@@ -101,10 +175,11 @@ function CategoryChooser({ categories }) {
   );
 }
 
-/* ── Listing: grid + toolbar, all state lives in the URL ──────── */
+/* ── Listing: left filter rail + grid, all state lives in the URL ── */
 function Listing({ categories }) {
   const { t, locale } = useLocale();
   const [params, setParams] = useSearchParams();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const category = params.get('category') || '';
   const q = params.get('q') || '';
@@ -146,6 +221,21 @@ function Listing({ categories }) {
     const id = setTimeout(() => patch({ q: qDraft.trim() }), 300);
     return () => clearTimeout(id);
   }, [qDraft, q, patch]);
+
+  // lock body scroll + auto-close the mobile drawer once we reach desktop
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+  useEffect(() => {
+    if (!drawerOpen) return undefined;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => mq.matches && setDrawerOpen(false);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [drawerOpen]);
 
   const SORTS = useMemo(
     () => [
@@ -191,176 +281,155 @@ function Listing({ categories }) {
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
   const heading = activeCat ? categoryLabel(locale, activeCat) : q ? `“${q}”` : t('shop.collection');
-
-  const clearSearch = () => {
-    setQDraft('');
-    patch({ q: '' });
-  };
-  const clearAll = () => {
-    setQDraft('');
-    patch({ q: '', brand: '', gender: '' });
-  };
-  const hasActiveFilters = Boolean(q || brand || gender);
+  const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0);
+  const controlProps = { t, locale, categories, category, brand, gender, facets, patch };
 
   return (
-    <div className="bg-canvas">
-      {/* compact header */}
-      <div className="px-4 md:px-8 pt-8 md:pt-12 pb-5">
-        <h1 className="font-display text-2xl md:text-3xl leading-tight">{heading}</h1>
-        <p className="text-xs text-stone mt-1 tabular-nums">{t('shop.pieces', { n: total })}</p>
-      </div>
-
-      {/* toolbar — stays in view while the grid scrolls */}
-      <div className="sticky top-16 md:top-20 z-30 bg-canvas border-y border-line">
-        {/* categories + sort */}
-        <div className="px-4 md:px-8 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 py-0.5">
-            <Pill
-              active={category === ''}
-              onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
-            >
-              {t('nav.all')}
-            </Pill>
-            {categories.map((c) => (
-              <Pill
-                key={c.id}
-                active={c.slug === category}
-                onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
-              >
-                {categoryLabel(locale, c)}
-              </Pill>
-            ))}
+    <div className="bg-canvas px-4 md:px-8 py-8 md:py-12">
+      <div className="lg:grid lg:grid-cols-[13rem_1fr] xl:grid-cols-[15rem_1fr] lg:gap-10 xl:gap-14">
+        {/* desktop rail */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <FilterControls {...controlProps} />
           </div>
-          <select
-            value={sort}
-            onChange={(e) => patch({ sort: e.target.value === DEFAULT_SORT ? '' : e.target.value })}
-            className="shrink-0 border border-line bg-canvas px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] text-ink cursor-pointer focus:outline-none focus:border-ink"
-          >
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </div>
+        </aside>
 
-        {/* search + facets */}
-        <div className="px-4 md:px-8 py-3 border-t border-line flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-8">
-          <div className="relative w-full lg:w-72 shrink-0">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-              className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-stone"
-            >
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-              <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <input
-              value={qDraft}
-              onChange={(e) => setQDraft(e.target.value)}
-              placeholder={t('shop.search')}
-              aria-label={t('shop.search')}
-              className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
-            />
-            {qDraft && (
+        {/* content */}
+        <div className="min-w-0">
+          <div className="pb-5 border-b border-line mb-8">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h1 className="font-display text-2xl md:text-3xl leading-tight">{heading}</h1>
+                <p className="text-xs text-stone mt-1 tabular-nums">{t('shop.pieces', { n: total })}</p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(true)}
+                  className="lg:hidden inline-flex items-center gap-1.5 border border-line px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] hover:border-ink transition-colors"
+                >
+                  {t('shop.filters')}
+                  {activeCount > 0 && <span className="text-champagne">({activeCount})</span>}
+                </button>
+                <select
+                  value={sort}
+                  onChange={(e) => patch({ sort: e.target.value === DEFAULT_SORT ? '' : e.target.value })}
+                  className="border border-line bg-canvas px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] text-ink cursor-pointer focus:outline-none focus:border-ink"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="relative mt-4 w-full sm:max-w-sm">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-stone"
+              >
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
+                <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                value={qDraft}
+                onChange={(e) => setQDraft(e.target.value)}
+                placeholder={t('shop.search')}
+                aria-label={t('shop.search')}
+                className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+              />
+              {qDraft && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQDraft('');
+                    patch({ q: '' });
+                  }}
+                  aria-label={t('shop.clear')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-stone hover:text-ink text-lg leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] bg-ivory animate-pulse" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <p className="text-center text-stone py-20">
+              {q ? t('search.none', { q }) : t('shop.empty')}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
+              {products.map((p, i) => (
+                <Reveal key={p.id} delay={(i % 4) * 0.04}>
+                  <ProductCard product={p} />
+                </Reveal>
+              ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-8 mt-20 eyebrow">
               <button
-                type="button"
-                onClick={clearSearch}
-                aria-label={t('shop.clear')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-stone hover:text-ink text-lg leading-none"
+                onClick={() => patch({ page: page > 2 ? page - 1 : '' })}
+                disabled={page <= 1}
+                className="link-underline disabled:opacity-30 disabled:no-underline"
               >
-                ×
+                {t('shop.prev')}
               </button>
-            )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-x-8 gap-y-3 lg:flex-1">
-            {facets.genders.length > 0 && (
-              <PillGroup label={t('filter.gender')}>
-                <Pill active={gender === ''} onClick={() => patch({ gender: '' })}>
-                  {t('filter.all')}
-                </Pill>
-                {facets.genders.map((g) => (
-                  <Pill
-                    key={g.value}
-                    active={gender === g.value}
-                    onClick={() => patch({ gender: g.value })}
-                  >
-                    {t(`gender.${g.value}`)}
-                  </Pill>
-                ))}
-              </PillGroup>
-            )}
-            {facets.brands.length > 0 && (
-              <PillGroup label={t('filter.brand')}>
-                <Pill active={brand === ''} onClick={() => patch({ brand: '' })}>
-                  {t('filter.all')}
-                </Pill>
-                {facets.brands.map((b) => (
-                  <Pill
-                    key={b.value}
-                    active={brand === b.value}
-                    onClick={() => patch({ brand: b.value })}
-                  >
-                    {b.value}
-                  </Pill>
-                ))}
-              </PillGroup>
-            )}
-          </div>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="self-start lg:self-center eyebrow text-stone hover:text-ink underline underline-offset-4 whitespace-nowrap"
-            >
-              {t('shop.clear')}
-            </button>
+              <span className="text-stone">{page} / {totalPages}</span>
+              <button
+                onClick={() => patch({ page: page + 1 })}
+                disabled={page >= totalPages}
+                className="link-underline disabled:opacity-30"
+              >
+                {t('shop.next')}
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="px-4 md:px-8 py-16">
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-x-6 gap-y-12">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="aspect-[4/5] bg-ivory animate-pulse" />
-            ))}
+      {/* mobile drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-ink/30 animate-[fadeIn_0.2s_ease-out]"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-canvas flex flex-col shadow-[1px_0_0_0_var(--color-line)]">
+            <div className="flex items-center justify-between px-6 h-16 border-b border-line shrink-0">
+              <span className="eyebrow">{t('shop.filters')}</span>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="text-sm text-stone hover:text-ink"
+                aria-label={t('nav.close')}
+              >
+                {t('nav.close')}
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <FilterControls {...controlProps} />
+            </div>
+            <div className="p-4 border-t border-line shrink-0">
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="w-full bg-ink text-canvas h-11 eyebrow"
+              >
+                {t('shop.pieces', { n: total })}
+              </button>
+            </div>
           </div>
-        ) : products.length === 0 ? (
-          <p className="text-center text-stone py-20">
-            {q ? t('search.none', { q }) : t('shop.empty')}
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-x-6 gap-y-12">
-            {products.map((p, i) => (
-              <Reveal key={p.id} delay={(i % 5) * 0.04}>
-                <ProductCard product={p} />
-              </Reveal>
-            ))}
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-8 mt-20 eyebrow">
-            <button
-              onClick={() => patch({ page: page > 2 ? page - 1 : '' })}
-              disabled={page <= 1}
-              className="link-underline disabled:opacity-30 disabled:no-underline"
-            >
-              {t('shop.prev')}
-            </button>
-            <span className="text-stone">{page} / {totalPages}</span>
-            <button
-              onClick={() => patch({ page: page + 1 })}
-              disabled={page >= totalPages}
-              className="link-underline disabled:opacity-30"
-            >
-              {t('shop.next')}
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
