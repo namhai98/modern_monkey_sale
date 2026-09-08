@@ -2,13 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
-import { money } from '../lib/price';
+import { useMoney } from '../lib/price';
 import Button from '../components/Button';
 import ImageFallback from '../components/ImageFallback';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total } = useCart();
   const { t } = useLocale();
+  const money = useMoney();
   const navigate = useNavigate();
 
   return (

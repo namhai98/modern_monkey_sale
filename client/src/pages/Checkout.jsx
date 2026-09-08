@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import client from '../api/client';
 import { resizeUnsplash } from '../lib/media';
-import { money } from '../lib/price';
+import { useMoney } from '../lib/price';
 import Button from '../components/Button';
 import ImageFallback from '../components/ImageFallback';
 
@@ -16,6 +16,7 @@ export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const { t } = useLocale();
+  const money = useMoney();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', line1: '', city: '', postcode: '', country: '' });

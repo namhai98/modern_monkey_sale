@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
+import { useMoney } from '../lib/price';
 import Skeleton from '../components/Skeleton';
 
 export default function Orders() {
   const { t } = useLocale();
+  const money = useMoney();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +59,7 @@ export default function Orders() {
               </p>
             </div>
             <div className="text-right space-y-2">
-              <p className="text-stone">${Number(order.total).toFixed(2)}</p>
+              <p className="text-stone">{money(order.total)}</p>
               <OrderStatusBadge status={order.status} />
             </div>
           </Link>

@@ -10,7 +10,7 @@ import ProductCard from '../components/ProductCard';
 import ProductGallery from '../components/ProductGallery';
 import Button from '../components/Button';
 import { ProductDetailSkeleton } from '../components/Skeleton';
-import { money, isDiscounted, discountPercent } from '../lib/price';
+import { useMoney, isDiscounted, discountPercent } from '../lib/price';
 
 function Accordion({ title, body, open, onToggle }) {
   return (
@@ -39,6 +39,7 @@ function Accordion({ title, body, open, onToggle }) {
 export default function ProductDetail() {
   const { id } = useParams();
   const { t, locale } = useLocale();
+  const money = useMoney();
   const [product, setProduct] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [related, setRelated] = useState([]);

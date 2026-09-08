@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom';
 import { resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
-import { money, isDiscounted, discountPercent } from '../lib/price';
+import { useMoney, isDiscounted, discountPercent } from '../lib/price';
 import ImageFallback from './ImageFallback';
 
 export default function ProductCard({ product }) {
   const { t, locale } = useLocale();
+  const money = useMoney();
   const soldOut = product.stock <= 0;
   const onSale = isDiscounted(product);
 

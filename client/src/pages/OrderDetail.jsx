@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
-import { money } from '../lib/price';
+import { useMoney } from '../lib/price';
 
 export default function OrderDetail() {
   const { id } = useParams();
   const { t } = useLocale();
+  const money = useMoney();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);

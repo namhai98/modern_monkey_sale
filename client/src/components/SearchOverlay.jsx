@@ -4,11 +4,13 @@ import client from '../api/client';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import { useMoney } from '../lib/price';
 import ImageFallback from './ImageFallback';
 
 export default function SearchOverlay() {
   const { searchOpen, closeSearch } = useUI();
   const { t } = useLocale();
+  const money = useMoney();
   const [q, setQ] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -88,7 +90,7 @@ export default function SearchOverlay() {
                     <ImageFallback src={resizeUnsplash(p.image_url, 120)} alt="" className="h-full w-full object-cover" />
                   </div>
                   <span className="flex-1 font-display text-lg group-hover:italic">{p.name}</span>
-                  <span className="text-sm text-stone">${p.price.toFixed(2)}</span>
+                  <span className="text-sm text-stone">{money(p.final_price ?? p.price)}</span>
                 </button>
               ))}
               {!loading && results.length > 0 && (

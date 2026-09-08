@@ -11,6 +11,7 @@ export default function AdminNav() {
     { to: '/admin/categories', label: 'Categories', show: isManager },
     { to: '/admin/discounts', label: 'Discounts', show: isManager },
     { to: '/admin/users', label: 'Users', show: isManager },
+    { to: '/admin/settings', label: 'Settings', show: isManager },
   ].filter((t) => t.show);
 
   return (

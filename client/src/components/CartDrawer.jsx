@@ -3,7 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
-import { money } from '../lib/price';
+import { useMoney } from '../lib/price';
 import Button from './Button';
 import ImageFallback from './ImageFallback';
 
@@ -13,6 +13,7 @@ export default function CartDrawer() {
   const { cartOpen, closeCart } = useUI();
   const { items, updateQuantity, removeItem, total } = useCart();
   const { t } = useLocale();
+  const money = useMoney();
   const navigate = useNavigate();
 
   function go(path) {

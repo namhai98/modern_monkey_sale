@@ -153,6 +153,15 @@ CREATE TABLE IF NOT EXISTS discount_products (
 CREATE INDEX IF NOT EXISTS idx_discount_products_product ON discount_products (product_id);
 CREATE INDEX IF NOT EXISTS idx_discounts_active ON discounts (is_active, start_date, end_date);
 
+-- Key/value store for small admin-editable settings (see migration 009)
+CREATE TABLE IF NOT EXISTS settings (
+  key VARCHAR(64) PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+INSERT INTO settings (key, value) VALUES ('mnt_rate', '3450')
+ON CONFLICT (key) DO NOTHING;
+
 -- Sample seed data — a small luxury demo catalogue (bags, watches, apparel)
 INSERT INTO categories (name, slug) VALUES
   ('Bags', 'bags'),
