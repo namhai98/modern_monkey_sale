@@ -14,6 +14,33 @@ function categoryImage(slug) {
   return media.bands[slug] || media.editorialRight;
 }
 
+/* ── selectable pill ─────────────────────────────────────────── */
+function Pill({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`shrink-0 px-3.5 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] border transition-colors ${
+        active
+          ? 'bg-ink text-canvas border-ink'
+          : 'bg-transparent text-ink border-line hover:border-ink'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function PillGroup({ label, children }) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="eyebrow text-stone mr-1">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 /* ── "All" landing: pick a category, or search ────────────────── */
 function CategoryChooser({ categories }) {
   const { t, locale } = useLocale();
@@ -70,30 +97,6 @@ function CategoryChooser({ categories }) {
           </Reveal>
         ))}
       </div>
-    </div>
-  );
-}
-
-function FacetRow({ label, options, value, onPick, translate }) {
-  if (options.length === 0) return null;
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <span className="eyebrow text-stone">{label}</span>
-      <button
-        onClick={() => onPick('')}
-        className={`eyebrow ${value === '' ? 'text-ink' : 'text-stone hover:text-ink'}`}
-      >
-        {translate('filter.all')}
-      </button>
-      {options.map((o) => (
-        <button
-          key={o.value}
-          onClick={() => onPick(o.value)}
-          className={`eyebrow ${value === o.value ? 'text-ink' : 'text-stone hover:text-ink'}`}
-        >
-          {o.label}
-        </button>
-      ))}
     </div>
   );
 }
@@ -193,45 +196,45 @@ function Listing({ categories }) {
     setQDraft('');
     patch({ q: '' });
   };
-  const chips = [
-    q && { key: 'q', label: `“${q}”`, clear: clearSearch },
-    gender && { key: 'gender', label: t(`gender.${gender}`), clear: () => patch({ gender: '' }) },
-    brand && { key: 'brand', label: brand, clear: () => patch({ brand: '' }) },
-  ].filter(Boolean);
+  const clearAll = () => {
+    setQDraft('');
+    patch({ q: '', brand: '', gender: '' });
+  };
+  const hasActiveFilters = Boolean(q || brand || gender);
 
   return (
     <div className="bg-canvas">
-      <div className="px-4 md:px-8 pt-16 pb-8 text-center">
-        <p className="eyebrow text-stone">{t('shop.pieces', { n: total })}</p>
-        <h1 className="font-display text-4xl md:text-5xl mt-3">{heading}</h1>
+      {/* compact header */}
+      <div className="px-4 md:px-8 pt-8 md:pt-12 pb-5">
+        <h1 className="font-display text-2xl md:text-3xl leading-tight">{heading}</h1>
+        <p className="text-xs text-stone mt-1 tabular-nums">{t('shop.pieces', { n: total })}</p>
       </div>
 
-      <div className="border-y border-line">
+      {/* toolbar — stays in view while the grid scrolls */}
+      <div className="sticky top-16 md:top-20 z-30 bg-canvas border-y border-line">
         {/* categories + sort */}
-        <div className="px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-4 sm:gap-5 overflow-x-auto -mx-1 px-1">
-            <button
+        <div className="px-4 md:px-8 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 py-0.5">
+            <Pill
+              active={category === ''}
               onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
-              className={`eyebrow whitespace-nowrap ${category === '' ? 'text-ink' : 'text-stone hover:text-ink'}`}
             >
               {t('nav.all')}
-            </button>
+            </Pill>
             {categories.map((c) => (
-              <button
+              <Pill
                 key={c.id}
+                active={c.slug === category}
                 onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
-                className={`eyebrow whitespace-nowrap ${
-                  c.slug === category ? 'text-ink' : 'text-stone hover:text-ink'
-                }`}
               >
                 {categoryLabel(locale, c)}
-              </button>
+              </Pill>
             ))}
           </div>
           <select
             value={sort}
             onChange={(e) => patch({ sort: e.target.value === DEFAULT_SORT ? '' : e.target.value })}
-            className="bg-transparent eyebrow focus:outline-none cursor-pointer self-start sm:self-auto sm:text-right shrink-0"
+            className="shrink-0 border border-line bg-canvas px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] text-ink cursor-pointer focus:outline-none focus:border-ink"
           >
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -240,56 +243,81 @@ function Listing({ categories }) {
         </div>
 
         {/* search + facets */}
-        <div className="px-4 md:px-8 py-4 border-t border-line flex flex-col lg:flex-row lg:items-center gap-x-10 gap-y-4">
-          <input
-            value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
-            placeholder={t('shop.search')}
-            aria-label={t('shop.search')}
-            className="w-full lg:w-64 bg-transparent border-b border-line pb-2 text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
-          />
-          <FacetRow
-            label={t('filter.gender')}
-            options={facets.genders.map((g) => ({ value: g.value, label: t(`gender.${g.value}`) }))}
-            value={gender}
-            onPick={(v) => patch({ gender: v })}
-            translate={t}
-          />
-          <FacetRow
-            label={t('filter.brand')}
-            options={facets.brands.map((b) => ({ value: b.value, label: b.value }))}
-            value={brand}
-            onPick={(v) => patch({ brand: v })}
-            translate={t}
-          />
-        </div>
-
-        {/* active filters */}
-        {chips.length > 0 && (
-          <div className="px-4 md:px-8 py-3 border-t border-line flex items-center gap-2 flex-wrap text-xs">
-            {chips.map((c) => (
+        <div className="px-4 md:px-8 py-3 border-t border-line flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-8">
+          <div className="relative w-full lg:w-72 shrink-0">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-stone"
+            >
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              value={qDraft}
+              onChange={(e) => setQDraft(e.target.value)}
+              placeholder={t('shop.search')}
+              aria-label={t('shop.search')}
+              className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+            />
+            {qDraft && (
               <button
-                key={c.key}
-                onClick={c.clear}
-                className="inline-flex items-center gap-1.5 border border-line px-3 py-1 hover:border-ink transition-colors"
+                type="button"
+                onClick={clearSearch}
+                aria-label={t('shop.clear')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-stone hover:text-ink text-lg leading-none"
               >
-                {c.label}
-                <span aria-hidden="true">×</span>
-              </button>
-            ))}
-            {chips.length > 1 && (
-              <button
-                onClick={() => {
-                  setQDraft('');
-                  patch({ q: '', brand: '', gender: '' });
-                }}
-                className="eyebrow text-stone hover:text-ink ml-1"
-              >
-                {t('shop.clear')}
+                ×
               </button>
             )}
           </div>
-        )}
+
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-x-8 gap-y-3 lg:flex-1">
+            {facets.genders.length > 0 && (
+              <PillGroup label={t('filter.gender')}>
+                <Pill active={gender === ''} onClick={() => patch({ gender: '' })}>
+                  {t('filter.all')}
+                </Pill>
+                {facets.genders.map((g) => (
+                  <Pill
+                    key={g.value}
+                    active={gender === g.value}
+                    onClick={() => patch({ gender: g.value })}
+                  >
+                    {t(`gender.${g.value}`)}
+                  </Pill>
+                ))}
+              </PillGroup>
+            )}
+            {facets.brands.length > 0 && (
+              <PillGroup label={t('filter.brand')}>
+                <Pill active={brand === ''} onClick={() => patch({ brand: '' })}>
+                  {t('filter.all')}
+                </Pill>
+                {facets.brands.map((b) => (
+                  <Pill
+                    key={b.value}
+                    active={brand === b.value}
+                    onClick={() => patch({ brand: b.value })}
+                  >
+                    {b.value}
+                  </Pill>
+                ))}
+              </PillGroup>
+            )}
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="self-start lg:self-center eyebrow text-stone hover:text-ink underline underline-offset-4 whitespace-nowrap"
+            >
+              {t('shop.clear')}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="px-4 md:px-8 py-16">
