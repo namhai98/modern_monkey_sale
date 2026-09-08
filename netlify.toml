@@ -13,12 +13,10 @@
   NODE_VERSION = "22"
 
 # ── API proxy ────────────────────────────────────────────────────────────────
-# 1. Deploy the backend on Render (see render.yaml / DEPLOY.md).
-# 2. Replace the host below with your Render URL.
-# 3. Commit + push — Netlify redeploys automatically.
+# Points at the Render service (see render.yaml / DEPLOY.md).
 [[redirects]]
   from   = "/api/*"
-  to     = "https://REPLACE-WITH-RENDER-APP.onrender.com/api/:splat"
+  to     = "https://modern-monkey-sale-api.onrender.com/api/:splat"
   status = 200
   force  = true
 
