@@ -138,9 +138,9 @@ function CategoryBands() {
   }, []);
 
   const bands = [
-    { slug: 'bags', label: t('nav.bags'), img: homeMedia.bands.bags },
-    { slug: 'watches', label: t('nav.watches'), img: homeMedia.bands.watches },
-    { slug: 'apparel', label: t('nav.apparel'), img: homeMedia.bands.apparel },
+    { slug: 'bags', label: t('nav.bags'), img: homeMedia.bands.bags, grade: PHOTO },
+    { slug: 'watches', label: t('nav.watches'), img: homeMedia.bands.watches, grade: SOFT },
+    { slug: 'apparel', label: t('nav.apparel'), img: homeMedia.bands.apparel, grade: SOFT },
   ];
 
   return (
@@ -155,7 +155,7 @@ function CategoryBands() {
               <img
                 src={b.img}
                 alt=""
-                style={{ filter: SOFT }}
+                style={{ filter: b.grade }}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
               />
               {/* soft cream spotlight so the centred label stays legible */}

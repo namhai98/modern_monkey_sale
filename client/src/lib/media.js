@@ -21,7 +21,7 @@ export const homeMedia = {
   hero: '/home/hero.jpg', // model + bag, black / gold
   editorialLeft: U('1490114538077-0a7f8cb49891', 1400), // dark plaid + leather
   bands: {
-    bags: U('1445205170230-053b83016050', 2000),
+    bags: '/home/bag.jpg', // model + black bag, cream / gold
     watches: U('1469334031218-e382a71b716b', 2000),
     apparel: U('1495121605193-b116b5b9c5fe', 2000),
   },
