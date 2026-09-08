@@ -16,9 +16,9 @@ export default function ImageFallback({ src, alt = '', className = '', ...imgPro
       <div
         role="img"
         aria-label={alt || 'Image unavailable'}
-        className={`@container flex items-center justify-center bg-ivory text-mist select-none ${className}`}
+        className={`@container flex items-center justify-center bg-ivory text-stone/45 select-none ${className}`}
       >
-        <span className="font-display leading-none tracking-wide text-[clamp(0.8rem,20cqw,3rem)]">
+        <span className="font-display leading-none tracking-[0.12em] text-[clamp(0.8rem,20cqw,3rem)]">
           MM
         </span>
       </div>
