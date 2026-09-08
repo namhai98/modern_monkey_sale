@@ -20,6 +20,17 @@
   status = 200
   force  = true
 
+# ── Uploaded product images ──────────────────────────────────────────────────
+# The API stores optimised WebP variants and returns "/media/..." URLs. Proxy
+# them to the backend so they resolve on the Netlify origin. (For a CDN / S3
+# setup, set STORAGE_PUBLIC_URL on the backend to an absolute URL and this
+# rule becomes a no-op.)
+[[redirects]]
+  from   = "/media/*"
+  to     = "https://modern-monkey-sale-api.onrender.com/media/:splat"
+  status = 200
+  force  = true
+
 # ── SPA fallback ─────────────────────────────────────────────────────────────
 # Every other path serves the app shell so React Router can handle deep links.
 [[redirects]]

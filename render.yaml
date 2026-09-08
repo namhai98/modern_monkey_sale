@@ -41,6 +41,14 @@ services:
       - key: APP_URL
         sync: false
 
+      # Absolute public base for uploaded product images. Set to this service's
+      # own URL + /media so image URLs are absolute (no Netlify proxy hop):
+      #   https://modern-monkey-sale-api.onrender.com/media
+      # NOTE: the free plan's disk is ephemeral — uploads are lost on restart.
+      # For persistence use STORAGE_PROVIDER=s3 with an R2/S3 bucket instead.
+      - key: STORAGE_PUBLIC_URL
+        sync: false
+
       # Optional: SMTP for password-reset email. If unset, reset links are
       # written to the Render logs instead.
       # - key: SMTP_HOST
