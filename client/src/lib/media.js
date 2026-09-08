@@ -18,14 +18,14 @@ export const media = {
 // Home page only — a separate, warmer set for the brown / orange / yellow / black
 // art direction. The rest of the site keeps `media` above.
 export const homeMedia = {
-  hero: U('1441984904996-e0b6ba687e04', 2000),
-  editorialLeft: U('1487222477894-8943e31ef7b2', 1400),
+  hero: U('1487222477894-8943e31ef7b2', 2000), // brown leather, moody portrait
+  editorialLeft: U('1490114538077-0a7f8cb49891', 1400), // dark plaid + leather
   bands: {
-    bags: U('1590874103328-eac38a683ce7', 2000),
-    watches: U('1495856458515-0637185db551', 2000),
-    apparel: U('1516762689617-e1cffcef479d', 2000),
+    bags: U('1445205170230-053b83016050', 2000), // warm-lit boutique rail
+    watches: U('1469334031218-e382a71b716b', 2000), // yellow wall editorial
+    apparel: U('1495121605193-b116b5b9c5fe', 2000), // denim + amber drape
   },
-  atelier: U('1553062407-98eeb64c6a62', 1600),
+  atelier: U('1517502884422-41eaead166d4', 1600), // golden-hour interior
 };
 
 export function resizeUnsplash(url, w) {
