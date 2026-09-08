@@ -1,0 +1,30 @@
+# Netlify — Modern Monkey storefront (Vite SPA in client/).
+#
+# The API and PostgreSQL run elsewhere (Render + Neon). Netlify proxies
+# /api/* to the Render service so the browser only ever talks to the Netlify
+# origin: no CORS, and the httpOnly refresh-token cookie stays first-party.
+
+[build]
+  base    = "client"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# ── API proxy ────────────────────────────────────────────────────────────────
+# 1. Deploy the backend on Render (see render.yaml / DEPLOY.md).
+# 2. Replace the host below with your Render URL.
+# 3. Commit + push — Netlify redeploys automatically.
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://REPLACE-WITH-RENDER-APP.onrender.com/api/:splat"
+  status = 200
+  force  = true
+
+# ── SPA fallback ─────────────────────────────────────────────────────────────
+# Every other path serves the app shell so React Router can handle deep links.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
