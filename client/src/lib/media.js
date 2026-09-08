@@ -15,17 +15,17 @@ export const media = {
   atelier: U('1556905055-8f358a7a47b2', 1600),
 };
 
-// Home page only — a separate, warmer set for the brown / orange / yellow / black
-// art direction. The rest of the site keeps `media` above.
+// Home page only — black + yellow art direction. Local campaign shots live in
+// client/public/home/ ; the rest of the site keeps `media` above.
 export const homeMedia = {
-  hero: U('1487222477894-8943e31ef7b2', 2000), // brown leather, moody portrait
+  hero: '/home/hero.jpg', // model + bag, black / gold
   editorialLeft: U('1490114538077-0a7f8cb49891', 1400), // dark plaid + leather
   bands: {
-    bags: U('1445205170230-053b83016050', 2000), // warm-lit boutique rail
-    watches: U('1469334031218-e382a71b716b', 2000), // yellow wall editorial
-    apparel: U('1495121605193-b116b5b9c5fe', 2000), // denim + amber drape
+    bags: U('1445205170230-053b83016050', 2000),
+    watches: U('1469334031218-e382a71b716b', 2000),
+    apparel: U('1495121605193-b116b5b9c5fe', 2000),
   },
-  atelier: U('1517502884422-41eaead166d4', 1600), // golden-hour interior
+  atelier: '/home/banner.jpg', // wide product still-life
 };
 
 export function resizeUnsplash(url, w) {

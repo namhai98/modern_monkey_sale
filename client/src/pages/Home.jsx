@@ -7,62 +7,60 @@ import { homeMedia, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 
 /* ────────────────────────────────────────────────────────────────
-   Home-only art direction: modern / edgy, black + yellow.
-   Scoped entirely to this file — every other screen keeps the
-   ivory / ink theme.
+   Home-only art direction: light cream luxury editorial —
+   warm ivory grounds, near-black serif type, a single gold accent.
+   Scoped entirely to this file.
    ──────────────────────────────────────────────────────────────── */
-const INK = '#0e0e0c'; // near-black
-const PAPER = '#f5f4ee'; // light neutral (product strips, light text)
-const YELLOW = '#f5c518';
+const PAPER = '#f3eee2'; // warm cream ground
+const STRIP = '#f9f6ee'; // slightly lighter — product rows
+const INK = '#1b1712'; // near-black
+const GOLD = '#c19a3f';
+const DIM = 'rgba(27,23,18,.68)'; // secondary text
 
-// near-monochrome photo grade so the yellow accents carry the colour
-const MONO = 'grayscale(.9) contrast(1.12) brightness(.82)';
-const GRAIN =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E\")";
+// campaign shots keep their colour; stock band imagery is softened + lifted so
+// it sits inside the cream world
+const PHOTO = 'contrast(1.04) saturate(1.03)';
+const SOFT = 'grayscale(.32) contrast(1.03) brightness(1.04)';
 
 function Hero() {
   const { t } = useLocale();
   return (
     <section
       className="relative h-[100svh] min-h-[560px] w-full overflow-hidden"
-      style={{ background: INK, color: PAPER }}
+      style={{ background: PAPER, color: INK }}
     >
       <img
         src={homeMedia.hero}
         alt=""
-        style={{ filter: MONO }}
-        className="absolute inset-0 h-full w-full object-cover opacity-50 motion-safe:animate-[fadeIn_1.6s_ease-out]"
+        style={{ filter: PHOTO }}
+        className="absolute inset-0 h-full w-full object-cover motion-safe:animate-[fadeIn_1.6s_ease-out]"
       />
+      {/* cream veil on the left for the copy */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(120% 90% at 80% 10%, rgba(245,197,24,.30), transparent 55%),' +
-            'linear-gradient(180deg, rgba(14,14,12,.45), rgba(14,14,12,.88))',
+            'linear-gradient(90deg, rgba(243,238,226,.95) 0%, rgba(243,238,226,.55) 40%, rgba(243,238,226,0) 66%)',
         }}
       />
-      <div
-        className="absolute inset-0 mix-blend-overlay opacity-[0.16]"
-        style={{ backgroundImage: GRAIN }}
-      />
 
-      <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
-        <p className="eyebrow fade-up" style={{ color: YELLOW, animationDelay: '0.3s' }}>
+      <div className="relative h-full max-w-6xl mx-auto px-6 flex flex-col justify-center items-start text-left">
+        <p className="eyebrow fade-up" style={{ color: GOLD, animationDelay: '0.3s' }}>
           {t('home.hero.eyebrow')}
         </p>
         <h1
-          className="font-display text-5xl md:text-7xl lg:text-8xl mt-4 max-w-4xl leading-[1.02] fade-up"
+          className="font-display text-5xl md:text-7xl lg:text-8xl mt-4 max-w-2xl leading-[1.02] fade-up"
           style={{ animationDelay: '0.45s' }}
         >
           {t('home.hero.title')}
         </h1>
         <span
           className="mt-6 block h-px w-16 fade-up"
-          style={{ background: YELLOW, animationDelay: '0.6s' }}
+          style={{ background: GOLD, animationDelay: '0.6s' }}
         />
         <p
           className="mt-6 max-w-sm text-sm fade-up"
-          style={{ color: 'rgba(245,244,238,.72)', animationDelay: '0.72s' }}
+          style={{ color: DIM, animationDelay: '0.72s' }}
         >
           {t('home.hero.support')}
         </p>
@@ -70,9 +68,15 @@ function Hero() {
           <Link
             to="/shop"
             className="mt-10 inline-flex h-12 items-center justify-center px-10 eyebrow transition-colors"
-            style={{ background: YELLOW, color: INK }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#ffdd3d')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = YELLOW)}
+            style={{ background: GOLD, color: '#fff' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = INK;
+              e.currentTarget.style.color = PAPER;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = GOLD;
+              e.currentTarget.style.color = '#fff';
+            }}
           >
             {t('home.hero.cta')}
           </Link>
@@ -85,34 +89,28 @@ function Hero() {
 function Editorial() {
   const { t } = useLocale();
   return (
-    <section style={{ background: INK, color: PAPER }}>
+    <section style={{ background: PAPER, color: INK }}>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 md:gap-16 items-center">
         <Reveal>
-          <div className="relative">
-            <img
-              src={homeMedia.editorialLeft}
-              alt=""
-              style={{ filter: MONO }}
-              className="w-full aspect-[4/5] object-cover"
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(200deg, rgba(245,197,24,.14), rgba(14,14,12,.55))' }}
-            />
-          </div>
+          <img
+            src={homeMedia.editorialLeft}
+            alt=""
+            style={{ filter: SOFT }}
+            className="w-full aspect-[4/5] object-cover"
+          />
         </Reveal>
         <Reveal delay={0.1} className="md:pl-10">
-          <p className="eyebrow" style={{ color: YELLOW }}>{t('home.house.eyebrow')}</p>
+          <p className="eyebrow" style={{ color: GOLD }}>{t('home.house.eyebrow')}</p>
           <h2 className="font-display text-4xl md:text-5xl mt-4 mb-6 leading-tight">
             {t('home.house.title')}
           </h2>
-          <p className="leading-relaxed max-w-md" style={{ color: 'rgba(245,244,238,.68)' }}>
+          <p className="leading-relaxed max-w-md" style={{ color: DIM }}>
             {t('home.house.body')}
           </p>
           <Link
             to="/shop"
-            className="inline-block mt-8 eyebrow link-underline transition-colors"
-            style={{ color: YELLOW }}
+            className="inline-block mt-8 eyebrow link-underline"
+            style={{ color: GOLD }}
           >
             {t('home.house.cta')}
           </Link>
@@ -146,41 +144,40 @@ function CategoryBands() {
   ];
 
   return (
-    <section style={{ background: INK }}>
+    <section style={{ background: PAPER }}>
       {bands.map((b, i) => (
         <div key={b.slug}>
           <Reveal as="div">
             <Link
               to={`/shop?category=${b.slug}`}
-              className="group relative block h-[60vh] min-h-[380px] md:h-[72vh] w-full overflow-hidden"
+              className="group relative block h-[56vh] min-h-[360px] md:h-[68vh] w-full overflow-hidden"
             >
               <img
                 src={b.img}
                 alt=""
-                style={{ filter: MONO }}
+                style={{ filter: SOFT }}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
               />
+              {/* soft cream spotlight so the centred label stays legible */}
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    i % 2
-                      ? 'linear-gradient(90deg, rgba(14,14,12,.86), rgba(14,14,12,.25) 55%, rgba(245,197,24,.14))'
-                      : 'linear-gradient(90deg, rgba(245,197,24,.16), rgba(14,14,12,.3) 45%, rgba(14,14,12,.86))',
+                    'radial-gradient(closest-side at 50% 52%, rgba(243,238,226,.9), rgba(243,238,226,.25) 78%, rgba(243,238,226,.05))',
                 }}
               />
               <div
                 className="relative h-full flex flex-col items-center justify-center"
-                style={{ color: PAPER }}
+                style={{ color: INK }}
               >
                 <p
                   className="font-display text-7xl md:text-8xl"
-                  style={{ color: 'transparent', WebkitTextStroke: `1px ${YELLOW}` }}
+                  style={{ color: 'transparent', WebkitTextStroke: `1px ${GOLD}` }}
                 >
                   {`0${i + 1}`}
                 </p>
                 <h3 className="font-display text-5xl md:text-6xl mt-1">{b.label}</h3>
-                <span className="mt-6 eyebrow link-underline" style={{ color: YELLOW }}>
+                <span className="mt-6 eyebrow link-underline" style={{ color: GOLD }}>
                   {t('home.band.shop', { cat: b.label })}
                 </span>
               </div>
@@ -188,14 +185,14 @@ function CategoryBands() {
           </Reveal>
 
           {byCat[b.slug]?.length > 0 && (
-            <div style={{ background: PAPER }}>
+            <div style={{ background: STRIP }}>
               <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
                 <div className="flex items-baseline justify-between mb-8 md:mb-10">
-                  <p className="eyebrow" style={{ color: '#111' }}>{b.label}</p>
+                  <p className="eyebrow" style={{ color: GOLD }}>{b.label}</p>
                   <Link
                     to={`/shop?category=${b.slug}`}
                     className="eyebrow link-underline"
-                    style={{ color: '#111' }}
+                    style={{ color: INK }}
                   >
                     {t('shop.explore')}
                   </Link>
@@ -231,7 +228,7 @@ function Featured() {
     <section style={{ background: PAPER }}>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
         <Reveal className="text-center mb-12 md:mb-16">
-          <p className="eyebrow" style={{ color: '#111' }}>{t('home.featured.eyebrow')}</p>
+          <p className="eyebrow" style={{ color: GOLD }}>{t('home.featured.eyebrow')}</p>
           <h2 className="font-display text-4xl md:text-5xl mt-3" style={{ color: INK }}>
             {t('home.featured.title')}
           </h2>
@@ -251,28 +248,30 @@ function Featured() {
 function Atelier() {
   const { t } = useLocale();
   return (
-    <section className="relative" style={{ background: INK, color: PAPER }}>
+    <section className="relative" style={{ background: PAPER, color: INK }}>
       <img
         src={resizeUnsplash(homeMedia.atelier, 2000)}
         alt=""
-        style={{ filter: MONO }}
-        className="h-[65vh] md:h-[82vh] w-full object-cover opacity-65"
+        style={{ filter: PHOTO }}
+        className="h-[56vh] md:h-[72vh] w-full object-cover"
       />
       <div
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(180deg, rgba(14,14,12,.55), rgba(14,14,12,.32) 40%, rgba(245,197,24,.20))',
+            'linear-gradient(90deg, rgba(243,238,226,.94) 0%, rgba(243,238,226,.5) 42%, rgba(243,238,226,0) 66%)',
         }}
       />
-      <Reveal className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-        <p className="eyebrow" style={{ color: YELLOW }}>{t('home.atelier.eyebrow')}</p>
-        <h2 className="font-display text-4xl md:text-6xl mt-4 max-w-3xl leading-tight">
-          {t('home.atelier.title')}
-        </h2>
-        <p className="mt-6 max-w-lg leading-relaxed" style={{ color: 'rgba(245,244,238,.72)' }}>
-          {t('home.atelier.body')}
-        </p>
+      <Reveal className="absolute inset-0">
+        <div className="h-full max-w-6xl mx-auto px-6 flex flex-col justify-center items-start text-left">
+          <p className="eyebrow" style={{ color: GOLD }}>{t('home.atelier.eyebrow')}</p>
+          <h2 className="font-display text-4xl md:text-6xl mt-4 max-w-xl leading-tight">
+            {t('home.atelier.title')}
+          </h2>
+          <p className="mt-6 max-w-md leading-relaxed" style={{ color: DIM }}>
+            {t('home.atelier.body')}
+          </p>
+        </div>
       </Reveal>
     </section>
   );
@@ -280,7 +279,7 @@ function Atelier() {
 
 export default function Home() {
   return (
-    <div style={{ background: INK }}>
+    <div style={{ background: PAPER }}>
       <Hero />
       <Editorial />
       <CategoryBands />

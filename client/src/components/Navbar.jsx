@@ -114,7 +114,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 inset-x-0 z-40 transition-colors duration-500 ${
-        light ? 'text-canvas' : 'text-ink bg-canvas border-b border-line'
+        light ? 'text-ink' : 'text-ink bg-canvas border-b border-line'
       }`}
     >
       <nav className="h-16 md:h-20 px-4 sm:px-6 md:px-10 flex items-center justify-between gap-3">
