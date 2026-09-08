@@ -124,53 +124,95 @@ function Editorial() {
   );
 }
 
+const BAND_SLUGS = ['bags', 'watches', 'apparel'];
+
 function CategoryBands() {
   const { t } = useLocale();
+  const [byCat, setByCat] = useState({});
+
+  useEffect(() => {
+    Promise.all(
+      BAND_SLUGS.map((slug) =>
+        client
+          .get('/products', { params: { category: slug, limit: 3 } })
+          .then((res) => [slug, res.data.items])
+          .catch(() => [slug, []])
+      )
+    ).then((pairs) => setByCat(Object.fromEntries(pairs)));
+  }, []);
+
   const bands = [
     { slug: 'bags', label: t('nav.bags'), img: homeMedia.bands.bags },
     { slug: 'watches', label: t('nav.watches'), img: homeMedia.bands.watches },
     { slug: 'apparel', label: t('nav.apparel'), img: homeMedia.bands.apparel },
   ];
+
   return (
     <section style={{ background: INK }}>
       {bands.map((b, i) => (
-        <Reveal key={b.slug} as="div">
-          <Link
-            to={`/shop?category=${b.slug}`}
-            className="group relative block h-[60vh] min-h-[380px] md:h-[72vh] w-full overflow-hidden"
-          >
-            <img
-              src={b.img}
-              alt=""
-              style={{ filter: WARM }}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  i % 2
-                    ? 'linear-gradient(90deg, rgba(20,11,2,.82), rgba(74,44,20,.25) 55%, rgba(224,98,31,.16))'
-                    : 'linear-gradient(90deg, rgba(224,98,31,.18), rgba(74,44,20,.28) 45%, rgba(20,11,2,.82))',
-              }}
-            />
-            <div
-              className="relative h-full flex flex-col items-center justify-center"
-              style={{ color: CREAM }}
+        <div key={b.slug}>
+          <Reveal as="div">
+            <Link
+              to={`/shop?category=${b.slug}`}
+              className="group relative block h-[60vh] min-h-[380px] md:h-[72vh] w-full overflow-hidden"
             >
-              <p
-                className="font-display text-7xl md:text-8xl"
-                style={{ color: 'transparent', WebkitTextStroke: `1px rgba(245,197,24,.55)` }}
+              <img
+                src={b.img}
+                alt=""
+                style={{ filter: WARM }}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    i % 2
+                      ? 'linear-gradient(90deg, rgba(20,11,2,.82), rgba(74,44,20,.25) 55%, rgba(224,98,31,.16))'
+                      : 'linear-gradient(90deg, rgba(224,98,31,.18), rgba(74,44,20,.28) 45%, rgba(20,11,2,.82))',
+                }}
+              />
+              <div
+                className="relative h-full flex flex-col items-center justify-center"
+                style={{ color: CREAM }}
               >
-                {`0${i + 1}`}
-              </p>
-              <h3 className="font-display text-5xl md:text-6xl mt-1">{b.label}</h3>
-              <span className="mt-6 eyebrow link-underline" style={{ color: YELLOW }}>
-                {t('home.band.shop', { cat: b.label })}
-              </span>
+                <p
+                  className="font-display text-7xl md:text-8xl"
+                  style={{ color: 'transparent', WebkitTextStroke: `1px rgba(245,197,24,.55)` }}
+                >
+                  {`0${i + 1}`}
+                </p>
+                <h3 className="font-display text-5xl md:text-6xl mt-1">{b.label}</h3>
+                <span className="mt-6 eyebrow link-underline" style={{ color: YELLOW }}>
+                  {t('home.band.shop', { cat: b.label })}
+                </span>
+              </div>
+            </Link>
+          </Reveal>
+
+          {byCat[b.slug]?.length > 0 && (
+            <div style={{ background: '#f6ece0' }}>
+              <div className="max-w-6xl mx-auto px-6 py-14 md:py-20">
+                <div className="flex items-baseline justify-between mb-8 md:mb-10">
+                  <p className="eyebrow" style={{ color: '#b5541c' }}>{b.label}</p>
+                  <Link
+                    to={`/shop?category=${b.slug}`}
+                    className="eyebrow link-underline"
+                    style={{ color: '#b5541c' }}
+                  >
+                    {t('shop.explore')}
+                  </Link>
+                </div>
+                <div className="grid grid-cols-3 gap-x-4 md:gap-x-6 gap-y-10">
+                  {byCat[b.slug].map((p, j) => (
+                    <Reveal key={p.id} delay={j * 0.06}>
+                      <ProductCard product={p} />
+                    </Reveal>
+                  ))}
+                </div>
+              </div>
             </div>
-          </Link>
-        </Reveal>
+          )}
+        </div>
       ))}
     </section>
   );
