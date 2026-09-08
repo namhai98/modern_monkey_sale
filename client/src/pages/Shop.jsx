@@ -33,7 +33,7 @@ function Pill({ active, children, onClick }) {
 }
 
 /* ── the filter rail body — shared by the desktop column and the mobile drawer ── */
-function FilterControls({ t, locale, categories, category, brand, gender, facets, patch }) {
+function FilterControls({ t, locale, categories, category, brand, gender, sale, facets, patch }) {
   const rowCls = (active) =>
     `flex items-center gap-2.5 w-full text-left py-1 text-sm transition-colors ${
       active ? 'text-ink' : 'text-stone hover:text-ink'
@@ -44,6 +44,16 @@ function FilterControls({ t, locale, categories, category, brand, gender, facets
 
   return (
     <div className="space-y-8">
+      <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={sale}
+          onChange={(e) => patch({ sale: e.target.checked ? '1' : '' })}
+          className="accent-ink"
+        />
+        <span className={sale ? 'text-ink' : 'text-stone'}>{t('filter.onSale')}</span>
+      </label>
+
       <div>
         <p className="eyebrow text-stone mb-3">{t('shop.category')}</p>
         <ul>
@@ -102,10 +112,10 @@ function FilterControls({ t, locale, categories, category, brand, gender, facets
         </div>
       )}
 
-      {(brand || gender) && (
+      {(brand || gender || sale) && (
         <button
           type="button"
-          onClick={() => patch({ brand: '', gender: '' })}
+          onClick={() => patch({ brand: '', gender: '', sale: '' })}
           className="eyebrow text-stone hover:text-ink underline underline-offset-4"
         >
           {t('shop.clear')}
@@ -143,9 +153,14 @@ function CategoryChooser({ categories }) {
             className="w-full bg-transparent border-b border-line pb-2 text-center text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
           />
         </form>
-        <Link to="/shop?all=1" className="inline-block mt-5 eyebrow link-underline">
-          {t('shop.everything')}
-        </Link>
+        <div className="mt-5 flex items-center justify-center gap-6">
+          <Link to="/shop?all=1" className="eyebrow link-underline">
+            {t('shop.everything')}
+          </Link>
+          <Link to="/shop?sale=1" className="eyebrow link-underline text-champagne">
+            {t('nav.sale')}
+          </Link>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3">
@@ -185,6 +200,7 @@ function Listing({ categories }) {
   const q = params.get('q') || '';
   const brand = params.get('brand') || '';
   const gender = params.get('gender') || '';
+  const sale = params.get('sale') === '1';
   const sort = params.get('sort') || DEFAULT_SORT;
   const page = Math.max(1, parseInt(params.get('page') || '1', 10));
 
@@ -250,11 +266,15 @@ function Listing({ categories }) {
   useEffect(() => {
     client
       .get('/products/facets', {
-        params: { ...(category ? { category } : {}), ...(q ? { search: q } : {}) },
+        params: {
+          ...(category ? { category } : {}),
+          ...(q ? { search: q } : {}),
+          ...(sale ? { on_sale: 1 } : {}),
+        },
       })
       .then((res) => setFacets(res.data))
       .catch(() => setFacets({ brands: [], genders: [] }));
-  }, [category, q]);
+  }, [category, q, sale]);
 
   useEffect(() => {
     const [field, order] = sort.split(':');
@@ -266,6 +286,7 @@ function Listing({ categories }) {
           ...(q ? { search: q } : {}),
           ...(brand ? { brand } : {}),
           ...(gender ? { gender } : {}),
+          ...(sale ? { on_sale: 1 } : {}),
           sort: field,
           order,
           page,
@@ -277,12 +298,18 @@ function Listing({ categories }) {
         setTotal(res.data.total);
       })
       .finally(() => setLoading(false));
-  }, [category, q, brand, gender, sort, page]);
+  }, [category, q, brand, gender, sale, sort, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-  const heading = activeCat ? categoryLabel(locale, activeCat) : q ? `“${q}”` : t('shop.collection');
-  const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0);
-  const controlProps = { t, locale, categories, category, brand, gender, facets, patch };
+  const heading = activeCat
+    ? categoryLabel(locale, activeCat)
+    : q
+    ? `“${q}”`
+    : sale && !category
+    ? t('nav.sale')
+    : t('shop.collection');
+  const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0);
+  const controlProps = { t, locale, categories, category, brand, gender, sale, facets, patch };
 
   return (
     <div className="bg-canvas px-4 md:px-8 py-8 md:py-12">
@@ -439,12 +466,13 @@ export default function Shop() {
   const category = params.get('category') || '';
   const q = params.get('q') || '';
   const all = params.get('all') === '1';
+  const sale = params.get('sale') === '1';
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     client.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
   }, []);
 
-  if (!category && !q && !all) return <CategoryChooser categories={categories} />;
+  if (!category && !q && !all && !sale) return <CategoryChooser categories={categories} />;
   return <Listing categories={categories} />;
 }

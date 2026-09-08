@@ -135,6 +135,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link to="/shop" className="eyebrow link-underline">{t('nav.all')}</Link>
+            <Link to="/shop?sale=1" className="eyebrow link-underline text-champagne">{t('nav.sale')}</Link>
           </div>
         </div>
 
@@ -173,6 +174,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link to="/shop" className="font-display text-3xl">{t('nav.all')}</Link>
+            <Link to="/shop?sale=1" className="font-display text-3xl text-champagne">{t('nav.sale')}</Link>
             <button
               onClick={() => { setMenuOpen(false); openSearch(); }}
               className="font-display text-3xl text-left"

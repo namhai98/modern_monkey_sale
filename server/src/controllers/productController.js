@@ -111,6 +111,15 @@ export async function listProducts(req, res) {
       params.push(String(req.query.gender));
       where.push(`p.gender = $${params.length}`);
     }
+    if (req.query.on_sale === '1') {
+      where.push(`EXISTS (
+        SELECT 1 FROM discount_products dps
+        JOIN discounts ds ON ds.id = dps.discount_id
+        WHERE dps.product_id = p.id
+          AND ds.is_active = TRUE
+          AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
+      )`);
+    }
     if (req.query.low_stock === '1') {
       where.push('p.stock <= p.low_stock_threshold');
     }
@@ -162,6 +171,15 @@ export async function listProductFacets(req, res) {
       params.push(`%${req.query.search}%`);
       const s = `$${params.length}`;
       where.push(`(p.name ILIKE ${s} OR p.brand ILIKE ${s} OR p.sku ILIKE ${s})`);
+    }
+    if (req.query.on_sale === '1') {
+      where.push(`EXISTS (
+        SELECT 1 FROM discount_products dps
+        JOIN discounts ds ON ds.id = dps.discount_id
+        WHERE dps.product_id = p.id
+          AND ds.is_active = TRUE
+          AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
+      )`);
     }
     const whereSql = `WHERE ${where.join(' AND ')}`;
     const base = `FROM products p LEFT JOIN categories c ON c.id = p.category_id ${whereSql}`;
