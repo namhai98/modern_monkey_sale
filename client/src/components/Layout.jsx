@@ -24,7 +24,7 @@ export default function Layout({ children }) {
     <>
       <Navbar />
       <main className={isHome ? '' : 'pt-16 md:pt-20 min-h-[60vh]'}>{children}</main>
-      {!hideFooter && <SiteFooter />}
+      {!hideFooter && <SiteFooter flush={isHome} />}
       <CartDrawer />
       <SearchOverlay />
     </>

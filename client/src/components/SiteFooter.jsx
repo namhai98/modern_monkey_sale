@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import LangSwitch from './LangSwitch';
 
-export default function SiteFooter() {
+export default function SiteFooter({ flush = false }) {
   const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
   return (
-    <footer className="bg-ink text-canvas mt-20 md:mt-32">
+    <footer className={`bg-ink text-canvas ${flush ? '' : 'mt-20 md:mt-32'}`}>
       <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
         <div className="max-w-md">
           <p className="eyebrow text-canvas/60">{t('footer.letter.eyebrow')}</p>
