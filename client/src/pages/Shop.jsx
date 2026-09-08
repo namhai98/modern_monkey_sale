@@ -58,6 +58,9 @@ function CategoryProducts({ slug, categories }) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState('created_at:desc');
+  const [brand, setBrand] = useState('');
+  const [gender, setGender] = useState('');
+  const [facets, setFacets] = useState({ brands: [], genders: [] });
   const [loading, setLoading] = useState(true);
 
   const SORTS = useMemo(
@@ -73,20 +76,37 @@ function CategoryProducts({ slug, categories }) {
   const activeCat = categories.find((c) => c.slug === slug);
 
   useEffect(() => {
+    client
+      .get('/products/facets', { params: { category: slug } })
+      .then((res) => setFacets(res.data))
+      .catch(() => setFacets({ brands: [], genders: [] }));
+  }, [slug]);
+
+  useEffect(() => {
     setPage(1);
-  }, [slug, sort]);
+  }, [slug, sort, brand, gender]);
 
   useEffect(() => {
     const [field, order] = sort.split(':');
     setLoading(true);
     client
-      .get('/products', { params: { category: slug, sort: field, order, page, limit: LIMIT } })
+      .get('/products', {
+        params: {
+          category: slug,
+          sort: field,
+          order,
+          page,
+          limit: LIMIT,
+          ...(brand ? { brand } : {}),
+          ...(gender ? { gender } : {}),
+        },
+      })
       .then((res) => {
         setProducts(res.data.items);
         setTotal(res.data.total);
       })
       .finally(() => setLoading(false));
-  }, [slug, sort, page]);
+  }, [slug, sort, page, brand, gender]);
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
@@ -126,6 +146,51 @@ function CategoryProducts({ slug, categories }) {
           ))}
         </select>
       </div>
+
+      {(facets.genders.length > 0 || facets.brands.length > 0) && (
+        <div className="px-4 md:px-8 border-b border-line py-4 flex flex-col sm:flex-row gap-x-10 gap-y-3">
+          {facets.genders.length > 0 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="eyebrow text-stone">{t('filter.gender')}</span>
+              <button
+                onClick={() => setGender('')}
+                className={`eyebrow ${gender === '' ? 'text-ink' : 'text-stone hover:text-ink'}`}
+              >
+                {t('filter.all')}
+              </button>
+              {facets.genders.map((g) => (
+                <button
+                  key={g.value}
+                  onClick={() => setGender(g.value)}
+                  className={`eyebrow ${gender === g.value ? 'text-ink' : 'text-stone hover:text-ink'}`}
+                >
+                  {t(`gender.${g.value}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          {facets.brands.length > 0 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="eyebrow text-stone">{t('filter.brand')}</span>
+              <button
+                onClick={() => setBrand('')}
+                className={`eyebrow ${brand === '' ? 'text-ink' : 'text-stone hover:text-ink'}`}
+              >
+                {t('filter.all')}
+              </button>
+              {facets.brands.map((b) => (
+                <button
+                  key={b.value}
+                  onClick={() => setBrand(b.value)}
+                  className={`eyebrow ${brand === b.value ? 'text-ink' : 'text-stone hover:text-ink'}`}
+                >
+                  {b.value}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="px-4 md:px-8 py-16">
         {loading ? (

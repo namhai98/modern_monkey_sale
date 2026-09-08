@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS products (
   image_url VARCHAR(500),
   category_id INTEGER REFERENCES categories(id),
   sku VARCHAR(60) UNIQUE,
+  brand VARCHAR(120),
+  gender VARCHAR(16) CHECK (gender IN ('women', 'men', 'unisex')),
   stock INTEGER NOT NULL DEFAULT 0,
   low_stock_threshold INTEGER NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -172,3 +174,17 @@ SELECT p.id, p.image_url, 0
 FROM products p
 WHERE p.image_url <> ''
   AND NOT EXISTS (SELECT 1 FROM product_images pi WHERE pi.product_id = p.id);
+
+-- Demo brand + gender so the shop filters have something to show
+UPDATE products p
+SET brand = CASE c.slug
+    WHEN 'bags'    THEN (ARRAY['Aurele', 'Halden', 'Otero'])[(p.id % 3) + 1]
+    WHEN 'watches' THEN (ARRAY['Corvel', 'Halden', 'Lindqvist'])[(p.id % 3) + 1]
+    WHEN 'apparel' THEN (ARRAY['Aurele', 'Verne', 'Otero'])[(p.id % 3) + 1]
+    ELSE 'Aurele' END
+FROM categories c
+WHERE c.id = p.category_id AND (p.brand IS NULL OR p.brand = '');
+
+UPDATE products
+SET gender = (ARRAY['women', 'men', 'unisex'])[(id % 3) + 1]
+WHERE gender IS NULL;

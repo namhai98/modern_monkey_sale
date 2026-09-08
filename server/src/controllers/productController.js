@@ -10,6 +10,7 @@ const SORTABLE = {
 };
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const GENDERS = ['women', 'men', 'unisex'];
 
 // Product images are managed via the /api/products/:id/images sub-resource
 // (see productImageController). `SELECT_BASE` just embeds the current set.
@@ -43,6 +44,14 @@ function validateProductInput(body, { partial }) {
   if (has('is_active') && typeof body.is_active !== 'boolean') {
     errs.push('is_active must be a boolean');
   }
+  if (has('brand') && body.brand !== null) {
+    if (typeof body.brand !== 'string' || body.brand.length > 120) {
+      errs.push('brand must be a string of at most 120 characters');
+    }
+  }
+  if (has('gender') && body.gender !== null && body.gender !== '') {
+    if (!GENDERS.includes(body.gender)) errs.push(`gender must be one of: ${GENDERS.join(', ')}`);
+  }
   return errs;
 }
 
@@ -62,12 +71,20 @@ export async function listProducts(req, res) {
 
     if (req.query.search) {
       params.push(`%${req.query.search}%`);
-      where.push(`p.name ILIKE $${params.length}`);
+      where.push(`(p.name ILIKE $${params.length} OR p.brand ILIKE $${params.length})`);
     }
     if (req.query.category) {
       const cat = String(req.query.category);
       params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
       where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
+    }
+    if (req.query.brand) {
+      params.push(String(req.query.brand));
+      where.push(`p.brand = $${params.length}`);
+    }
+    if (req.query.gender) {
+      params.push(String(req.query.gender));
+      where.push(`p.gender = $${params.length}`);
     }
     if (req.query.low_stock === '1') {
       where.push('p.stock <= p.low_stock_threshold');
@@ -102,6 +119,44 @@ export async function listProducts(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch products' });
+  }
+}
+
+// Filter options for the storefront — the brands and genders actually present,
+// optionally scoped to a category. Active products only.
+export async function listProductFacets(req, res) {
+  try {
+    const params = [];
+    const where = ['p.is_active = TRUE'];
+    if (req.query.category) {
+      const cat = String(req.query.category);
+      params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
+      where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
+    }
+    const whereSql = `WHERE ${where.join(' AND ')}`;
+    const base = `FROM products p LEFT JOIN categories c ON c.id = p.category_id ${whereSql}`;
+
+    const brands = await query(
+      `SELECT p.brand AS value, COUNT(*)::int AS count ${base}
+         AND p.brand IS NOT NULL AND p.brand <> ''
+       GROUP BY p.brand ORDER BY p.brand`,
+      params
+    );
+    const genders = await query(
+      `SELECT p.gender AS value, COUNT(*)::int AS count ${base}
+         AND p.gender IS NOT NULL
+       GROUP BY p.gender`,
+      params
+    );
+
+    const order = { women: 0, men: 1, unisex: 2 };
+    res.json({
+      brands: brands.rows,
+      genders: genders.rows.sort((a, b) => (order[a.value] ?? 9) - (order[b.value] ?? 9)),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch product facets' });
   }
 }
 
@@ -141,8 +196,9 @@ export async function createProduct(req, res) {
     try {
       // image_url starts empty; the first image upload sets it (see productImageController.syncPrimary)
       const ins = await client.query(
-        `INSERT INTO products (name, description, price, image_url, category_id, sku, stock, low_stock_threshold)
-         VALUES ($1, $2, $3, '', $4, $5, $6, $7) RETURNING id`,
+        `INSERT INTO products
+           (name, description, price, image_url, category_id, sku, stock, low_stock_threshold, brand, gender)
+         VALUES ($1, $2, $3, '', $4, $5, $6, $7, $8, $9) RETURNING id`,
         [
           b.name.trim(),
           b.description ?? null,
@@ -151,6 +207,8 @@ export async function createProduct(req, res) {
           (b.sku && String(b.sku).trim()) || null,
           stock,
           threshold,
+          (b.brand && String(b.brand).trim()) || null,
+          b.gender || null,
         ]
       );
       id = ins.rows[0].id;
@@ -207,6 +265,8 @@ export async function updateProduct(req, res) {
     if (b.price !== undefined) put('price', b.price);
     if (b.category_id !== undefined) put('category_id', b.category_id);
     if (b.sku !== undefined) put('sku', (b.sku && String(b.sku).trim()) || null);
+    if (b.brand !== undefined) put('brand', (b.brand && String(b.brand).trim()) || null);
+    if (b.gender !== undefined) put('gender', b.gender || null);
     if (b.low_stock_threshold !== undefined) put('low_stock_threshold', b.low_stock_threshold);
     if (b.is_active !== undefined) put('is_active', b.is_active);
 

@@ -30,6 +30,7 @@ const CATALOGUE = {
       'Chain-Strap Baguette', 'Traveller Holdall',
     ],
     priceFrom: 190, priceStep: 128,
+    brands: ['Aurele', 'Halden', 'Otero'],
     blurb: (n) => `The ${n.toLowerCase()} in full-grain calfskin, cut and saddle-stitched by hand. Made to soften and patina with the years.`,
   },
   Watches: {
@@ -54,6 +55,7 @@ const CATALOGUE = {
       'Everyday Automatic 38', 'World-Timer',
     ],
     priceFrom: 780, priceStep: 240,
+    brands: ['Corvel', 'Halden', 'Lindqvist'],
     blurb: (n) => `A ${n.toLowerCase()} with a sapphire crystal and an in-house automatic movement, visible through the caseback. Two-year international warranty.`,
   },
   Apparel: {
@@ -78,6 +80,7 @@ const CATALOGUE = {
       'Tailored Tuxedo Jacket', 'Cashmere Lounge Trousers',
     ],
     priceFrom: 150, priceStep: 165,
+    brands: ['Aurele', 'Verne', 'Otero'],
     blurb: (n) => `The ${n.toLowerCase()}, woven in Italy from carefully sourced fibres. Cut for a relaxed, timeless line. Dry clean only.`,
   },
 };
@@ -113,6 +116,8 @@ async function main() {
         const stock = [4, 60, 25, 8, 40, 15, 30, 6, 50, 12][i % 10] + (i % 3);
         const threshold = 5 + (i % 3);
         const sku = `${prefix}-${String(i + 1).padStart(3, '0')}`;
+        const brand = cfg.brands[i % cfg.brands.length];
+        const gender = ['women', 'men', 'unisex'][i % 3];
 
         // 4 distinct images per product, cycled from the category pool
         const gallery = [];
@@ -122,9 +127,9 @@ async function main() {
 
         const ins = await client.query(
           `INSERT INTO products
-             (name, description, price, image_url, category_id, sku, stock, low_stock_threshold)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-          [pname, cfg.blurb(pname), price.toFixed(2), gallery[0], categoryId, sku, stock, threshold]
+             (name, description, price, image_url, category_id, sku, stock, low_stock_threshold, brand, gender)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+          [pname, cfg.blurb(pname), price.toFixed(2), gallery[0], categoryId, sku, stock, threshold, brand, gender]
         );
         const productId = ins.rows[0].id;
         for (let k = 0; k < gallery.length; k += 1) {

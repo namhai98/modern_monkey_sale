@@ -10,6 +10,8 @@ const emptyForm = {
   price: '',
   category_id: '',
   sku: '',
+  brand: '',
+  gender: '',
   low_stock_threshold: 0,
 };
 
@@ -129,6 +131,8 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
       price: Number(form.price),
       category_id: form.category_id ? Number(form.category_id) : null,
       sku: form.sku || null,
+      brand: form.brand || null,
+      gender: form.gender || null,
       low_stock_threshold: Number(form.low_stock_threshold) || 0,
     };
     try {
@@ -163,6 +167,15 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
         {categories.map((c) => (
           <option key={c.id} value={c.id}>{c.name}</option>
         ))}
+      </select>
+      <input className={inputCls} placeholder="Brand (optional)" value={form.brand || ''}
+        onChange={(e) => set('brand', e.target.value)} />
+      <select className={inputCls} value={form.gender || ''}
+        onChange={(e) => set('gender', e.target.value)}>
+        <option value="">Gender —</option>
+        <option value="women">Women</option>
+        <option value="men">Men</option>
+        <option value="unisex">Unisex</option>
       </select>
       {!editing && (
         <input className={inputCls} type="number" min="0" placeholder="Initial stock" value={form.stock ?? ''}
@@ -306,6 +319,8 @@ export default function AdminProducts() {
         price: String(created.price),
         category_id: created.category?.id ? String(created.category.id) : '',
         sku: created.sku || '',
+        brand: created.brand || '',
+        gender: created.gender || '',
         low_stock_threshold: created.low_stock_threshold,
         images: created.images || [],
       });
@@ -373,7 +388,11 @@ export default function AdminProducts() {
                     <div className="font-medium">{p.name}</div>
                     {p.sku && <div className="text-xs text-gray-400">{p.sku}</div>}
                   </td>
-                  <td className="py-2">{p.category?.name || '—'}</td>
+                  <td className="py-2">
+                    {p.category?.name || '—'}
+                    {p.brand && <span className="text-xs text-gray-400"> · {p.brand}</span>}
+                    {p.gender && <span className="text-xs text-gray-400"> · {p.gender}</span>}
+                  </td>
                   <td className="py-2">${p.price.toFixed(2)}</td>
                   <td className="py-2">
                     <span className={p.low_stock ? 'text-amber-600 font-medium' : ''}>{p.stock}</span>
@@ -402,6 +421,8 @@ export default function AdminProducts() {
                                 price: String(p.price),
                                 category_id: p.category?.id ? String(p.category.id) : '',
                                 sku: p.sku || '',
+                                brand: p.brand || '',
+                                gender: p.gender || '',
                                 low_stock_threshold: p.low_stock_threshold,
                                 images: p.images || [],
                               }

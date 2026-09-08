@@ -135,11 +135,17 @@ export default function ProductDetail() {
         {/* info */}
         <div className="px-6 md:px-14 py-12 md:py-16 lg:py-14">
           <div className="lg:sticky lg:top-24">
-            {product.category && (
-              <Link to={`/shop?category=${product.category.slug}`} className="eyebrow text-stone link-underline">
-                {categoryLabel(locale, product.category)}
-              </Link>
-            )}
+            <div className="flex items-center gap-3 flex-wrap">
+              {product.brand && <span className="eyebrow text-ink">{product.brand}</span>}
+              {product.category && (
+                <Link to={`/shop?category=${product.category.slug}`} className="eyebrow text-stone link-underline">
+                  {categoryLabel(locale, product.category)}
+                </Link>
+              )}
+              {product.gender && (
+                <span className="eyebrow text-stone">· {t(`gender.${product.gender}`)}</span>
+              )}
+            </div>
             <h1 className="font-display text-4xl md:text-5xl mt-4 leading-tight">{product.name}</h1>
             <p className="text-lg text-stone mt-4">
               ${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}

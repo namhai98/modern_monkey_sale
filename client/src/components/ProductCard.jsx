@@ -57,9 +57,9 @@ export default function ProductCard({ product }) {
       </div>
 
       <div className="pt-4 text-center">
-        {product.category && (
+        {(product.brand || product.category) && (
           <p className="eyebrow text-[0.6rem] text-stone mb-1">
-            {categoryLabel(locale, product.category)}
+            {product.brand || categoryLabel(locale, product.category)}
           </p>
         )}
         <h3 className="font-display text-xl leading-snug">{product.name}</h3>

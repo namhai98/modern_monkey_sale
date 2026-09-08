@@ -17,6 +17,8 @@ export function serializeProduct(row) {
     image_url: row.image_url || images[0]?.card || images[0]?.detail || '',
     images,
     sku: row.sku || null,
+    brand: row.brand || null,
+    gender: row.gender || null,
     stock: row.stock,
     low_stock_threshold: row.low_stock_threshold,
     low_stock: row.stock <= row.low_stock_threshold,

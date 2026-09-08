@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   listProducts,
+  listProductFacets,
   getProduct,
   createProduct,
   updateProduct,
@@ -15,6 +16,7 @@ const canManage = requireRole('manager', 'admin');
 
 // Public catalog (staff also get inactive products via ?include_inactive=1)
 router.get('/', optionalAuth, listProducts);
+router.get('/facets', listProductFacets);
 router.post('/', requireAuth, canManage, createProduct);
 
 // Image sub-resource: upload / reorder / primary / delete

@@ -55,6 +55,12 @@ const en = {
   'sort.priceAsc': 'Price · low to high',
   'sort.priceDesc': 'Price · high to low',
   'sort.name': 'Alphabetical',
+  'filter.brand': 'Brand',
+  'filter.gender': 'Gender',
+  'filter.all': 'All',
+  'gender.women': 'Women',
+  'gender.men': 'Men',
+  'gender.unisex': 'Unisex',
 
   // product card / pdp
   'product.view': 'View',
@@ -279,6 +285,12 @@ const mn = {
   'sort.priceAsc': 'Үнэ · багаас их',
   'sort.priceDesc': 'Үнэ · ихээс бага',
   'sort.name': 'Цагаан толгойгоор',
+  'filter.brand': 'Брэнд',
+  'filter.gender': 'Хүйс',
+  'filter.all': 'Бүгд',
+  'gender.women': 'Эмэгтэй',
+  'gender.men': 'Эрэгтэй',
+  'gender.unisex': 'Унисекс',
 
   'product.view': 'Үзэх',
   'product.soldOut': 'Дууссан',
