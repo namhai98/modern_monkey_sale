@@ -55,6 +55,21 @@ CREATE TABLE IF NOT EXISTS product_images (
 );
 CREATE INDEX IF NOT EXISTS idx_product_images_sort ON product_images (product_id, sort_order);
 
+-- Size variants with per-size stock (see migration 010). Products with no rows
+-- here behave exactly as before — stock lives on the products row.
+CREATE TABLE IF NOT EXISTS product_variants (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  label VARCHAR(40) NOT NULL,             -- "S", "M", "42", "One Size"
+  sku VARCHAR(60) UNIQUE,
+  stock INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE (product_id, label)
+);
+CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants (product_id, sort_order);
+
 -- Upgrading an existing database? Run migrations 003, 005 and 006 in order.
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -72,6 +87,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   id SERIAL PRIMARY KEY,
   order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
   product_id INTEGER REFERENCES products(id),
+  variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL,
+  variant_label VARCHAR(40),              -- snapshot: size at time of purchase
   quantity INTEGER NOT NULL,
   price NUMERIC(10, 2) NOT NULL,          -- final unit price paid
   original_price NUMERIC(10, 2),          -- unit price before any discount
@@ -120,6 +137,7 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens (use
 CREATE TABLE IF NOT EXISTS stock_movements (
   id SERIAL PRIMARY KEY,
   product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL,
   delta INTEGER NOT NULL,
   type VARCHAR(20) NOT NULL CHECK (type IN ('sale', 'restock', 'adjustment', 'return')),
   reason TEXT,

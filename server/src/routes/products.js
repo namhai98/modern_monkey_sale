@@ -9,6 +9,7 @@ import {
   listStockMovements,
 } from '../controllers/productController.js';
 import productImageRoutes from './productImages.js';
+import productVariantRoutes from './productVariants.js';
 import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -21,6 +22,8 @@ router.post('/', requireAuth, canManage, createProduct);
 
 // Image sub-resource: upload / reorder / primary / delete
 router.use('/:id/images', productImageRoutes);
+// Size-variant sub-resource: list / create / update / delete
+router.use('/:id/variants', productVariantRoutes);
 
 router.get('/:id', optionalAuth, getProduct);
 router.get('/:id/movements', requireAuth, canManage, listStockMovements);

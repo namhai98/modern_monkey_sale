@@ -7,7 +7,7 @@ export function sendOrderConfirmation({ to, orderId, items, total, shippingAddre
   if (!to) return Promise.resolve({ skipped: true });
 
   const rows = items.map((i) => ({
-    label: `${i.quantity} × ${i.product_name}`,
+    label: `${i.quantity} × ${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ''}`,
     price: fmt(i.price),
     was: i.discount_amount > 0 ? fmt(i.original_price) : null,
   }));

@@ -10,6 +10,19 @@ export function serializeProduct(row) {
   const imageRows = Array.isArray(row.images) ? row.images : [];
   const images = imageRows.map(serializeProductImage).filter(Boolean);
 
+  const variantRows = Array.isArray(row.variants) ? row.variants : [];
+  const variants = variantRows.map((v) => ({
+    id: v.id,
+    label: v.label,
+    sku: v.sku || null,
+    stock: v.stock,
+    in_stock: v.stock > 0,
+  }));
+  const hasVariants = variants.length > 0;
+  // When a product has sizes, its stock is the sum of theirs; otherwise the
+  // products row is authoritative.
+  const stock = hasVariants ? variants.reduce((s, v) => s + v.stock, 0) : row.stock;
+
   const price = Number(row.price);
   const { finalPrice, discountAmount, discount } = computeDiscountedPrice(price, row.discount);
 
@@ -27,9 +40,11 @@ export function serializeProduct(row) {
     sku: row.sku || null,
     brand: row.brand || null,
     gender: row.gender || null,
-    stock: row.stock,
+    has_variants: hasVariants,
+    variants,
+    stock,
     low_stock_threshold: row.low_stock_threshold,
-    low_stock: row.stock <= row.low_stock_threshold,
+    low_stock: stock <= row.low_stock_threshold,
     is_active: row.is_active,
     category: row.category_id
       ? { id: row.category_id, name: row.category_name, slug: row.category_slug }

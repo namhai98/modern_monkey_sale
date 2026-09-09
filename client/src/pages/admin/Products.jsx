@@ -115,6 +115,122 @@ function ProductImageManager({ productId, images: initialImages }) {
   );
 }
 
+// Talks to /api/products/:id/variants — add / edit stock / delete size runs.
+function ProductVariantManager({ productId, variants: initial }) {
+  const [variants, setVariants] = useState(initial || []);
+  const [draft, setDraft] = useState({ label: '', sku: '', stock: 0 });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function run(fn) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fn();
+      setVariants(res.data.variants);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function add(e) {
+    e.preventDefault();
+    if (!draft.label.trim()) return;
+    run(() =>
+      client.post(`/products/${productId}/variants`, {
+        label: draft.label.trim(),
+        sku: draft.sku.trim() || null,
+        stock: Number(draft.stock) || 0,
+      })
+    ).then(() => setDraft({ label: '', sku: '', stock: 0 }));
+  }
+
+  const setStock = (v, stock) => run(() => client.patch(`/products/${productId}/variants/${v.id}`, { stock }));
+
+  return (
+    <div className="md:col-span-2 border-t border-gray-100 pt-3">
+      <p className="text-xs text-gray-500 mb-2">
+        Sizes — leave empty for a one-size product. When sizes exist, stock is tracked per size and the
+        shopper must pick one.
+      </p>
+
+      {variants.length > 0 && (
+        <table className="w-full text-sm mb-3">
+          <thead>
+            <tr className="text-left text-gray-400 text-xs">
+              <th className="py-1">Size</th><th className="py-1">SKU</th>
+              <th className="py-1 w-28">Stock</th><th className="py-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {variants.map((v) => (
+              <tr key={v.id} className="border-t border-gray-50">
+                <td className="py-1 font-medium">{v.label}</td>
+                <td className="py-1 text-gray-500">{v.sku || '—'}</td>
+                <td className="py-1">
+                  <input
+                    type="number"
+                    min="0"
+                    defaultValue={v.stock}
+                    disabled={busy}
+                    onBlur={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isInteger(n) && n >= 0 && n !== v.stock) setStock(v, n);
+                    }}
+                    className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
+                  />
+                </td>
+                <td className="py-1 text-right">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => run(() => client.delete(`/products/${productId}/variants/${v.id}`))}
+                    className="text-red-500 hover:underline text-xs"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <form onSubmit={add} className="flex flex-wrap items-center gap-2">
+        <input
+          className={`${inputCls} w-24`}
+          placeholder="Size"
+          value={draft.label}
+          onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
+        />
+        <input
+          className={`${inputCls} w-40`}
+          placeholder="SKU (optional)"
+          value={draft.sku}
+          onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))}
+        />
+        <input
+          className={`${inputCls} w-20`}
+          type="number"
+          min="0"
+          placeholder="Stock"
+          value={draft.stock}
+          onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))}
+        />
+        <button
+          className="bg-gray-900 text-white px-3 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-50"
+          disabled={busy}
+        >
+          Add size
+        </button>
+      </form>
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+    </div>
+  );
+}
+
 function ProductForm({ categories, initial, onCancel, onSaved }) {
   const [form, setForm] = useState(initial);
   const [error, setError] = useState(null);
@@ -190,10 +306,13 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
         value={form.description} onChange={(e) => set('description', e.target.value)} />
 
       {editing ? (
-        <ProductImageManager productId={initial.id} images={initial.images || []} />
+        <>
+          <ProductImageManager productId={initial.id} images={initial.images || []} />
+          <ProductVariantManager productId={initial.id} variants={initial.variants || []} />
+        </>
       ) : (
         <p className="md:col-span-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
-          Save the product first, then add its images.
+          Save the product first, then add its images and sizes.
         </p>
       )}
 
@@ -326,6 +445,7 @@ export default function AdminProducts() {
         gender: created.gender || '',
         low_stock_threshold: created.low_stock_threshold,
         images: created.images || [],
+        variants: created.variants || [],
       });
     } else {
       setFormFor(null);
@@ -400,10 +520,14 @@ export default function AdminProducts() {
                   <td className="py-2">
                     <span className={p.low_stock ? 'text-amber-600 font-medium' : ''}>{p.stock}</span>
                     {p.low_stock && <span className="text-xs text-amber-600"> low</span>}
-                    <button onClick={() => setAdjustId(adjustId === p.id ? null : p.id)}
-                      className="ml-2 text-xs text-gray-500 hover:underline">
-                      {adjustId === p.id ? 'close' : 'adjust'}
-                    </button>
+                    {p.has_variants ? (
+                      <span className="ml-2 text-xs text-gray-400">per size</span>
+                    ) : (
+                      <button onClick={() => setAdjustId(adjustId === p.id ? null : p.id)}
+                        className="ml-2 text-xs text-gray-500 hover:underline">
+                        {adjustId === p.id ? 'close' : 'adjust'}
+                      </button>
+                    )}
                   </td>
                   <td className="py-2">
                     <button onClick={() => toggleActive(p)}
@@ -428,6 +552,7 @@ export default function AdminProducts() {
                                 gender: p.gender || '',
                                 low_stock_threshold: p.low_stock_threshold,
                                 images: p.images || [],
+                                variants: p.variants || [],
                               }
                         )
                       }

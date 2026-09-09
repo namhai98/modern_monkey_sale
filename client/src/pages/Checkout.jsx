@@ -46,7 +46,11 @@ export default function Checkout() {
       .join('\n');
     try {
       await client.post('/orders', {
-        items: items.map((i) => ({ product_id: i.id, quantity: i.quantity })),
+        items: items.map((i) => ({
+          product_id: i.id,
+          quantity: i.quantity,
+          ...(i.variant_id ? { variant_id: i.variant_id } : {}),
+        })),
         shipping_address,
       });
       clearCart();
@@ -101,13 +105,15 @@ export default function Checkout() {
         <p className="eyebrow text-stone mb-6">{t('checkout.yourOrder')}</p>
         <div className="space-y-5">
           {items.map((i) => (
-            <div key={i.id} className="flex gap-4">
+            <div key={`${i.id}:${i.variant_id ?? ''}`} className="flex gap-4">
               <div className="h-20 w-16 bg-ivory shrink-0 overflow-hidden">
                 <ImageFallback src={resizeUnsplash(i.image_url, 150)} alt={i.name} className="h-full w-full object-cover" />
               </div>
               <div className="flex-1 text-sm">
                 <p className="font-display text-base">{i.name}</p>
-                <p className="text-stone">{t('checkout.qty', { n: i.quantity })}</p>
+                <p className="text-stone">
+                  {i.variant_label ? `${i.variant_label} · ` : ''}{t('checkout.qty', { n: i.quantity })}
+                </p>
                 {i.original_price > i.price && (
                   <p className="text-xs text-stone/60">
                     <s>{money(i.original_price)}</s> {money(i.price)}

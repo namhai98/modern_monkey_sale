@@ -26,18 +26,25 @@ async function recordStatusChange(client, orderId, from, to, note, userId) {
 
 async function restockOrder(client, orderId, userId, reason) {
   const { rows } = await client.query(
-    'SELECT product_id, quantity FROM order_items WHERE order_id = $1',
+    'SELECT product_id, variant_id, quantity FROM order_items WHERE order_id = $1',
     [orderId]
   );
   for (const it of rows) {
+    if (it.variant_id) {
+      await client.query(
+        'UPDATE product_variants SET stock = stock + $1, updated_at = NOW() WHERE id = $2',
+        [it.quantity, it.variant_id]
+      );
+    } else {
+      await client.query(
+        'UPDATE products SET stock = stock + $1, updated_at = NOW() WHERE id = $2',
+        [it.quantity, it.product_id]
+      );
+    }
     await client.query(
-      'UPDATE products SET stock = stock + $1, updated_at = NOW() WHERE id = $2',
-      [it.quantity, it.product_id]
-    );
-    await client.query(
-      `INSERT INTO stock_movements (product_id, delta, type, reason, order_id, user_id)
-       VALUES ($1, $2, 'return', $3, $4, $5)`,
-      [it.product_id, it.quantity, reason, orderId, userId]
+      `INSERT INTO stock_movements (product_id, variant_id, delta, type, reason, order_id, user_id)
+       VALUES ($1, $2, $3, 'return', $4, $5, $6)`,
+      [it.product_id, it.variant_id, it.quantity, reason, orderId, userId]
     );
   }
 }
@@ -127,12 +134,28 @@ export async function createOrder(req, res) {
       if (!rows[0].is_active) {
         throw Object.assign(new Error(`Product ${item.product_id} is not available`), { status: 400 });
       }
+
+      // Size variants: when a product has them, a valid variant_id is required.
+      const vres = await client.query(
+        'SELECT id, label FROM product_variants WHERE product_id = $1',
+        [item.product_id]
+      );
+      let variant = null;
+      if (vres.rows.length > 0) {
+        variant = vres.rows.find((v) => v.id === Number(item.variant_id));
+        if (!variant) {
+          throw Object.assign(new Error(`Product ${item.product_id} needs a valid size`), { status: 400 });
+        }
+      }
+
       const originalPrice = parseFloat(rows[0].price);
       const best = pickBestActiveDiscount(originalPrice, discountsByProduct.get(item.product_id) || []);
       const { finalPrice, discountAmount, discount } = computeDiscountedPrice(originalPrice, best);
       total += finalPrice * item.quantity;
       priced.push({
         product_id: item.product_id,
+        variant_id: variant?.id ?? null,
+        variant_label: variant?.label ?? null,
         quantity: item.quantity,
         price: finalPrice,
         original_price: originalPrice,
@@ -158,11 +181,14 @@ export async function createOrder(req, res) {
     for (const item of priced) {
       await client.query(
         `INSERT INTO order_items
-           (order_id, product_id, quantity, price, original_price, discount_amount, discount_name, product_name)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+           (order_id, product_id, variant_id, variant_label, quantity, price,
+            original_price, discount_amount, discount_name, product_name)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           order.id,
           item.product_id,
+          item.variant_id,
+          item.variant_label,
           item.quantity,
           item.price,
           item.original_price,
@@ -171,11 +197,17 @@ export async function createOrder(req, res) {
           item.product_name,
         ]
       );
-      // Atomic guarded decrement — two concurrent orders can't oversell
-      const upd = await client.query(
-        'UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2 AND stock >= $1 RETURNING stock',
-        [item.quantity, item.product_id]
-      );
+      // Atomic guarded decrement — two concurrent orders can't oversell.
+      // A variant order draws down the variant's stock; otherwise the product's.
+      const upd = item.variant_id
+        ? await client.query(
+            'UPDATE product_variants SET stock = stock - $1, updated_at = NOW() WHERE id = $2 AND stock >= $1 RETURNING stock',
+            [item.quantity, item.variant_id]
+          )
+        : await client.query(
+            'UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2 AND stock >= $1 RETURNING stock',
+            [item.quantity, item.product_id]
+          );
       if (upd.rowCount === 0) {
         throw Object.assign(new Error(`Insufficient stock for product ${item.product_id}`), {
           status: 409,
@@ -183,9 +215,9 @@ export async function createOrder(req, res) {
         });
       }
       await client.query(
-        `INSERT INTO stock_movements (product_id, delta, type, order_id, user_id)
-         VALUES ($1, $2, 'sale', $3, $4)`,
-        [item.product_id, -item.quantity, order.id, userId]
+        `INSERT INTO stock_movements (product_id, variant_id, delta, type, order_id, user_id)
+         VALUES ($1, $2, $3, 'sale', $4, $5)`,
+        [item.product_id, item.variant_id, -item.quantity, order.id, userId]
       );
     }
 

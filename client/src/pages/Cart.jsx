@@ -10,7 +10,7 @@ import Button from '../components/Button';
 import ImageFallback from '../components/ImageFallback';
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total, syncPrices } = useCart();
+  const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
   const { t } = useLocale();
   const { info } = useToast();
   const money = useMoney();
@@ -36,8 +36,10 @@ export default function Cart() {
       ) : (
         <>
           <div className="divide-y divide-line border-y border-line">
-            {items.map((item) => (
-              <div key={item.id} className="flex gap-6 py-6">
+            {items.map((item) => {
+              const key = lineKey(item.id, item.variant_id);
+              return (
+              <div key={key} className="flex gap-6 py-6">
                 <div className="h-32 w-24 bg-ivory shrink-0 overflow-hidden">
                   <ImageFallback
                     src={resizeUnsplash(item.image_url, 200)}
@@ -50,6 +52,9 @@ export default function Cart() {
                     <p className="font-display text-xl">{item.name}</p>
                     <p className="text-stone">{money(item.price * item.quantity)}</p>
                   </div>
+                  {item.variant_label && (
+                    <p className="text-xs eyebrow text-stone mt-1">{item.variant_label}</p>
+                  )}
                   <p className="text-sm text-stone mt-1">
                     {item.original_price > item.price && (
                       <s className="text-stone/50 mr-2">{money(item.original_price)}</s>
@@ -59,18 +64,19 @@ export default function Cart() {
                   <div className="flex items-center gap-5 mt-4 text-sm">
                     <span className="inline-flex items-center border border-line">
                       <button className="px-3 py-1 text-stone hover:text-ink"
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}>−</button>
+                        onClick={() => updateQuantity(key, Math.max(1, item.quantity - 1))}>−</button>
                       <span className="px-2 tabular-nums">{item.quantity}</span>
                       <button className="px-3 py-1 text-stone hover:text-ink"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                        onClick={() => updateQuantity(key, item.quantity + 1)}>+</button>
                     </span>
-                    <button onClick={() => removeItem(item.id)} className="text-stone hover:text-ink link-underline">
+                    <button onClick={() => removeItem(key)} className="text-stone hover:text-ink link-underline">
                       {t('cart.remove')}
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex items-baseline justify-between mt-8">

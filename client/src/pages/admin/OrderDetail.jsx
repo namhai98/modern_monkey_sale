@@ -139,6 +139,7 @@ export default function AdminOrderDetail() {
             <tr key={it.id} className="border-b border-gray-100">
               <td className="py-2">
                 {it.name || `Product #${it.product_id}`}
+                {it.variant_label && <span className="text-xs text-gray-500"> · {it.variant_label}</span>}
                 {it.sku && <span className="text-xs text-gray-400"> · {it.sku}</span>}
               </td>
               <td className="py-2 text-right">{it.quantity}</td>

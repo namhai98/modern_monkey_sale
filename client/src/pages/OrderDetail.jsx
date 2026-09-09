@@ -65,7 +65,8 @@ export default function OrderDetail() {
             <tr key={it.id} className="border-b border-line/60">
               <td className="py-3">
                 {it.name || `#${it.product_id}`}
-                {it.sku && <span className="text-xs text-stone"> · {it.sku}</span>}
+                {it.variant_label && <span className="text-xs text-stone"> · {it.variant_label}</span>}
+                {it.sku && <span className="text-xs text-stone/70"> · {it.sku}</span>}
               </td>
               <td className="py-3 text-right">{it.quantity}</td>
               <td className="py-3 text-right">

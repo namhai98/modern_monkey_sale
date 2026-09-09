@@ -46,6 +46,7 @@ export default function ProductDetail() {
   const [notFound, setNotFound] = useState(false);
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
+  const [variantId, setVariantId] = useState(null);
   const [openSection, setOpenSection] = useState(0);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
@@ -57,6 +58,7 @@ export default function ProductDetail() {
     setProduct(null);
     setNotFound(false);
     setQty(1);
+    setVariantId(null);
     window.scrollTo({ top: 0 });
     client
       .get(`/products/${id}`)
@@ -86,7 +88,12 @@ export default function ProductDetail() {
   }
   if (!product) return <ProductDetailSkeleton />;
 
-  const soldOut = product.stock <= 0;
+  const variants = product.variants || [];
+  const hasVariants = variants.length > 0;
+  const selectedVariant = variants.find((v) => v.id === variantId) || null;
+  const soldOut = hasVariants ? variants.every((v) => v.stock <= 0) : product.stock <= 0;
+  const needsSize = hasVariants && !selectedVariant;
+  const maxQty = hasVariants ? selectedVariant?.stock || 1 : product.stock || 1;
   const slug = product.category?.slug;
   const categorySections =
     slug === 'bags'
@@ -113,7 +120,8 @@ export default function ProductDetail() {
   ];
 
   function addToBag() {
-    addItem(product, qty);
+    if (needsSize) return;
+    addItem(product, qty, selectedVariant);
     setAdded(true);
     success(t('cart.added'));
     setTimeout(() => {
@@ -171,19 +179,58 @@ export default function ProductDetail() {
               <p className="text-lg text-stone mt-4">{money(product.price)}</p>
             )}
 
-            <div className="mt-10 flex items-stretch gap-3">
+            {hasVariants && (
+              <div className="mt-8">
+                <p className="eyebrow text-stone mb-3">{t('pdp.size')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((v) => {
+                    const out = v.stock <= 0;
+                    const active = v.id === variantId;
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        disabled={out}
+                        onClick={() => {
+                          setVariantId(v.id);
+                          setQty((q) => Math.min(Math.max(1, q), v.stock || 1));
+                        }}
+                        aria-pressed={active}
+                        className={`min-w-[3rem] px-3 py-2 border text-sm transition-colors ${
+                          active
+                            ? 'bg-ink text-canvas border-ink'
+                            : out
+                            ? 'border-line text-stone/40 line-through cursor-not-allowed'
+                            : 'border-line text-ink hover:border-ink'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex items-stretch gap-3">
               <div className="inline-flex items-center border border-line">
                 <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="-">−</button>
                 <span className="px-3 tabular-nums text-sm">{qty}</span>
-                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.min(product.stock || 1, q + 1))} aria-label="+">+</button>
+                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.min(maxQty, q + 1))} aria-label="+">+</button>
               </div>
               <Button
                 onClick={addToBag}
-                disabled={soldOut}
+                disabled={soldOut || needsSize}
                 size="lg"
                 className="flex-1"
               >
-                {soldOut ? t('product.soldOut') : added ? t('pdp.added') : t('pdp.addToBag')}
+                {soldOut
+                  ? t('product.soldOut')
+                  : needsSize
+                  ? t('pdp.selectSize')
+                  : added
+                  ? t('pdp.added')
+                  : t('pdp.addToBag')}
               </Button>
             </div>
 

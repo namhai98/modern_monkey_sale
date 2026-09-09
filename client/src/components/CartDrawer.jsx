@@ -13,7 +13,7 @@ import ImageFallback from './ImageFallback';
 // mid-animation the way a JS-animation-library drawer can.
 export default function CartDrawer() {
   const { cartOpen, closeCart } = useUI();
-  const { items, updateQuantity, removeItem, total, syncPrices } = useCart();
+  const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
   const { t } = useLocale();
   const { info } = useToast();
   const money = useMoney();
@@ -73,8 +73,10 @@ export default function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-              {items.map((item) => (
-                <div key={item.id} className="flex gap-4">
+              {items.map((item) => {
+                const key = lineKey(item.id, item.variant_id);
+                return (
+                <div key={key} className="flex gap-4">
                   <div className="h-24 w-20 bg-ivory shrink-0 overflow-hidden">
                     <ImageFallback
                       src={resizeUnsplash(item.image_url, 200)}
@@ -84,6 +86,9 @@ export default function CartDrawer() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-display text-lg leading-tight">{item.name}</p>
+                    {item.variant_label && (
+                      <p className="text-[0.65rem] eyebrow text-stone mt-0.5">{item.variant_label}</p>
+                    )}
                     <p className="text-sm text-stone mt-1">
                       {item.original_price > item.price && (
                         <s className="text-stone/50 mr-1.5">{money(item.original_price)}</s>
@@ -94,7 +99,7 @@ export default function CartDrawer() {
                       <span className="inline-flex items-center border border-line">
                         <button
                           className="px-2.5 py-1 text-stone hover:text-ink"
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(key, Math.max(1, item.quantity - 1))}
                           aria-label="Decrease quantity"
                         >
                           −
@@ -102,14 +107,14 @@ export default function CartDrawer() {
                         <span className="px-2 tabular-nums">{item.quantity}</span>
                         <button
                           className="px-2.5 py-1 text-stone hover:text-ink"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(key, item.quantity + 1)}
                           aria-label="Increase quantity"
                         >
                           +
                         </button>
                       </span>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(key)}
                         className="text-stone hover:text-ink link-underline"
                       >
                         {t('cart.remove')}
@@ -117,7 +122,8 @@ export default function CartDrawer() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-line px-6 py-6 space-y-4">

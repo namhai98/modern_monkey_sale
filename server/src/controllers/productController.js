@@ -23,6 +23,12 @@ const SELECT_BASE = `
             FROM product_images pi WHERE pi.product_id = p.id),
            '[]'::jsonb
          ) AS images,
+         COALESCE(
+           (SELECT jsonb_agg(jsonb_build_object('id', pv.id, 'label', pv.label,
+                     'sku', pv.sku, 'stock', pv.stock) ORDER BY pv.sort_order, pv.id)
+            FROM product_variants pv WHERE pv.product_id = p.id),
+           '[]'::jsonb
+         ) AS variants,
          CASE WHEN disc.id IS NULL THEN NULL ELSE to_jsonb(disc) END AS discount
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id
