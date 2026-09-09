@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
@@ -19,8 +20,23 @@ dotenv.config();
 
 const app = express();
 
-// credentials:true so the browser sends/stores the refresh-token cookie
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || true, credentials: true }));
+// Security headers. No CSP here (this is a JSON API + optional /media static;
+// the frontend host sets its own), and cross-origin resource policy is relaxed
+// so the storefront can load /media images.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+// credentials:true so the browser sends/stores the refresh-token cookie.
+// CLIENT_ORIGIN (comma-separated allowed) is set in production; unset in dev
+// where the Vite proxy makes requests same-origin.
+const allowedOrigins = process.env.CLIENT_ORIGIN
+  ? process.env.CLIENT_ORIGIN.split(',').map((s) => s.trim())
+  : true;
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -1,6 +1,7 @@
 import { query, pool } from '../config/db.js';
 import { ORDER_STATUSES, TRANSITIONS, RESTOCKING, canTransition } from '../utils/orderStatus.js';
 import { computeDiscountedPrice, pickBestActiveDiscount } from '../utils/discount.js';
+import { sendOrderConfirmation } from '../utils/orderEmail.js';
 import {
   serializeOrderRow,
   serializeOrderItem,
@@ -190,6 +191,15 @@ export async function createOrder(req, res) {
 
     await client.query('COMMIT');
     res.status(201).json(order);
+
+    // fire-and-forget — never delays or fails the order
+    sendOrderConfirmation({
+      to: req.user.email,
+      orderId: order.id,
+      items: priced,
+      total,
+      shippingAddress: shipping_address,
+    }).catch((e) => console.warn('[order email]', e.message));
   } catch (err) {
     await client.query('ROLLBACK');
     if (err.status) {
