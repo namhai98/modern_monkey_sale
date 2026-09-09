@@ -1,16 +1,28 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
 import { resizeUnsplash } from '../lib/media';
 import { useMoney } from '../lib/price';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
 import ImageFallback from '../components/ImageFallback';
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total } = useCart();
+  const { items, updateQuantity, removeItem, total, syncPrices } = useCart();
   const { t } = useLocale();
+  const { info } = useToast();
   const money = useMoney();
   const navigate = useNavigate();
+  useDocumentTitle(t('cart.title'));
+
+  useEffect(() => {
+    syncPrices().then((n) => {
+      if (n) info(t('cart.pricesUpdated'));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-20">

@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from 'react';
 import client from '../../api/client';
 import AdminNav from '../../components/AdminNav';
 import ImageFallback from '../../components/ImageFallback';
+import { useToast } from '../../context/ToastContext';
 
 const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
 const MAX_IMAGES = 5;
@@ -260,6 +261,7 @@ function AdjustStock({ product, onDone }) {
 }
 
 export default function AdminProducts() {
+  const { error: toastError } = useToast();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -305,7 +307,7 @@ export default function AdminProducts() {
       await client.patch(`/products/${p.id}`, { is_active: !p.is_active });
       load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update');
+      toastError(err.response?.data?.error || 'Failed to update');
     }
   }
 

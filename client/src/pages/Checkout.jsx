@@ -6,6 +6,7 @@ import { useLocale } from '../context/LocaleContext';
 import client from '../api/client';
 import { resizeUnsplash } from '../lib/media';
 import { useMoney } from '../lib/price';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
 import ImageFallback from '../components/ImageFallback';
 
@@ -16,6 +17,7 @@ export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const { t } = useLocale();
+  useDocumentTitle(t('checkout.title'));
   const money = useMoney();
   const navigate = useNavigate();
 

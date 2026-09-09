@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 import AdminNav from '../../components/AdminNav';
 
 const ROLES = ['customer', 'staff', 'manager', 'admin'];
@@ -8,6 +9,7 @@ const NEW_USER_ROLES = ['staff', 'manager', 'admin'];
 const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
 
 export default function AdminUsers() {
+  const { error: toastError } = useToast();
   const { user } = useAuth();
   const isAdmin = user.role === 'admin';
 
@@ -56,7 +58,7 @@ export default function AdminUsers() {
       await client.patch(`/users/${id}/role`, { role });
       await load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update role');
+      toastError(err.response?.data?.error || 'Failed to update role');
     }
   }
 
@@ -65,7 +67,7 @@ export default function AdminUsers() {
       await client.patch(`/users/${u.id}/status`, { is_active: !u.is_active });
       await load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update status');
+      toastError(err.response?.data?.error || 'Failed to update status');
     }
   }
 

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 export default function NotFound() {
   const { t } = useLocale();
+  useDocumentTitle(t('notFound.title'));
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 md:py-44 text-center">
       <p className="font-display text-7xl md:text-9xl text-mist leading-none">404</p>

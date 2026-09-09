@@ -3,15 +3,19 @@ import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
 import { useMoney } from '../lib/price';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 export default function OrderDetail() {
   const { id } = useParams();
   const { t } = useLocale();
+  const { error: toastError } = useToast();
   const money = useMoney();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  useDocumentTitle(order ? t('orders.order', { id: order.id }) : t('orders.title'));
 
   const load = useCallback(() => {
     client
@@ -29,7 +33,7 @@ export default function OrderDetail() {
       const res = await client.post(`/orders/${id}/cancel`);
       setOrder(res.data);
     } catch (err) {
-      alert(err.response?.data?.error || t('checkout.fail'));
+      toastError(err.response?.data?.error || t('checkout.fail'));
     } finally {
       setCancelling(false);
     }

@@ -4,6 +4,7 @@ import client from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
 import { categoryLabel } from '../lib/i18n';
 import Reveal from '../components/Reveal';
 import ProductCard from '../components/ProductCard';
@@ -11,6 +12,7 @@ import ProductGallery from '../components/ProductGallery';
 import Button from '../components/Button';
 import { ProductDetailSkeleton } from '../components/Skeleton';
 import { useMoney, isDiscounted, discountPercent } from '../lib/price';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 function Accordion({ title, body, open, onToggle }) {
   return (
@@ -48,6 +50,8 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
   const { openCart } = useUI();
+  const { success } = useToast();
+  useDocumentTitle(product?.name);
 
   useEffect(() => {
     setProduct(null);
@@ -111,6 +115,7 @@ export default function ProductDetail() {
   function addToBag() {
     addItem(product, qty);
     setAdded(true);
+    success(t('cart.added'));
     setTimeout(() => {
       setAdded(false);
       openCart();

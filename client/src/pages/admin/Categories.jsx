@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import client from '../../api/client';
 import AdminNav from '../../components/AdminNav';
+import { useToast } from '../../context/ToastContext';
 
 const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
 
 export default function AdminCategories() {
+  const { error: toastError } = useToast();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,7 +46,7 @@ export default function AdminCategories() {
       setEditing(null);
       load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to rename');
+      toastError(err.response?.data?.error || 'Failed to rename');
     }
   }
 
@@ -54,7 +56,7 @@ export default function AdminCategories() {
       await client.delete(`/categories/${c.id}`);
       load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete');
+      toastError(err.response?.data?.error || 'Failed to delete');
     }
   }
 

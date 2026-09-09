@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import client from '../api/client';
 
 const CartContext = createContext(null);
 
@@ -48,11 +49,38 @@ export function CartProvider({ children }) {
     setItems([]);
   }
 
+  // Re-read live prices for the items in the cart (discounts can change / expire
+  // after something was added). Returns how many lines changed. The backend
+  // still recomputes everything at checkout — this only keeps the display honest.
+  const syncPrices = useCallback(async () => {
+    const ids = items.map((i) => i.id);
+    if (ids.length === 0) return 0;
+    try {
+      const { data } = await client.get('/products', {
+        params: { ids: ids.join(','), limit: ids.length },
+      });
+      const byId = new Map(data.items.map((p) => [p.id, p]));
+      let changed = 0;
+      const next = items.map((it) => {
+        const p = byId.get(it.id);
+        if (!p) return it;
+        const price = Number(p.final_price ?? p.price);
+        const original_price = Number(p.price);
+        if (price !== it.price || original_price !== it.original_price) changed += 1;
+        return { ...it, price, original_price };
+      });
+      if (changed) setItems(next);
+      return changed;
+    } catch {
+      return 0;
+    }
+  }, [items]);
+
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, updateQuantity, removeItem, clearCart, total }}
+      value={{ items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total }}
     >
       {children}
     </CartContext.Provider>

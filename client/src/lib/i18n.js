@@ -120,6 +120,8 @@ const en = {
   'cart.calcNote': 'Shipping and duties calculated at checkout.',
   'cart.checkout': 'Proceed to checkout',
   'cart.count': 'Your Bag ({n})',
+  'cart.pricesUpdated': 'Some prices in your bag have been updated.',
+  'cart.added': 'Added to your bag',
 
   // search
   'search.placeholder': 'What are you looking for?',
@@ -363,6 +365,8 @@ const mn = {
   'cart.calcNote': 'Хүргэлт болон татварыг төлбөрийн үед тооцно.',
   'cart.checkout': 'Төлбөр рүү шилжих',
   'cart.count': 'Таны сагс ({n})',
+  'cart.pricesUpdated': 'Сагсан дахь зарим үнэ шинэчлэгдлээ.',
+  'cart.added': 'Сагсанд нэмэгдлээ',
 
   'search.placeholder': 'Та юу хайж байна вэ?',
   'search.searching': 'Хайж байна…',

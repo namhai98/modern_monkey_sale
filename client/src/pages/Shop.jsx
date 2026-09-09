@@ -7,6 +7,7 @@ import ImageFallback from '../components/ImageFallback';
 import { media, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 const LIMIT = 15;
 const DEFAULT_SORT = 'created_at:desc';
@@ -129,6 +130,7 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
 /* ── "All" landing: pick a category, or search ────────────────── */
 function CategoryChooser({ categories }) {
   const { t, locale } = useLocale();
+  useDocumentTitle(t('shop.collection'));
   const navigate = useNavigate();
   const [q, setQ] = useState('');
 
@@ -309,6 +311,7 @@ function Listing({ categories }) {
     : sale && !category
     ? t('nav.sale')
     : t('shop.collection');
+  useDocumentTitle(heading);
   const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0);
   const controlProps = { t, locale, categories, category, brand, gender, sale, facets, patch };
 

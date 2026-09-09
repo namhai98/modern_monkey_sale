@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
 import { resizeUnsplash } from '../lib/media';
 import { useMoney } from '../lib/price';
 import Button from './Button';
@@ -11,10 +13,20 @@ import ImageFallback from './ImageFallback';
 // mid-animation the way a JS-animation-library drawer can.
 export default function CartDrawer() {
   const { cartOpen, closeCart } = useUI();
-  const { items, updateQuantity, removeItem, total } = useCart();
+  const { items, updateQuantity, removeItem, total, syncPrices } = useCart();
   const { t } = useLocale();
+  const { info } = useToast();
   const money = useMoney();
   const navigate = useNavigate();
+
+  // Refresh prices whenever the drawer opens — discounts may have changed.
+  useEffect(() => {
+    if (!cartOpen) return;
+    syncPrices().then((n) => {
+      if (n) info(t('cart.pricesUpdated'));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartOpen]);
 
   function go(path) {
     closeCart();

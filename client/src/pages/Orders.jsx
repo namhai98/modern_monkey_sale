@@ -4,10 +4,12 @@ import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
 import { useMoney } from '../lib/price';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Skeleton from '../components/Skeleton';
 
 export default function Orders() {
   const { t } = useLocale();
+  useDocumentTitle(t('orders.title'));
   const money = useMoney();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

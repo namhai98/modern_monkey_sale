@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import SiteFooter from './SiteFooter';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
+import ErrorBoundary from './ErrorBoundary';
 
 // Admin screens keep their own plain chrome — no marketing footer there.
 const HIDE_FOOTER = ['/admin', '/login', '/forgot-password', '/reset-password', '/checkout'];
@@ -23,7 +24,9 @@ export default function Layout({ children }) {
   return (
     <>
       <Navbar />
-      <main className={isHome ? '' : 'pt-16 md:pt-20 min-h-[60vh]'}>{children}</main>
+      <main className={isHome ? '' : 'pt-16 md:pt-20 min-h-[60vh]'}>
+        <ErrorBoundary key={location.key}>{children}</ErrorBoundary>
+      </main>
       {!hideFooter && <SiteFooter flush={isHome} />}
       <CartDrawer />
       <SearchOverlay />

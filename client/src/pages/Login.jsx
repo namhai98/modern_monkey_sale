@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
 
 function safeRedirect(target) {
@@ -16,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState(null);
   const { login, register } = useAuth();
   const { t } = useLocale();
+  useDocumentTitle(t('login.signIn'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = safeRedirect(searchParams.get('redirect'));
