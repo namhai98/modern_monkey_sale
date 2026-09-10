@@ -31,7 +31,7 @@ export default function Cart() {
       {items.length === 0 ? (
         <p className="text-stone">
           {t('cart.empty')}{' '}
-          <Link to="/shop" className="link-underline text-ink">{t('cart.continue')}</Link>.
+          <Link to="/shop?all=1" className="link-underline text-ink">{t('cart.continue')}</Link>.
         </p>
       ) : (
         <>

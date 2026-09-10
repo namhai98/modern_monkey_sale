@@ -23,6 +23,15 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Brand registry (see migration 011) — a managed list, like categories,
+-- rather than free-typed text on each product.
+CREATE TABLE IF NOT EXISTS brands (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL UNIQUE,
+  slug VARCHAR(140) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -31,7 +40,8 @@ CREATE TABLE IF NOT EXISTS products (
   image_url VARCHAR(500),
   category_id INTEGER REFERENCES categories(id),
   sku VARCHAR(60) UNIQUE,
-  brand VARCHAR(120),
+  brand VARCHAR(120),          -- legacy free text, superseded by brand_id
+  brand_id INTEGER REFERENCES brands(id),
   gender VARCHAR(16) CHECK (gender IN ('women', 'men', 'unisex')),
   stock INTEGER NOT NULL DEFAULT 0,
   low_stock_threshold INTEGER NOT NULL DEFAULT 0,
@@ -39,6 +49,7 @@ CREATE TABLE IF NOT EXISTS products (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_products_brand_id ON products (brand_id);
 
 CREATE TABLE IF NOT EXISTS product_images (
   id SERIAL PRIMARY KEY,
@@ -242,3 +253,16 @@ WHERE c.id = p.category_id AND (p.brand IS NULL OR p.brand = '');
 UPDATE products
 SET gender = (ARRAY['women', 'men', 'unisex'])[(id % 3) + 1]
 WHERE gender IS NULL;
+
+-- Register every brand name now in use, then point each product at its row.
+INSERT INTO brands (name, slug)
+SELECT DISTINCT p.brand,
+       lower(regexp_replace(regexp_replace(trim(p.brand), '[^a-zA-Z0-9]+', '-', 'g'), '^-+|-+$', '', 'g'))
+FROM products p
+WHERE p.brand IS NOT NULL AND p.brand <> ''
+ON CONFLICT (name) DO NOTHING;
+
+UPDATE products p
+SET brand_id = b.id
+FROM brands b
+WHERE b.name = p.brand AND p.brand_id IS NULL;

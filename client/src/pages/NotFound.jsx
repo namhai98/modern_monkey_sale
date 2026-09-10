@@ -12,7 +12,7 @@ export default function NotFound() {
       <p className="text-stone text-sm mt-4 max-w-md mx-auto">{t('notFound.body')}</p>
       <div className="mt-10 flex items-center justify-center gap-8">
         <Link to="/" className="eyebrow link-underline">{t('notFound.home')}</Link>
-        <Link to="/shop" className="eyebrow link-underline">{t('notFound.shop')}</Link>
+        <Link to="/shop?all=1" className="eyebrow link-underline">{t('notFound.shop')}</Link>
       </div>
     </div>
   );

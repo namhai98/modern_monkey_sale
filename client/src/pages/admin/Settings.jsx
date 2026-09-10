@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import client from '../../api/client';
-import AdminNav from '../../components/AdminNav';
+import { useLocale } from '../../context/LocaleContext';
 
-const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
+const inputCls =
+  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
+  'focus:outline-none focus:border-champagne transition-colors';
+const btnPrimary =
+  'bg-ink text-canvas border border-ink px-4 py-2 text-sm transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50';
 const fmtMnt = (n) => `${(Math.floor(n / 1000) * 1000).toLocaleString('en-US')}₮`;
 
 export default function AdminSettings() {
+  const { t } = useLocale();
   const [rate, setRate] = useState('');
   const [current, setCurrent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +27,7 @@ export default function AdminSettings() {
         setRate(res.data.mnt_rate != null ? String(res.data.mnt_rate) : '');
         setError(null);
       })
-      .catch(() => setError('Failed to load settings'))
+      .catch(() => setError(t('admin.settings.loadFailed')))
       .finally(() => setLoading(false));
   }
 
@@ -38,9 +43,9 @@ export default function AdminSettings() {
     try {
       const res = await client.patch('/settings', { mnt_rate: Number(rate) });
       setCurrent(res.data);
-      setMsg('Saved');
+      setMsg(t('admin.settings.saved'));
     } catch (err) {
-      setError(err.response?.data?.error || 'Save failed');
+      setError(err.response?.data?.error || t('admin.settings.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -49,22 +54,20 @@ export default function AdminSettings() {
   const preview = Number(rate) > 0 ? fmtMnt(1450.9 * Number(rate)) : null;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
-      <AdminNav />
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Settings</h1>
+    <div className="max-w-3xl mx-auto pb-8">
+      <h1 className="font-display text-2xl text-ink mb-6">{t('admin.settings.title')}</h1>
 
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-stone">{t('admin.settings.loading')}</p>
       ) : (
-        <div className="max-w-md">
-          <p className="text-sm font-medium text-gray-800">Tögrög exchange rate</p>
-          <p className="text-sm text-gray-600 mt-1 mb-3">
-            How many ₮ per $1. Shoppers who switch the site to Mongolian see prices converted with
-            this rate and rounded down to the nearest thousand tögrög.
+        <div className="max-w-md border border-line bg-ivory p-6">
+          <p className="text-sm font-medium text-ink">{t('admin.settings.rateTitle')}</p>
+          <p className="text-sm text-stone mt-1 mb-4 leading-relaxed">
+            {t('admin.settings.rateBody')}
           </p>
 
           <form onSubmit={save} className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">$1 =</span>
+            <span className="text-sm text-stone">$1 =</span>
             <input
               className={`${inputCls} w-32`}
               type="number"
@@ -74,27 +77,24 @@ export default function AdminSettings() {
               onChange={(e) => setRate(e.target.value)}
               required
             />
-            <span className="text-sm text-gray-500">₮</span>
-            <button
-              className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-50"
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save'}
+            <span className="text-sm text-stone">₮</span>
+            <button className={btnPrimary} disabled={saving}>
+              {saving ? t('admin.settings.saving') : t('admin.settings.save')}
             </button>
           </form>
 
           {preview && (
-            <p className="text-xs text-gray-500 mt-3">
-              Preview — a $1,450.90 item shows as <span className="text-gray-800">{preview}</span>
+            <p className="text-xs text-stone mt-4">
+              {t('admin.settings.preview', { value: preview })}
             </p>
           )}
           {current?.updated_at && (
-            <p className="text-xs text-gray-400 mt-1">
-              Last updated {new Date(current.updated_at).toLocaleString()}
+            <p className="text-xs text-stone/70 mt-1">
+              {t('admin.settings.lastUpdated', { date: new Date(current.updated_at).toLocaleString() })}
             </p>
           )}
-          {msg && <p className="text-green-600 text-sm mt-2">{msg}</p>}
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {msg && <p className="text-green-400 text-sm mt-3">{msg}</p>}
+          {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
         </div>
       )}
     </div>

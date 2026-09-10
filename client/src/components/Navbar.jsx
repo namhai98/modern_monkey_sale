@@ -4,7 +4,9 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
+import { useTheme } from '../context/ThemeContext';
 import LangSwitch from './LangSwitch';
+import ThemeToggle from './ThemeToggle';
 
 const STAFF_ROLES = ['staff', 'manager', 'admin'];
 const CATEGORY_SLUGS = [
@@ -76,6 +78,7 @@ export default function Navbar() {
   const { user } = useAuth();
   const { openCart, openSearch } = useUI();
   const { t } = useLocale();
+  const { theme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const count = items.reduce((n, i) => n + i.quantity, 0);
@@ -134,7 +137,7 @@ export default function Navbar() {
                 {c.label}
               </Link>
             ))}
-            <Link to="/shop" className="eyebrow link-underline">{t('nav.all')}</Link>
+            <Link to="/shop?all=1" className="eyebrow link-underline">{t('nav.all')}</Link>
             <Link to="/shop?sale=1" className="eyebrow link-underline text-champagne">{t('nav.sale')}</Link>
           </div>
         </div>
@@ -142,14 +145,20 @@ export default function Navbar() {
         {/* center: wordmark */}
         <Link
           to="/"
-          className="font-display text-sm sm:text-lg md:text-2xl tracking-[0.15em] sm:tracking-[0.3em] md:tracking-[0.45em] uppercase whitespace-nowrap shrink-0"
+          className="flex items-center gap-2 sm:gap-3 font-display text-sm sm:text-lg md:text-2xl tracking-[0.15em] sm:tracking-[0.3em] md:tracking-[0.45em] uppercase whitespace-nowrap shrink-0"
         >
+          <img
+            src={theme === 'light' ? '/favicon-mark.png' : '/home/logo-mark-white.png'}
+            alt=""
+            className="h-5 w-5 sm:h-7 sm:w-7 md:h-8 md:w-8 shrink-0"
+          />
           Modern&nbsp;Monkey
         </Link>
 
         {/* right: lang / search / account / bag */}
         <div className="flex-1 min-w-0 flex items-center justify-end gap-4 sm:gap-6">
           <LangSwitch className="hidden md:flex" />
+          <ThemeToggle className="hidden md:flex" />
           <button onClick={openSearch} className="eyebrow link-underline hidden sm:inline">
             {t('nav.search')}
           </button>
@@ -173,7 +182,7 @@ export default function Navbar() {
                 {c.label}
               </Link>
             ))}
-            <Link to="/shop" className="font-display text-3xl">{t('nav.all')}</Link>
+            <Link to="/shop?all=1" className="font-display text-3xl">{t('nav.all')}</Link>
             <Link to="/shop?sale=1" className="font-display text-3xl text-champagne">{t('nav.sale')}</Link>
             <button
               onClick={() => { setMenuOpen(false); openSearch(); }}
@@ -191,7 +200,10 @@ export default function Navbar() {
               ) : (
                 <button onClick={() => navigate('/login')} className="text-left">{t('nav.login')}</button>
               )}
-              <LangSwitch className="pt-2" />
+              <div className="flex items-center gap-6 pt-2">
+                <LangSwitch />
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>

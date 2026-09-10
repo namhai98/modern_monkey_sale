@@ -7,15 +7,28 @@ import { homeMedia, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 
 /* ────────────────────────────────────────────────────────────────
-   Home-only art direction: light cream luxury editorial —
-   warm ivory grounds, near-black serif type, a single gold accent.
-   Scoped entirely to this file.
+   Home-only art direction — dark or light luxury editorial, whichever
+   the shopper has chosen (see ThemeContext). Every colour below is a
+   CSS custom property, so it repaints on its own when the `.light`
+   class toggles; nothing here needs to know which theme is active.
    ──────────────────────────────────────────────────────────────── */
-const PAPER = '#f3eee2'; // warm cream ground
-const STRIP = '#f9f6ee'; // slightly lighter — product rows
-const INK = '#1b1712'; // near-black
-const GOLD = '#c19a3f';
-const DIM = 'rgba(27,23,18,.68)'; // secondary text
+const PAPER = 'var(--canvas)'; // page ground
+const STRIP = 'var(--ivory)'; // slightly lifted — product rows
+const INK = 'var(--ink)'; // primary text
+const GOLD = 'var(--champagne)';
+const DIM = 'var(--stone)'; // secondary text
+
+// A veil that fades a photo into the page's own ground colour, at the given
+// opacity stops — used instead of a hardcoded dark gradient so it inverts
+// correctly on the light theme too.
+const veil = (stops) =>
+  `linear-gradient(90deg, ${stops
+    .map(([pct, op]) => `color-mix(in srgb, var(--canvas) ${op * 100}%, transparent) ${pct}%`)
+    .join(', ')})`;
+const spotlight = (stops) =>
+  `radial-gradient(closest-side at 50% 52%, ${stops
+    .map(([pct, op]) => `color-mix(in srgb, var(--canvas) ${op * 100}%, transparent) ${pct}%`)
+    .join(', ')})`;
 
 // campaign shots keep their colour; stock band imagery is softened + lifted so
 // it sits inside the cream world
@@ -35,13 +48,10 @@ function Hero() {
         style={{ filter: PHOTO }}
         className="absolute inset-0 h-full w-full object-cover motion-safe:animate-[fadeIn_1.6s_ease-out]"
       />
-      {/* cream veil on the left for the copy */}
+      {/* veil on the left for the copy, faded into the page's own ground */}
       <div
         className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(90deg, rgba(243,238,226,.95) 0%, rgba(243,238,226,.55) 40%, rgba(243,238,226,0) 66%)',
-        }}
+        style={{ background: veil([[0, 0.95], [40, 0.55], [66, 0]]) }}
       />
 
       <div className="relative h-full max-w-6xl mx-auto px-6 flex flex-col justify-center items-start text-left">
@@ -66,7 +76,7 @@ function Hero() {
         </p>
         <div className="fade-up" style={{ animationDelay: '0.9s' }}>
           <Link
-            to="/shop"
+            to="/shop?all=1"
             className="mt-10 inline-flex h-12 items-center justify-center px-10 eyebrow transition-colors"
             style={{ background: GOLD, color: '#fff' }}
             onMouseEnter={(e) => {
@@ -89,7 +99,7 @@ function Hero() {
 function Editorial() {
   const { t } = useLocale();
   return (
-    <section style={{ background: PAPER, color: INK }}>
+    <section style={{ color: INK }}>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 md:gap-16 items-center">
         <Reveal>
           <img
@@ -108,7 +118,7 @@ function Editorial() {
             {t('home.house.body')}
           </p>
           <Link
-            to="/shop"
+            to="/shop?all=1"
             className="inline-block mt-8 eyebrow link-underline"
             style={{ color: GOLD }}
           >
@@ -144,7 +154,7 @@ function CategoryBands() {
   ];
 
   return (
-    <section style={{ background: PAPER }}>
+    <section>
       {bands.map((b, i) => (
         <div key={b.slug}>
           <Reveal as="div">
@@ -158,13 +168,10 @@ function CategoryBands() {
                 style={{ filter: b.grade }}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
               />
-              {/* soft cream spotlight so the centred label stays legible */}
+              {/* soft spotlight so the centred label stays legible */}
               <div
                 className="absolute inset-0"
-                style={{
-                  background:
-                    'radial-gradient(closest-side at 50% 52%, rgba(243,238,226,.9), rgba(243,238,226,.25) 78%, rgba(243,238,226,.05))',
-                }}
+                style={{ background: spotlight([[0, 0.9], [78, 0.25], [100, 0.05]]) }}
               />
               <div
                 className="relative h-full flex flex-col items-center justify-center"
@@ -225,7 +232,7 @@ function Featured() {
 
   if (items.length === 0) return null;
   return (
-    <section style={{ background: PAPER }}>
+    <section>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
         <Reveal className="text-center mb-12 md:mb-16">
           <p className="eyebrow" style={{ color: GOLD }}>{t('home.featured.eyebrow')}</p>
@@ -257,10 +264,7 @@ function Atelier() {
       />
       <div
         className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(90deg, rgba(243,238,226,.94) 0%, rgba(243,238,226,.5) 42%, rgba(243,238,226,0) 66%)',
-        }}
+        style={{ background: veil([[0, 0.94], [42, 0.5], [66, 0]]) }}
       />
       <Reveal className="absolute inset-0">
         <div className="h-full max-w-6xl mx-auto px-6 flex flex-col justify-center items-start text-left">
@@ -279,7 +283,7 @@ function Atelier() {
 
 export default function Home() {
   return (
-    <div style={{ background: PAPER }}>
+    <div>
       <Hero />
       <Editorial />
       <CategoryBands />

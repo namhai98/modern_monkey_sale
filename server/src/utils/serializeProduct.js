@@ -38,7 +38,9 @@ export function serializeProduct(row) {
     image_url: row.image_url || images[0]?.card || images[0]?.detail || '',
     images,
     sku: row.sku || null,
-    brand: row.brand || null,
+    brand: row.brand_id
+      ? { id: row.brand_id, name: row.brand_name, slug: row.brand_slug }
+      : null,
     gender: row.gender || null,
     has_variants: hasVariants,
     variants,

@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
 import userRoutes from './routes/users.js';
 import categoryRoutes from './routes/categories.js';
+import brandRoutes from './routes/brands.js';
 import discountRoutes from './routes/discounts.js';
 import settingsRoutes from './routes/settings.js';
 import { rateLimit } from './middleware/rateLimit.js';
@@ -68,6 +69,7 @@ app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/brands', brandRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', authRoutes);

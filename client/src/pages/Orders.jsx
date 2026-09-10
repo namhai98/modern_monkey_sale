@@ -42,7 +42,7 @@ export default function Orders() {
 
       {!loading && orders.length === 0 && (
         <p className="text-stone">
-          {t('orders.none')} <Link to="/shop" className="link-underline text-ink">{t('orders.start')}</Link>.
+          {t('orders.none')} <Link to="/shop?all=1" className="link-underline text-ink">{t('orders.start')}</Link>.
         </p>
       )}
 

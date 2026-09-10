@@ -18,6 +18,7 @@ const GENDERS = ['women', 'men', 'unisex'];
 // the product — the one leaving the customer paying the least.
 const SELECT_BASE = `
   SELECT p.*, c.name AS category_name, c.slug AS category_slug,
+         br.name AS brand_name, br.slug AS brand_slug,
          COALESCE(
            (SELECT jsonb_agg(to_jsonb(pi) ORDER BY pi.sort_order, pi.id)
             FROM product_images pi WHERE pi.product_id = p.id),
@@ -32,6 +33,7 @@ const SELECT_BASE = `
          CASE WHEN disc.id IS NULL THEN NULL ELSE to_jsonb(disc) END AS discount
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id
+  LEFT JOIN brands br ON br.id = p.brand_id
   LEFT JOIN LATERAL (
     SELECT d.id, d.name, d.type, d.value
     FROM discounts d
@@ -65,10 +67,8 @@ function validateProductInput(body, { partial }) {
   if (has('is_active') && typeof body.is_active !== 'boolean') {
     errs.push('is_active must be a boolean');
   }
-  if (has('brand') && body.brand !== null) {
-    if (typeof body.brand !== 'string' || body.brand.length > 120) {
-      errs.push('brand must be a string of at most 120 characters');
-    }
+  if (has('brand_id') && body.brand_id !== null && !Number.isInteger(body.brand_id)) {
+    errs.push('brand_id must be an integer');
   }
   if (has('gender') && body.gender !== null && body.gender !== '') {
     if (!GENDERS.includes(body.gender)) errs.push(`gender must be one of: ${GENDERS.join(', ')}`);
@@ -93,7 +93,7 @@ export async function listProducts(req, res) {
     if (req.query.search) {
       params.push(`%${req.query.search}%`);
       const s = `$${params.length}`;
-      where.push(`(p.name ILIKE ${s} OR p.brand ILIKE ${s} OR p.sku ILIKE ${s})`);
+      where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
     }
     if (req.query.category) {
       const cat = String(req.query.category);
@@ -110,8 +110,9 @@ export async function listProducts(req, res) {
       where.push(`p.id = ANY($${params.length})`);
     }
     if (req.query.brand) {
-      params.push(String(req.query.brand));
-      where.push(`p.brand = $${params.length}`);
+      const b = String(req.query.brand);
+      params.push(/^\d+$/.test(b) ? Number(b) : b);
+      where.push(/^\d+$/.test(b) ? `p.brand_id = $${params.length}` : `br.slug = $${params.length}`);
     }
     if (req.query.gender) {
       params.push(String(req.query.gender));
@@ -140,7 +141,8 @@ export async function listProducts(req, res) {
 
     const countRes = await query(
       `SELECT COUNT(*)::int AS total FROM products p
-       LEFT JOIN categories c ON c.id = p.category_id ${whereSql}`,
+       LEFT JOIN categories c ON c.id = p.category_id
+       LEFT JOIN brands br ON br.id = p.brand_id ${whereSql}`,
       params
     );
     const itemsRes = await query(
@@ -176,7 +178,7 @@ export async function listProductFacets(req, res) {
     if (req.query.search) {
       params.push(`%${req.query.search}%`);
       const s = `$${params.length}`;
-      where.push(`(p.name ILIKE ${s} OR p.brand ILIKE ${s} OR p.sku ILIKE ${s})`);
+      where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
     }
     if (req.query.on_sale === '1') {
       where.push(`EXISTS (
@@ -188,12 +190,14 @@ export async function listProductFacets(req, res) {
       )`);
     }
     const whereSql = `WHERE ${where.join(' AND ')}`;
-    const base = `FROM products p LEFT JOIN categories c ON c.id = p.category_id ${whereSql}`;
+    const base = `FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id
+       LEFT JOIN brands br ON br.id = p.brand_id ${whereSql}`;
 
     const brands = await query(
-      `SELECT p.brand AS value, COUNT(*)::int AS count ${base}
-         AND p.brand IS NOT NULL AND p.brand <> ''
-       GROUP BY p.brand ORDER BY p.brand`,
+      `SELECT br.id, br.name, br.slug, COUNT(*)::int AS count ${base}
+         AND br.id IS NOT NULL
+       GROUP BY br.id, br.name, br.slug ORDER BY br.name`,
       params
     );
     const genders = await query(
@@ -241,6 +245,12 @@ export async function createProduct(req, res) {
         return res.status(400).json({ error: 'Unknown category_id', code: 'VALIDATION_ERROR' });
       }
     }
+    if (b.brand_id != null) {
+      const br = await client.query('SELECT id FROM brands WHERE id = $1', [b.brand_id]);
+      if (br.rows.length === 0) {
+        return res.status(400).json({ error: 'Unknown brand_id', code: 'VALIDATION_ERROR' });
+      }
+    }
 
     const stock = isNonNegativeInt(b.stock) ? b.stock : 0;
     const threshold = isNonNegativeInt(b.low_stock_threshold) ? b.low_stock_threshold : 0;
@@ -251,7 +261,7 @@ export async function createProduct(req, res) {
       // image_url starts empty; the first image upload sets it (see productImageController.syncPrimary)
       const ins = await client.query(
         `INSERT INTO products
-           (name, description, price, image_url, category_id, sku, stock, low_stock_threshold, brand, gender)
+           (name, description, price, image_url, category_id, sku, stock, low_stock_threshold, brand_id, gender)
          VALUES ($1, $2, $3, '', $4, $5, $6, $7, $8, $9) RETURNING id`,
         [
           b.name.trim(),
@@ -261,7 +271,7 @@ export async function createProduct(req, res) {
           (b.sku && String(b.sku).trim()) || null,
           stock,
           threshold,
-          (b.brand && String(b.brand).trim()) || null,
+          b.brand_id ?? null,
           b.gender || null,
         ]
       );
@@ -306,6 +316,12 @@ export async function updateProduct(req, res) {
         return res.status(400).json({ error: 'Unknown category_id', code: 'VALIDATION_ERROR' });
       }
     }
+    if (b.brand_id != null) {
+      const br = await query('SELECT id FROM brands WHERE id = $1', [b.brand_id]);
+      if (br.rows.length === 0) {
+        return res.status(400).json({ error: 'Unknown brand_id', code: 'VALIDATION_ERROR' });
+      }
+    }
 
     const sets = [];
     const params = [];
@@ -319,7 +335,7 @@ export async function updateProduct(req, res) {
     if (b.price !== undefined) put('price', b.price);
     if (b.category_id !== undefined) put('category_id', b.category_id);
     if (b.sku !== undefined) put('sku', (b.sku && String(b.sku).trim()) || null);
-    if (b.brand !== undefined) put('brand', (b.brand && String(b.brand).trim()) || null);
+    if (b.brand_id !== undefined) put('brand_id', b.brand_id);
     if (b.gender !== undefined) put('gender', b.gender || null);
     if (b.low_stock_threshold !== undefined) put('low_stock_threshold', b.low_stock_threshold);
     if (b.is_active !== undefined) put('is_active', b.is_active);

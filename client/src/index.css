@@ -1,21 +1,54 @@
 @import "tailwindcss";
 
-@theme {
-  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
-  --font-sans: "Jost", ui-sans-serif, system-ui, -apple-system, sans-serif;
+/* Two themes, dark by default. `@theme inline` makes every color utility
+   (bg-canvas, text-ink, border-line, …) resolve through the plain custom
+   properties below, so toggling the `.light` class on <html> re-themes the
+   whole site with no per-component changes — only the values in :root/.light
+   need to differ. */
+@theme inline {
+  --font-display: "Playfair Display", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  --color-canvas: #fbfaf7;
-  --color-ivory: #f4f1ea;
-  --color-mist: #e7e2d8;
-  --color-ink: #17140f;
-  --color-charcoal: #2c2822;
-  --color-stone: #8a8378;
-  --color-line: #d9d3c7;
-  /* Restrained accent — muted champagne. Used only for small signals
+  --color-canvas: var(--canvas);
+  --color-ivory: var(--ivory);
+  --color-mist: var(--mist);
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-stone: var(--stone);
+  --color-line: var(--line);
+  /* Restrained accent — gold. Used only for small signals
      (focus ring, active language, cart count, low-stock), never for surfaces. */
-  --color-champagne: #b6a074;
+  --color-champagne: var(--champagne);
 
   --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  --canvas: #0a0a0a;
+  --ivory: #121210;
+  --mist: #17150f;
+  --ink: #f3efe6;
+  --charcoal: #d9d3c7;
+  --stone: #9a958a;
+  --line: rgba(243, 239, 230, 0.14);
+  --champagne: #c8a24a;
+  --glow-1: rgba(200, 162, 74, 0.07);
+  --glow-2: rgba(200, 162, 74, 0.05);
+  --vignette: #141310;
+}
+
+.light {
+  --canvas: #fbfaf7;
+  --ivory: #f4f1ea;
+  --mist: #e7e2d8;
+  --ink: #17140f;
+  --charcoal: #2c2822;
+  --stone: #8a8378;
+  --line: rgba(23, 20, 15, 0.12);
+  --champagne: #a67c2e;
+  --glow-1: rgba(166, 124, 46, 0.06);
+  --glow-2: rgba(166, 124, 46, 0.04);
+  --vignette: #fffdf8;
 }
 
 @layer base {
@@ -27,7 +60,17 @@
 
   body {
     margin: 0;
-    background: var(--color-canvas);
+    /* Flat black read as lifeless — a faint top vignette plus two very soft,
+       low-opacity gold glows (never bright enough to compete with content)
+       give the canvas some depth. Fixed so it reads as one ambient backdrop
+       behind every page rather than repeating per section on scroll. */
+    background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(46% 36% at 88% 4%, var(--glow-1), transparent 70%),
+      radial-gradient(42% 34% at 6% 96%, var(--glow-2), transparent 70%),
+      radial-gradient(100% 55% at 50% -12%, var(--vignette) 0%, transparent 70%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 300;
@@ -49,6 +92,18 @@
   :focus-visible {
     outline: 2px solid var(--color-champagne);
     outline-offset: 3px;
+  }
+
+  /* <input type="date">'s calendar-picker icon ignores color/text utilities —
+     the browser always renders it black. Invert it on the dark theme so it
+     reads against the field; the light theme's fields are light already, so
+     the native black icon is left alone. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+  }
+  .light input[type='date']::-webkit-calendar-picker-indicator {
+    filter: none;
   }
 
   /* Thin, letter-spaced eyebrow / label text — "N E W   A R R I V A L S" */
@@ -84,6 +139,16 @@
 }
 .fade-up {
   animation: fadeUp 0.9s var(--ease-luxe) both;
+}
+
+/* Quick, small-travel entrance for popovers (custom dropdowns, menus) —
+   distinct from .fade-up, which is tuned for page content, not UI chrome. */
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.drop-in {
+  animation: dropIn 0.16s var(--ease-luxe) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

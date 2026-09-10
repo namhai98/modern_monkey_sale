@@ -1,10 +1,17 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import client from '../../api/client';
-import AdminNav from '../../components/AdminNav';
 import ImageFallback from '../../components/ImageFallback';
+import Select from '../../components/Select';
+import Icon from '../../components/Icon';
 import { useToast } from '../../context/ToastContext';
+import { useLocale } from '../../context/LocaleContext';
 
-const inputCls = 'border border-gray-300 rounded-md px-3 py-2 text-sm';
+const inputCls =
+  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
+  'focus:outline-none focus:border-champagne transition-colors';
+const btnPrimary =
+  'bg-ink text-canvas border border-ink px-4 py-2 text-sm transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50';
+const btnGhost = 'px-4 py-2 text-sm text-stone transition-colors hover:text-ink';
 const MAX_IMAGES = 5;
 const emptyForm = {
   name: '',
@@ -12,7 +19,7 @@ const emptyForm = {
   price: '',
   category_id: '',
   sku: '',
-  brand: '',
+  brand_id: '',
   gender: '',
   low_stock_threshold: 0,
 };
@@ -23,6 +30,7 @@ function kb(bytes) {
 
 // Talks to /api/products/:id/images — upload, delete, reorder, set primary.
 function ProductImageManager({ productId, images: initialImages }) {
+  const { t } = useLocale();
   const [images, setImages] = useState(initialImages || []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -34,7 +42,7 @@ function ProductImageManager({ productId, images: initialImages }) {
       const res = await fn();
       setImages(res.data.images);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || t('admin.images.error'));
     } finally {
       setBusy(false);
     }
@@ -56,46 +64,45 @@ function ProductImageManager({ productId, images: initialImages }) {
   }
 
   return (
-    <div className="md:col-span-2 border-t border-gray-100 pt-3">
-      <p className="text-xs text-gray-500 mb-2">
-        Images ({images.length}/{MAX_IMAGES}) — the first is the primary image. JPG or PNG, up to 10&nbsp;MB;
-        stored as optimised WebP.
+    <div className="md:col-span-2 border-t border-line pt-3">
+      <p className="text-xs text-stone mb-2">
+        {t('admin.images.count', { n: images.length, max: MAX_IMAGES })}
       </p>
 
       {images.length > 0 && (
         <div className="flex flex-wrap gap-3 mb-3">
           {images.map((im, i) => (
-            <div key={im.id} className="w-24 text-[11px] text-gray-500">
+            <div key={im.id} className="w-24 text-[11px] text-stone">
               <div className="relative">
                 <ImageFallback
                   src={im.thumbnail}
                   alt=""
-                  className={`h-28 w-24 object-cover rounded border ${
-                    i === 0 ? 'border-gray-900' : 'border-gray-200'
+                  className={`h-28 w-24 object-cover border ${
+                    i === 0 ? 'border-champagne' : 'border-line'
                   }`}
                 />
                 {i === 0 && (
-                  <span className="absolute top-1 left-1 bg-gray-900 text-white px-1 rounded text-[10px]">
-                    Primary
+                  <span className="absolute top-1 left-1 bg-ink text-canvas px-1 text-[10px]">
+                    {t('admin.images.primary')}
                   </span>
                 )}
               </div>
               <div className="flex justify-between mt-1">
                 <button type="button" disabled={busy || i === 0} onClick={() => move(i, -1)}
-                  className="px-1 disabled:opacity-30">←</button>
+                  className="px-1 text-ink disabled:opacity-30">←</button>
                 {i !== 0 && (
                   <button type="button" disabled={busy}
                     onClick={() => run(() => client.patch(`/products/${productId}/images/${im.id}/primary`))}
-                    className="hover:underline">Set primary</button>
+                    className="text-ink hover:text-champagne">{t('admin.images.setPrimary')}</button>
                 )}
                 <button type="button" disabled={busy || i === images.length - 1} onClick={() => move(i, 1)}
-                  className="px-1 disabled:opacity-30">→</button>
+                  className="px-1 text-ink disabled:opacity-30">→</button>
               </div>
               <div className="flex justify-between mt-0.5">
                 <span>{im.width && im.height ? `${im.width}×${im.height}` : ''}</span>
                 <button type="button" disabled={busy}
                   onClick={() => run(() => client.delete(`/products/${productId}/images/${im.id}`))}
-                  className="text-red-500 hover:underline">Delete</button>
+                  className="text-red-400 hover:underline">{t('admin.images.delete')}</button>
               </div>
               {im.file_size ? <div>{kb(im.file_size)}</div> : null}
             </div>
@@ -104,19 +111,20 @@ function ProductImageManager({ productId, images: initialImages }) {
       )}
 
       {images.length < MAX_IMAGES && (
-        <label className="inline-block text-sm text-gray-600 cursor-pointer border border-gray-300 rounded-md px-3 py-2 hover:bg-gray-50">
-          {busy ? 'Working…' : 'Upload image'}
+        <label className="inline-block text-sm text-stone cursor-pointer border border-line px-3 py-2 transition-colors hover:bg-ivory hover:text-ink">
+          {busy ? t('admin.images.working') : t('admin.images.upload')}
           <input type="file" accept="image/jpeg,image/png" className="hidden" disabled={busy}
             onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
       )}
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
     </div>
   );
 }
 
 // Talks to /api/products/:id/variants — add / edit stock / delete size runs.
 function ProductVariantManager({ productId, variants: initial }) {
+  const { t } = useLocale();
   const [variants, setVariants] = useState(initial || []);
   const [draft, setDraft] = useState({ label: '', sku: '', stock: 0 });
   const [busy, setBusy] = useState(false);
@@ -129,7 +137,7 @@ function ProductVariantManager({ productId, variants: initial }) {
       const res = await fn();
       setVariants(res.data.variants);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || t('admin.variants.error'));
     } finally {
       setBusy(false);
     }
@@ -150,26 +158,23 @@ function ProductVariantManager({ productId, variants: initial }) {
   const setStock = (v, stock) => run(() => client.patch(`/products/${productId}/variants/${v.id}`, { stock }));
 
   return (
-    <div className="md:col-span-2 border-t border-gray-100 pt-3">
-      <p className="text-xs text-gray-500 mb-2">
-        Sizes — leave empty for a one-size product. When sizes exist, stock is tracked per size and the
-        shopper must pick one.
-      </p>
+    <div className="md:col-span-2 border-t border-line pt-3">
+      <p className="text-xs text-stone mb-2">{t('admin.variants.hint')}</p>
 
       {variants.length > 0 && (
         <table className="w-full text-sm mb-3">
           <thead>
-            <tr className="text-left text-gray-400 text-xs">
-              <th className="py-1">Size</th><th className="py-1">SKU</th>
-              <th className="py-1 w-28">Stock</th><th className="py-1"></th>
+            <tr className="text-left eyebrow text-stone">
+              <th className="py-1 font-normal">{t('admin.variants.size')}</th><th className="py-1 font-normal">{t('admin.variants.sku')}</th>
+              <th className="py-1 w-28 font-normal">{t('admin.variants.stock')}</th><th className="py-1"></th>
             </tr>
           </thead>
           <tbody>
             {variants.map((v) => (
-              <tr key={v.id} className="border-t border-gray-50">
-                <td className="py-1 font-medium">{v.label}</td>
-                <td className="py-1 text-gray-500">{v.sku || '—'}</td>
-                <td className="py-1">
+              <tr key={v.id} className="border-t border-line/60">
+                <td className="py-1.5 font-medium text-ink">{v.label}</td>
+                <td className="py-1.5 text-stone">{v.sku || '—'}</td>
+                <td className="py-1.5">
                   <input
                     type="number"
                     min="0"
@@ -179,17 +184,17 @@ function ProductVariantManager({ productId, variants: initial }) {
                       const n = Number(e.target.value);
                       if (Number.isInteger(n) && n >= 0 && n !== v.stock) setStock(v, n);
                     }}
-                    className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
+                    className="border border-line bg-transparent px-2 py-1 w-20 text-sm text-ink focus:outline-none focus:border-champagne"
                   />
                 </td>
-                <td className="py-1 text-right">
+                <td className="py-1.5 text-right">
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => run(() => client.delete(`/products/${productId}/variants/${v.id}`))}
-                    className="text-red-500 hover:underline text-xs"
+                    className="text-red-400 hover:underline text-xs"
                   >
-                    Delete
+                    {t('admin.variants.delete')}
                   </button>
                 </td>
               </tr>
@@ -201,13 +206,13 @@ function ProductVariantManager({ productId, variants: initial }) {
       <form onSubmit={add} className="flex flex-wrap items-center gap-2">
         <input
           className={`${inputCls} w-24`}
-          placeholder="Size"
+          placeholder={t('admin.variants.sizePlaceholder')}
           value={draft.label}
           onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
         />
         <input
           className={`${inputCls} w-40`}
-          placeholder="SKU (optional)"
+          placeholder={t('admin.variants.skuPlaceholder')}
           value={draft.sku}
           onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))}
         />
@@ -215,23 +220,21 @@ function ProductVariantManager({ productId, variants: initial }) {
           className={`${inputCls} w-20`}
           type="number"
           min="0"
-          placeholder="Stock"
+          placeholder={t('admin.variants.stockPlaceholder')}
           value={draft.stock}
           onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))}
         />
-        <button
-          className="bg-gray-900 text-white px-3 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-50"
-          disabled={busy}
-        >
-          Add size
+        <button className={btnPrimary} disabled={busy}>
+          {t('admin.variants.add')}
         </button>
       </form>
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
     </div>
   );
 }
 
-function ProductForm({ categories, initial, onCancel, onSaved }) {
+function ProductForm({ categories, brands, initial, onCancel, onSaved }) {
+  const { t } = useLocale();
   const [form, setForm] = useState(initial);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -249,7 +252,7 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
       price: Number(form.price),
       category_id: form.category_id ? Number(form.category_id) : null,
       sku: form.sku || null,
-      brand: form.brand || null,
+      brand_id: form.brand_id ? Number(form.brand_id) : null,
       gender: form.gender || null,
       low_stock_threshold: Number(form.low_stock_threshold) || 0,
     };
@@ -262,47 +265,52 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
         onSaved(res.data); // parent re-opens in edit mode so images can be added
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Save failed');
+      setError(err.response?.data?.error || t('admin.products.saveFailed'));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="border border-gray-200 rounded-lg p-4 mb-6 grid gap-3 md:grid-cols-2">
-      <div className="md:col-span-2 font-medium text-gray-900">
-        {editing ? `Edit: ${initial.name}` : 'New product'}
+    <form onSubmit={submit} className="border border-line bg-ivory p-4 mb-6 grid gap-3 md:grid-cols-2">
+      <div className="md:col-span-2 font-display text-lg text-ink">
+        {editing ? t('admin.products.editTitle', { name: initial.name }) : t('admin.products.newTitle')}
       </div>
-      <input className={inputCls} placeholder="Name" value={form.name}
+      <input className={inputCls} placeholder={t('admin.products.namePlaceholder')} value={form.name}
         onChange={(e) => set('name', e.target.value)} required />
-      <input className={inputCls} placeholder="SKU (optional)" value={form.sku}
+      <input className={inputCls} placeholder={t('admin.products.skuPlaceholder')} value={form.sku}
         onChange={(e) => set('sku', e.target.value)} />
-      <input className={inputCls} type="number" step="0.01" min="0" placeholder="Price" value={form.price}
+      <input className={inputCls} type="number" step="0.01" min="0" placeholder={t('admin.products.pricePlaceholder')} value={form.price}
         onChange={(e) => set('price', e.target.value)} required />
-      <select className={inputCls} value={form.category_id}
+      <Select value={form.category_id}
         onChange={(e) => set('category_id', e.target.value)}>
-        <option value="">No category</option>
+        <option value="">{t('admin.products.noCategory')}</option>
         {categories.map((c) => (
           <option key={c.id} value={c.id}>{c.name}</option>
         ))}
-      </select>
-      <input className={inputCls} placeholder="Brand (optional)" value={form.brand || ''}
-        onChange={(e) => set('brand', e.target.value)} />
-      <select className={inputCls} value={form.gender || ''}
+      </Select>
+      <Select value={form.brand_id || ''}
+        onChange={(e) => set('brand_id', e.target.value)}>
+        <option value="">{t('admin.products.noBrand')}</option>
+        {brands.map((b) => (
+          <option key={b.id} value={b.id}>{b.name}</option>
+        ))}
+      </Select>
+      <Select value={form.gender || ''}
         onChange={(e) => set('gender', e.target.value)}>
-        <option value="">Gender —</option>
-        <option value="women">Women</option>
-        <option value="men">Men</option>
-        <option value="unisex">Unisex</option>
-      </select>
+        <option value="">{t('admin.products.genderPlaceholder')}</option>
+        <option value="women">{t('gender.women')}</option>
+        <option value="men">{t('gender.men')}</option>
+        <option value="unisex">{t('gender.unisex')}</option>
+      </Select>
       {!editing && (
-        <input className={inputCls} type="number" min="0" placeholder="Initial stock" value={form.stock ?? ''}
+        <input className={inputCls} type="number" min="0" placeholder={t('admin.products.stockPlaceholder')} value={form.stock ?? ''}
           onChange={(e) => set('stock', e.target.value)} />
       )}
-      <input className={inputCls} type="number" min="0" placeholder="Low-stock threshold"
+      <input className={inputCls} type="number" min="0" placeholder={t('admin.products.lowStockThreshold')}
         value={form.low_stock_threshold}
         onChange={(e) => set('low_stock_threshold', e.target.value)} />
-      <textarea className={`${inputCls} md:col-span-2`} rows={2} placeholder="Description"
+      <textarea className={`${inputCls} md:col-span-2`} rows={2} placeholder={t('admin.products.descriptionPlaceholder')}
         value={form.description} onChange={(e) => set('description', e.target.value)} />
 
       {editing ? (
@@ -311,19 +319,18 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
           <ProductVariantManager productId={initial.id} variants={initial.variants || []} />
         </>
       ) : (
-        <p className="md:col-span-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
-          Save the product first, then add its images and sizes.
+        <p className="md:col-span-2 text-xs text-stone border-t border-line pt-3">
+          {t('admin.products.saveFirst')}
         </p>
       )}
 
-      {error && <p className="md:col-span-2 text-red-500 text-sm">{error}</p>}
+      {error && <p className="md:col-span-2 text-red-400 text-sm">{error}</p>}
       <div className="md:col-span-2 flex gap-2">
-        <button className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-50"
-          disabled={saving}>
-          {saving ? 'Saving...' : editing ? 'Save changes' : 'Create product'}
+        <button className={btnPrimary} disabled={saving}>
+          {saving ? t('admin.products.saving') : editing ? t('admin.products.saveChanges') : t('admin.products.create')}
         </button>
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md text-sm text-gray-600 hover:underline">
-          {editing ? 'Close' : 'Cancel'}
+        <button type="button" onClick={onCancel} className={btnGhost}>
+          {editing ? t('admin.products.close') : t('admin.products.cancel')}
         </button>
       </div>
     </form>
@@ -331,6 +338,7 @@ function ProductForm({ categories, initial, onCancel, onSaved }) {
 }
 
 function AdjustStock({ product, onDone }) {
+  const { t } = useLocale();
   const [mode, setMode] = useState('delta');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('restock');
@@ -349,40 +357,41 @@ function AdjustStock({ product, onDone }) {
       await client.patch(`/products/${product.id}/stock`, body);
       onDone();
     } catch (err) {
-      setError(err.response?.data?.error || 'Adjustment failed');
+      setError(err.response?.data?.error || t('admin.stock.failed'));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-center gap-2 bg-gray-50 rounded-md p-3 text-sm">
-      <select className={inputCls} value={mode} onChange={(e) => setMode(e.target.value)}>
-        <option value="delta">Change by</option>
-        <option value="set">Set to</option>
-      </select>
+    <form onSubmit={submit} className="flex flex-wrap items-center gap-2 bg-ivory border border-line p-3 text-sm">
+      <Select className="w-32" value={mode} onChange={(e) => setMode(e.target.value)}>
+        <option value="delta">{t('admin.stock.changeBy')}</option>
+        <option value="set">{t('admin.stock.setTo')}</option>
+      </Select>
       <input className={`${inputCls} w-24`} type="number" step="1" placeholder="0" value={amount}
         onChange={(e) => setAmount(e.target.value)} required />
-      <select className={inputCls} value={type} onChange={(e) => setType(e.target.value)}>
-        <option value="restock">restock</option>
-        <option value="adjustment">adjustment</option>
-        <option value="return">return</option>
-      </select>
-      <input className={`${inputCls} flex-1 min-w-[8rem]`} placeholder="Reason (optional)" value={reason}
+      <Select className="w-36" value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="restock">{t('admin.stock.restock')}</option>
+        <option value="adjustment">{t('admin.stock.adjustment')}</option>
+        <option value="return">{t('admin.stock.return')}</option>
+      </Select>
+      <input className={`${inputCls} flex-1 min-w-[8rem]`} placeholder={t('admin.stock.reasonPlaceholder')} value={reason}
         onChange={(e) => setReason(e.target.value)} />
-      <button className="bg-gray-900 text-white px-3 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50"
-        disabled={saving}>
-        Apply
+      <button className={btnPrimary} disabled={saving}>
+        {t('admin.stock.apply')}
       </button>
-      {error && <span className="text-red-500 w-full">{error}</span>}
+      {error && <span className="text-red-400 w-full">{error}</span>}
     </form>
   );
 }
 
 export default function AdminProducts() {
+  const { t } = useLocale();
   const { error: toastError } = useToast();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -410,12 +419,13 @@ export default function AdminProducts() {
         setProducts(res.data.items);
         setError(null);
       })
-      .catch((err) => setError(err.response?.data?.error || 'Failed to load products'))
+      .catch((err) => setError(err.response?.data?.error || t('admin.products.loadFailed')))
       .finally(() => setLoading(false));
-  }, [search, showInactive, lowOnly]);
+  }, [search, showInactive, lowOnly, t]);
 
   useEffect(() => {
     client.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
+    client.get('/brands').then((res) => setBrands(res.data)).catch(() => {});
   }, []);
   useEffect(() => {
     load();
@@ -426,7 +436,7 @@ export default function AdminProducts() {
       await client.patch(`/products/${p.id}`, { is_active: !p.is_active });
       load();
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to update');
+      toastError(err.response?.data?.error || t('admin.products.updateFailed'));
     }
   }
 
@@ -441,7 +451,7 @@ export default function AdminProducts() {
         price: String(created.price),
         category_id: created.category?.id ? String(created.category.id) : '',
         sku: created.sku || '',
-        brand: created.brand || '',
+        brand_id: created.brand?.id ? String(created.brand.id) : '',
         gender: created.gender || '',
         low_stock_threshold: created.low_stock_threshold,
         images: created.images || [],
@@ -453,89 +463,88 @@ export default function AdminProducts() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <AdminNav />
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+    <div className="max-w-5xl mx-auto pb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="font-display text-2xl text-ink">{t('admin.products.title')}</h1>
         <button
           onClick={() => setFormFor(formFor === 'new' ? null : 'new')}
-          className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800"
+          className={btnPrimary}
         >
-          {formFor === 'new' ? 'Close' : 'New product'}
+          {formFor === 'new' ? t('admin.products.close') : t('admin.products.new')}
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
-        <input className={inputCls} placeholder="Search by name" value={search}
+      <div className="flex flex-wrap items-center gap-4 mb-6 text-sm">
+        <input className={inputCls} placeholder={t('admin.products.searchPlaceholder')} value={search}
           onChange={(e) => setSearch(e.target.value)} />
-        <label className="flex items-center gap-1.5 text-gray-600">
+        <label className="flex items-center gap-1.5 text-stone">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          Show inactive
+          {t('admin.products.showInactive')}
         </label>
-        <label className="flex items-center gap-1.5 text-gray-600">
+        <label className="flex items-center gap-1.5 text-stone">
           <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
-          Low stock only
+          {t('admin.products.lowStockOnly')}
         </label>
       </div>
 
       {formFor === 'new' && (
-        <ProductForm categories={categories} initial={{ ...emptyForm, stock: 0 }}
+        <ProductForm categories={categories} brands={brands} initial={{ ...emptyForm, stock: 0 }}
           onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
       {/* freshly created product not yet in the loaded list — keep the form up so images can be added */}
       {formFor && formFor.id && !products.some((p) => p.id === formFor.id) && (
-        <ProductForm categories={categories} initial={formFor}
+        <ProductForm categories={categories} brands={brands} initial={formFor}
           onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
-      {loading && <p className="text-gray-500">Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-stone">{t('admin.products.loading')}</p>}
+      {error && <p className="text-red-400">{error}</p>}
 
       {!loading && !error && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-500 border-b border-gray-200">
-              <th className="py-2">Product</th>
-              <th className="py-2">Category</th>
-              <th className="py-2">Price</th>
-              <th className="py-2">Stock</th>
-              <th className="py-2">Status</th>
-              <th className="py-2"></th>
+            <tr className="text-left eyebrow text-stone border-b border-line">
+              <th className="py-3 font-normal">{t('admin.products.colProduct')}</th>
+              <th className="py-3 font-normal">{t('admin.products.colCategory')}</th>
+              <th className="py-3 font-normal">{t('admin.products.colPrice')}</th>
+              <th className="py-3 font-normal">{t('admin.products.colStock')}</th>
+              <th className="py-3 font-normal">{t('admin.products.colStatus')}</th>
+              <th className="py-3 text-right font-normal">{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
             {products.map((p) => (
               <Fragment key={p.id}>
-                <tr className={`border-b border-gray-100 ${p.is_active ? '' : 'text-gray-400'}`}>
-                  <td className="py-2">
+                <tr className={`border-b border-line/60 transition-colors hover:bg-ivory ${p.is_active ? 'text-ink' : 'text-stone'}`}>
+                  <td className="py-3">
                     <div className="font-medium">{p.name}</div>
-                    {p.sku && <div className="text-xs text-gray-400">{p.sku}</div>}
+                    {p.sku && <div className="text-xs text-stone">{p.sku}</div>}
                   </td>
-                  <td className="py-2">
+                  <td className="py-3 text-stone">
                     {p.category?.name || '—'}
-                    {p.brand && <span className="text-xs text-gray-400"> · {p.brand}</span>}
-                    {p.gender && <span className="text-xs text-gray-400"> · {p.gender}</span>}
+                    {p.brand && <span className="text-xs"> · {p.brand.name}</span>}
+                    {p.gender && <span className="text-xs"> · {t(`gender.${p.gender}`)}</span>}
                   </td>
-                  <td className="py-2">${p.price.toFixed(2)}</td>
-                  <td className="py-2">
-                    <span className={p.low_stock ? 'text-amber-600 font-medium' : ''}>{p.stock}</span>
-                    {p.low_stock && <span className="text-xs text-amber-600"> low</span>}
+                  <td className="py-3">${p.price.toFixed(2)}</td>
+                  <td className="py-3">
+                    <span className={p.low_stock ? 'text-amber-400 font-medium' : ''}>{p.stock}</span>
+                    {p.low_stock && <span className="text-xs text-amber-400"> {t('admin.products.low')}</span>}
                     {p.has_variants ? (
-                      <span className="ml-2 text-xs text-gray-400">per size</span>
+                      <span className="ml-2 text-xs text-stone">{t('admin.products.perSize')}</span>
                     ) : (
                       <button onClick={() => setAdjustId(adjustId === p.id ? null : p.id)}
-                        className="ml-2 text-xs text-gray-500 hover:underline">
-                        {adjustId === p.id ? 'close' : 'adjust'}
+                        className="ml-2 text-xs text-stone hover:text-champagne">
+                        {adjustId === p.id ? t('admin.products.closeLower') : t('admin.products.adjust')}
                       </button>
                     )}
                   </td>
-                  <td className="py-2">
+                  <td className="py-3">
                     <button onClick={() => toggleActive(p)}
-                      className={p.is_active ? 'text-green-600 hover:underline' : 'text-red-500 hover:underline'}>
-                      {p.is_active ? 'Active' : 'Inactive'}
+                      className={p.is_active ? 'text-green-400 hover:underline' : 'text-red-400 hover:underline'}>
+                      {p.is_active ? t('admin.products.active') : t('admin.products.inactive')}
                     </button>
                   </td>
-                  <td className="py-2 text-right">
+                  <td className="py-3 text-right">
                     <button
                       onClick={() =>
                         setFormFor(
@@ -548,7 +557,7 @@ export default function AdminProducts() {
                                 price: String(p.price),
                                 category_id: p.category?.id ? String(p.category.id) : '',
                                 sku: p.sku || '',
-                                brand: p.brand || '',
+                                brand_id: p.brand?.id ? String(p.brand.id) : '',
                                 gender: p.gender || '',
                                 low_stock_threshold: p.low_stock_threshold,
                                 images: p.images || [],
@@ -556,9 +565,11 @@ export default function AdminProducts() {
                               }
                         )
                       }
-                      className="text-gray-600 hover:underline"
+                      className="inline-flex text-stone transition-colors hover:text-champagne"
+                      aria-label={t('admin.products.edit')}
+                      title={t('admin.products.edit')}
                     >
-                      Edit
+                      <Icon name="edit" />
                     </button>
                   </td>
                 </tr>
@@ -572,7 +583,7 @@ export default function AdminProducts() {
                 {formFor && formFor.id === p.id && (
                   <tr>
                     <td colSpan={6}>
-                      <ProductForm categories={categories} initial={formFor}
+                      <ProductForm categories={categories} brands={brands} initial={formFor}
                         onCancel={() => setFormFor(null)} onSaved={afterSave} />
                     </td>
                   </tr>

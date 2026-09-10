@@ -80,7 +80,7 @@ export default function ProductDetail() {
     return (
       <div className="max-w-3xl mx-auto px-6 py-32 text-center">
         <h1 className="font-display text-3xl">{t('pdp.gone')}</h1>
-        <Link to="/shop" className="inline-block mt-6 eyebrow link-underline">
+        <Link to="/shop?all=1" className="inline-block mt-6 eyebrow link-underline">
           {t('pdp.backToCollection')}
         </Link>
       </div>
@@ -131,7 +131,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="bg-canvas">
+    <div>
       <div className="lg:grid lg:grid-cols-[58%_42%] lg:items-start">
         {/* gallery */}
         <div className="bg-ivory pb-4 lg:pb-6 lg:sticky lg:top-20">
@@ -151,7 +151,11 @@ export default function ProductDetail() {
         <div className="px-6 md:px-14 py-12 md:py-16 lg:py-14">
           <div className="lg:sticky lg:top-24">
             <div className="flex items-center gap-3 flex-wrap">
-              {product.brand && <span className="eyebrow text-ink">{product.brand}</span>}
+              {product.brand && (
+                <Link to={`/shop?all=1&brand=${product.brand.slug}`} className="eyebrow text-ink link-underline">
+                  {product.brand.name}
+                </Link>
+              )}
               {product.category && (
                 <Link to={`/shop?category=${product.category.slug}`} className="eyebrow text-stone link-underline">
                   {categoryLabel(locale, product.category)}

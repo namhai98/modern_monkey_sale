@@ -1,11 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminLayout from './components/AdminLayout';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -25,6 +27,7 @@ import NotFound from './pages/NotFound';
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminProducts = lazy(() => import('./pages/admin/Products'));
 const AdminCategories = lazy(() => import('./pages/admin/Categories'));
+const AdminBrands = lazy(() => import('./pages/admin/Brands'));
 const AdminDiscounts = lazy(() => import('./pages/admin/Discounts'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
@@ -33,10 +36,9 @@ const AdminOrderDetail = lazy(() => import('./pages/admin/OrderDetail'));
 const STAFF = ['staff', 'manager', 'admin'];
 const MANAGER = ['manager', 'admin'];
 
-const admin = (node) => <Suspense fallback={<div className="px-6 py-20 text-sm text-gray-400">Loading…</div>}>{node}</Suspense>;
-
 export default function App() {
   return (
+    <ThemeProvider>
     <LocaleProvider>
       <AuthProvider>
         <CartProvider>
@@ -57,13 +59,18 @@ export default function App() {
                   <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                   <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/admin/orders" element={<ProtectedRoute roles={STAFF}>{admin(<AdminOrders />)}</ProtectedRoute>} />
-                  <Route path="/admin/orders/:id" element={<ProtectedRoute roles={STAFF}>{admin(<AdminOrderDetail />)}</ProtectedRoute>} />
-                  <Route path="/admin/products" element={<ProtectedRoute roles={MANAGER}>{admin(<AdminProducts />)}</ProtectedRoute>} />
-                  <Route path="/admin/categories" element={<ProtectedRoute roles={MANAGER}>{admin(<AdminCategories />)}</ProtectedRoute>} />
-                  <Route path="/admin/discounts" element={<ProtectedRoute roles={MANAGER}>{admin(<AdminDiscounts />)}</ProtectedRoute>} />
-                  <Route path="/admin/users" element={<ProtectedRoute roles={MANAGER}>{admin(<AdminUsers />)}</ProtectedRoute>} />
-                  <Route path="/admin/settings" element={<ProtectedRoute roles={MANAGER}>{admin(<AdminSettings />)}</ProtectedRoute>} />
+                  {/* AdminNav stays mounted across every /admin/* navigation — only
+                      the Outlet content below it swaps while a page's chunk loads. */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route path="orders" element={<ProtectedRoute roles={STAFF}><AdminOrders /></ProtectedRoute>} />
+                    <Route path="orders/:id" element={<ProtectedRoute roles={STAFF}><AdminOrderDetail /></ProtectedRoute>} />
+                    <Route path="products" element={<ProtectedRoute roles={MANAGER}><AdminProducts /></ProtectedRoute>} />
+                    <Route path="categories" element={<ProtectedRoute roles={MANAGER}><AdminCategories /></ProtectedRoute>} />
+                    <Route path="brands" element={<ProtectedRoute roles={MANAGER}><AdminBrands /></ProtectedRoute>} />
+                    <Route path="discounts" element={<ProtectedRoute roles={MANAGER}><AdminDiscounts /></ProtectedRoute>} />
+                    <Route path="users" element={<ProtectedRoute roles={MANAGER}><AdminUsers /></ProtectedRoute>} />
+                    <Route path="settings" element={<ProtectedRoute roles={MANAGER}><AdminSettings /></ProtectedRoute>} />
+                  </Route>
                   <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
@@ -73,5 +80,6 @@ export default function App() {
         </CartProvider>
       </AuthProvider>
     </LocaleProvider>
+    </ThemeProvider>
   );
 }

@@ -18,7 +18,6 @@ export async function getSettings(req, res) {
   }
 }
 
-// Manager/admin — set the tögrög exchange rate (₮ per $1).
 export async function updateSettings(req, res) {
   try {
     const rate = Number(req.body?.mnt_rate);

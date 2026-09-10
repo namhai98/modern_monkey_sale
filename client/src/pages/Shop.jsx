@@ -106,8 +106,8 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
               {t('filter.all')}
             </Pill>
             {facets.brands.map((b) => (
-              <Pill key={b.value} active={brand === b.value} onClick={() => patch({ brand: b.value })}>
-                {b.value}
+              <Pill key={b.slug} active={brand === b.slug} onClick={() => patch({ brand: b.slug })}>
+                {b.name}
               </Pill>
             ))}
           </div>
@@ -141,7 +141,7 @@ function CategoryChooser({ categories }) {
   }
 
   return (
-    <div className="bg-canvas">
+    <div>
       <div className="px-4 md:px-8 pt-16 pb-10 text-center">
         <p className="eyebrow text-stone">{t('shop.allPieces')}</p>
         <h1 className="font-display text-4xl md:text-5xl mt-3">{t('shop.collection')}</h1>
@@ -153,7 +153,7 @@ function CategoryChooser({ categories }) {
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('shop.search')}
             aria-label={t('shop.search')}
-            className="w-full bg-transparent border-b border-line pb-2 text-center text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+            className="w-full bg-transparent border-b border-line pb-2 text-center text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:border-ink transition-colors"
           />
         </form>
         <div className="mt-5 flex items-center justify-center gap-6">
@@ -316,7 +316,7 @@ function Listing({ categories }) {
   const controlProps = { t, locale, categories, category, brand, gender, sale, facets, patch };
 
   return (
-    <div className="bg-canvas px-4 md:px-8 py-8 md:py-12">
+    <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="lg:grid lg:grid-cols-[13rem_1fr] xl:grid-cols-[15rem_1fr] lg:gap-10 xl:gap-14">
         {/* desktop rail */}
         <aside className="hidden lg:block">
@@ -369,7 +369,7 @@ function Listing({ categories }) {
                 onChange={(e) => setQDraft(e.target.value)}
                 placeholder={t('shop.search')}
                 aria-label={t('shop.search')}
-                className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+                className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:border-ink transition-colors"
               />
               {qDraft && (
                 <button

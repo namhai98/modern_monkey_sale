@@ -17,20 +17,25 @@ export default function SearchOverlay() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
+  // Opening the overlay with an empty field is not a useful empty state —
+  // show a handful of suggested products right away so there's always
+  // something to browse before the shopper types anything.
   useEffect(() => {
-    if (searchOpen) {
-      setQ('');
-      setResults([]);
-      setTimeout(() => inputRef.current?.focus(), 120);
-    }
+    if (!searchOpen) return;
+    setQ('');
+    setLoading(true);
+    client
+      .get('/products', { params: { limit: 6, sort: 'created_at', order: 'desc' } })
+      .then((res) => setResults(res.data.items))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
+    setTimeout(() => inputRef.current?.focus(), 120);
   }, [searchOpen]);
 
   useEffect(() => {
-    if (!q.trim()) {
-      setResults([]);
-      return;
-    }
-    const t = setTimeout(() => {
+    // Empty query: leave the suggested products from above in place.
+    if (!q.trim()) return;
+    const id = setTimeout(() => {
       setLoading(true);
       client
         .get('/products', { params: { search: q, limit: 6 } })
@@ -38,7 +43,7 @@ export default function SearchOverlay() {
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
     }, 250);
-    return () => clearTimeout(t);
+    return () => clearTimeout(id);
   }, [q]);
 
   function open(id) {
@@ -71,7 +76,7 @@ export default function SearchOverlay() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t('search.placeholder')}
-                className="w-full bg-transparent border-b border-line pb-4 font-display text-2xl md:text-4xl placeholder:text-mist focus:outline-none focus:border-ink transition-colors"
+                className="w-full bg-transparent border-b border-line pb-4 font-display text-2xl md:text-4xl text-ink placeholder:text-ink/40 focus:outline-none focus:border-ink transition-colors"
               />
             </form>
 
@@ -79,6 +84,9 @@ export default function SearchOverlay() {
               {loading && <p className="text-sm text-stone">{t('search.searching')}</p>}
               {!loading && q.trim() && results.length === 0 && (
                 <p className="text-sm text-stone">{t('search.none', { q })}</p>
+              )}
+              {!loading && !q.trim() && results.length > 0 && (
+                <p className="eyebrow text-stone mb-2">{t('search.suggested')}</p>
               )}
               {results.map((p) => (
                 <button
@@ -89,11 +97,11 @@ export default function SearchOverlay() {
                   <div className="h-14 w-12 bg-ivory overflow-hidden shrink-0">
                     <ImageFallback src={resizeUnsplash(p.image_url, 120)} alt="" className="h-full w-full object-cover" />
                   </div>
-                  <span className="flex-1 font-display text-lg group-hover:italic">{p.name}</span>
+                  <span className="flex-1 font-display text-lg text-ink group-hover:italic">{p.name}</span>
                   <span className="text-sm text-stone">{money(p.final_price ?? p.price)}</span>
                 </button>
               ))}
-              {!loading && results.length > 0 && (
+              {!loading && q.trim() && results.length > 0 && (
                 <button onClick={seeAll} className="mt-6 inline-block eyebrow link-underline">
                   {t('shop.viewAll')}
                 </button>
