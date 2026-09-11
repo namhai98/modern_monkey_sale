@@ -187,6 +187,9 @@ export default function SiteFooter({ flush = false }) {
           <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-8">
             <p>{t('footer.tagline')}</p>
+            <Link to="/privacy" className="link-lux transition-colors hover:text-white">
+              {t('footer.legal.privacy')}
+            </Link>
             <LangSwitch />
           </div>
         </div>

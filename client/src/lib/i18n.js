@@ -540,6 +540,11 @@ const en = {
   'footer.house.craft': 'Craftsmanship',
   'footer.house.sustain': 'Sustainability',
   'footer.col.account': 'Account',
+  'privacy.title': 'Privacy',
+  'privacy.eyebrow': 'Legal',
+  'privacy.updated': 'Last updated {date}',
+  'privacy.contactHead': 'Questions about your data',
+  'footer.legal.privacy': 'Privacy',
   'footer.copyright': '© {year} Modern Monkey Maison. All rights reserved.',
 
   // home — additions that mirror the presentation site's sections
@@ -1100,6 +1105,11 @@ const mn = {
   'footer.house.craft': 'Гар урлал',
   'footer.house.sustain': 'Тогтвортой байдал',
   'footer.col.account': 'Хаяг',
+  'privacy.title': 'Нууцлал',
+  'privacy.eyebrow': 'Хууль зүй',
+  'privacy.updated': 'Сүүлд шинэчилсэн {date}',
+  'privacy.contactHead': 'Мэдээлэлтэй холбоотой асуулт',
+  'footer.legal.privacy': 'Нууцлал',
   'footer.copyright': '© {year} Modern Monkey Maison. Бүх эрх хамгаалагдсан.',
 
   // home — additions that mirror the presentation site's sections
