@@ -8,9 +8,9 @@ export default function ProtectedRoute({ children, roles }) {
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-6 py-40 space-y-4">
-        <Skeleton className="h-2 w-24 mx-auto" />
-        <Skeleton className="h-2 w-40 mx-auto" />
+      <div className="container-lux max-w-md space-y-4 py-40">
+        <Skeleton className="mx-auto h-2 w-24" />
+        <Skeleton className="mx-auto h-2 w-40" />
       </div>
     );
   }

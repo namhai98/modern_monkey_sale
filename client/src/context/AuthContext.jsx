@@ -53,6 +53,18 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  /* Finish a social sign-in. The OAuth callback already set the refresh cookie
+     server-side and bounced the browser back, so all that is left is to trade
+     that cookie for an access token — the same call the axios interceptor makes
+     when a token expires. Nothing sensitive ever travelled in the URL. */
+  async function completeOAuth() {
+    const { data } = await client.post('/auth/refresh');
+    localStorage.setItem('mms_token', data.token);
+    localStorage.setItem('mms_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data.user;
+  }
+
   async function logout() {
     try {
       await client.post('/auth/logout');
@@ -86,6 +98,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        completeOAuth,
         logout,
         logoutEverywhere,
         updateUser,

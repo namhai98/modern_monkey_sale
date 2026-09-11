@@ -34,12 +34,27 @@ services:
       - key: PASSWORD_RESET_TTL_MIN
         value: "30"
 
-      # Your Netlify site URL — used for CORS and password-reset links.
+      # Your Netlify site URL — used for CORS, password-reset links, and to
+      # derive the OAuth redirect URI (see "Social sign-in" in DEPLOY.md).
       # e.g. https://modern-monkey-sale.netlify.app
       - key: CLIENT_ORIGIN
         sync: false
       - key: APP_URL
         sync: false
+
+      # Social sign-in. The Google button appears only once BOTH of these are
+      # set; leave them blank to keep it hidden. Register
+      #   <APP_URL>/api/auth/oauth/google/callback
+      # as an authorised redirect URI in the Google Cloud console first.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Facebook, when you add it — same shape:
+      # - key: FACEBOOK_APP_ID
+      #   sync: false
+      # - key: FACEBOOK_APP_SECRET
+      #   sync: false
 
       # Absolute public base for uploaded product images. Set to this service's
       # own URL + /media so image URLs are absolute (no Netlify proxy hop):

@@ -18,16 +18,20 @@ export default function AdminNav() {
   ].filter((t) => t.show);
 
   return (
-    <div className="flex flex-wrap gap-1 border-b border-line mb-8">
+    /* The rule and the spacing below it belong to AdminLayout, so the tab strip
+       itself is just the row. */
+    <div className="flex flex-wrap gap-x-2">
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           className={({ isActive }) =>
-            `whitespace-nowrap px-4 py-3 text-sm -mb-px border-b-2 transition-colors ${
+            // Active tab is gold and nothing else — the same single signal the
+            // storefront nav uses for the current route.
+            `micro -mb-px whitespace-nowrap border-b px-4 py-4 transition-colors duration-300 ${
               isActive
-                ? 'border-champagne text-ink font-medium'
-                : 'border-transparent text-stone hover:text-ink'
+                ? 'border-gold text-gold'
+                : 'border-transparent text-muted hover:text-foreground'
             }`
           }
         >

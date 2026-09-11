@@ -10,28 +10,46 @@ import Reveal from '../components/Reveal';
 import ProductCard from '../components/ProductCard';
 import ProductGallery from '../components/ProductGallery';
 import Button from '../components/Button';
+import Breadcrumb from '../components/Breadcrumb';
+import Price from '../components/Price';
+import QuantityStepper from '../components/QuantityStepper';
+import Section, { Container } from '../components/Section';
+import { RowHeading } from '../components/SectionHeading';
+import EmptyState from '../components/EmptyState';
 import { ProductDetailSkeleton } from '../components/Skeleton';
-import { useMoney, isDiscounted, discountPercent } from '../lib/price';
+import { useMoney, isDiscounted } from '../lib/price';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 
+/* A hairline-divided accordion — the same shape as the presentation site's FAQ:
+   micro-type title, a +/– that rotates into an × as it opens, and the open row
+   in gold. The body stays in the DOM and is collapsed with grid-template-rows,
+   so it is always findable by in-page search and never JS-gated. */
 function Accordion({ title, body, open, onToggle }) {
   return (
     <div className="border-b border-line">
       <button
         onClick={onToggle}
         aria-expanded={open}
-        className="w-full flex items-center justify-between py-5 text-left eyebrow"
+        className={`micro flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-300 ${
+          open ? 'text-gold' : 'text-foreground hover:text-gold'
+        }`}
       >
         {title}
-        <span className="text-stone text-base">{open ? '–' : '+'}</span>
+        <span
+          aria-hidden="true"
+          className={`shrink-0 text-base leading-none transition-transform duration-300 ${
+            open ? 'rotate-45' : ''
+          }`}
+        >
+          +
+        </span>
       </button>
-      {/* CSS grid-rows collapse — content always in the DOM, never JS-gated */}
       <div
-        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <p className="pb-6 text-stone leading-relaxed text-sm max-w-md">{body}</p>
+          <p className="max-w-md pb-6 text-sm leading-relaxed text-muted">{body}</p>
         </div>
       </div>
     </div>
@@ -78,12 +96,11 @@ export default function ProductDetail() {
 
   if (notFound) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-32 text-center">
-        <h1 className="font-display text-3xl">{t('pdp.gone')}</h1>
-        <Link to="/shop?all=1" className="inline-block mt-6 eyebrow link-underline">
-          {t('pdp.backToCollection')}
-        </Link>
-      </div>
+      <EmptyState
+        eyebrow="404"
+        title={t('pdp.gone')}
+        actions={<Button to="/shop?all=1">{t('pdp.backToCollection')}</Button>}
+      />
     );
   }
   if (!product) return <ProductDetailSkeleton />;
@@ -130,11 +147,23 @@ export default function ProductDetail() {
     }, 400);
   }
 
+  const crumbs = [{ label: t('shop.collection'), to: '/shop' }];
+  if (product.category) {
+    crumbs.push({
+      label: categoryLabel(locale, product.category),
+      to: `/shop?category=${product.category.slug}`,
+    });
+  }
+  crumbs.push({ label: product.name });
+
   return (
-    <div>
+    <>
+      <Container className="py-5">
+        <Breadcrumb items={crumbs} />
+      </Container>
+
       <div className="lg:grid lg:grid-cols-[58%_42%] lg:items-start">
-        {/* gallery */}
-        <div className="bg-ivory pb-4 lg:pb-6 lg:sticky lg:top-20">
+        <div className="bg-surface pb-4 lg:sticky lg:top-20 lg:pb-6">
           <ProductGallery
             images={
               product.images?.length
@@ -147,45 +176,48 @@ export default function ProductDetail() {
           />
         </div>
 
-        {/* info */}
-        <div className="px-6 md:px-14 py-12 md:py-16 lg:py-14">
-          <div className="lg:sticky lg:top-24">
-            <div className="flex items-center gap-3 flex-wrap">
+        <div className="px-6 py-12 md:px-12 md:py-16 lg:py-14">
+          <div className="lg:sticky lg:top-28">
+            {/* Meta row — brand and category as micro-type links, the
+                tracking ladder's 0.28em step. */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               {product.brand && (
-                <Link to={`/shop?all=1&brand=${product.brand.slug}`} className="eyebrow text-ink link-underline">
+                <Link
+                  to={`/shop?all=1&brand=${product.brand.slug}`}
+                  className="link-lux micro text-gold"
+                >
                   {product.brand.name}
                 </Link>
               )}
               {product.category && (
-                <Link to={`/shop?category=${product.category.slug}`} className="eyebrow text-stone link-underline">
+                <Link
+                  to={`/shop?category=${product.category.slug}`}
+                  className="link-lux micro text-muted transition-colors hover:text-gold"
+                >
                   {categoryLabel(locale, product.category)}
                 </Link>
               )}
               {product.gender && (
-                <span className="eyebrow text-stone">· {t(`gender.${product.gender}`)}</span>
-              )}
+                <span className="micro text-muted">{t(`gender.${product.gender}`)}</span>
+            )}
             </div>
-            <h1 className="font-display text-4xl md:text-5xl mt-4 leading-tight">{product.name}</h1>
-            {isDiscounted(product) ? (
-              <div className="mt-4">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-lg text-ink">{money(product.final_price)}</span>
-                  <s className="text-sm text-stone/50">{money(product.price)}</s>
-                  <span className="eyebrow text-[0.65rem] bg-ink text-canvas px-2 py-0.5">
-                    {t('price.off', { n: discountPercent(product) })}
-                  </span>
-                </div>
-                <p className="text-xs text-stone mt-2">
+
+            <h1 className="heading-serif mt-5 text-4xl leading-[1.08] md:text-5xl">
+              {product.name}
+            </h1>
+
+            <div className="mt-6">
+              <Price product={product} size="lg" showPercent />
+              {isDiscounted(product) && (
+                <p className="micro mt-3 tracking-[0.22em] text-gold">
                   {t('price.save', { amount: money(product.discount_amount) })}
                 </p>
-              </div>
-            ) : (
-              <p className="text-lg text-stone mt-4">{money(product.price)}</p>
-            )}
+              )}
+            </div>
 
             {hasVariants && (
-              <div className="mt-8">
-                <p className="eyebrow text-stone mb-3">{t('pdp.size')}</p>
+              <div className="mt-10">
+                <p className="micro mb-4 text-muted">{t('pdp.size')}</p>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((v) => {
                     const out = v.stock <= 0;
@@ -200,12 +232,12 @@ export default function ProductDetail() {
                           setQty((q) => Math.min(Math.max(1, q), v.stock || 1));
                         }}
                         aria-pressed={active}
-                        className={`min-w-[3rem] px-3 py-2 border text-sm transition-colors ${
+                        className={`min-w-12 border px-4 py-2.5 text-sm transition-colors duration-300 ${
                           active
-                            ? 'bg-ink text-canvas border-ink'
+                            ? 'border-gold text-gold'
                             : out
-                            ? 'border-line text-stone/40 line-through cursor-not-allowed'
-                            : 'border-line text-ink hover:border-ink'
+                            ? 'cursor-not-allowed border-line text-muted/40 line-through'
+                            : 'border-line text-foreground hover:border-gold/50 hover:text-gold'
                         }`}
                       >
                         {v.label}
@@ -213,20 +245,24 @@ export default function ProductDetail() {
                     );
                   })}
                 </div>
+                {needsSize && (
+                  <p className="micro mt-4 text-muted">{t('pdp.selectSize')}</p>
+                )}
               </div>
             )}
 
-            <div className="mt-8 flex items-stretch gap-3">
-              <div className="inline-flex items-center border border-line">
-                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="-">−</button>
-                <span className="px-3 tabular-nums text-sm">{qty}</span>
-                <button className="px-4 text-stone hover:text-ink" onClick={() => setQty((q) => Math.min(maxQty, q + 1))} aria-label="+">+</button>
-              </div>
+            <div className="mt-10 flex flex-wrap items-stretch gap-4">
+              <QuantityStepper
+                value={qty}
+                max={maxQty}
+                onChange={setQty}
+                labels={{ decrease: t('cart.decrease'), increase: t('cart.increase') }}
+              />
               <Button
                 onClick={addToBag}
                 disabled={soldOut || needsSize}
                 size="lg"
-                className="flex-1"
+                className="min-w-0 flex-1"
               >
                 {soldOut
                   ? t('product.soldOut')
@@ -238,9 +274,11 @@ export default function ProductDetail() {
               </Button>
             </div>
 
-            {!soldOut && product.low_stock && <p className="mt-4 text-xs text-stone">{t('pdp.fewRemain')}</p>}
+            {!soldOut && product.low_stock && (
+              <p className="micro mt-5 tracking-[0.22em] text-gold">{t('pdp.fewRemain')}</p>
+            )}
 
-            <div className="mt-14">
+            <div className="mt-14 border-t border-line">
               {sections.map((s, i) => (
                 <Accordion
                   key={s.title + i}
@@ -256,20 +294,29 @@ export default function ProductDetail() {
       </div>
 
       {related.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-20 md:py-28">
-          <Reveal className="text-center mb-12 md:mb-14">
-            <p className="eyebrow text-stone">{t('pdp.related')}</p>
-          </Reveal>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+        <Section tone="surface" pad="content">
+          <RowHeading
+            eyebrow={t('pdp.related')}
+            action={
+              product.category && (
+                <Link
+                  to={`/shop?category=${product.category.slug}`}
+                  className="link-lux micro tracking-[0.3em] text-gold"
+                >
+                  {t('shop.explore')}
+                </Link>
+              )
+            }
+          />
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 md:mt-14 lg:grid-cols-4">
             {related.map((p, i) => (
-              <Reveal key={p.id} delay={i * 0.06}>
+              <Reveal key={p.id} delay={i * 0.08}>
                 <ProductCard product={p} />
               </Reveal>
             ))}
           </div>
-        </section>
+        </Section>
       )}
-
-    </div>
+    </>
   );
 }

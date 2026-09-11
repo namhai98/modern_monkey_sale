@@ -34,8 +34,11 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
+      {/* The presentation site's toast: an ink panel behind a gold hairline,
+             centred at the foot of the page, fading up over 500ms. A toast is a
+             floating layer, which is the one place a shadow is allowed. */}
       <div
-        className="fixed z-[100] bottom-4 inset-x-0 flex flex-col items-center gap-2 px-4 pointer-events-none"
+        className="pointer-events-none fixed inset-x-0 bottom-8 z-[80] flex flex-col items-center gap-3 px-4"
         role="status"
         aria-live="polite"
       >
@@ -44,13 +47,14 @@ export function ToastProvider({ children }) {
             key={t.id}
             type="button"
             onClick={() => dismiss(t.id)}
-            className={`pointer-events-auto w-full max-w-sm sm:w-auto text-left text-sm px-4 py-3 border shadow-[0_8px_24px_-8px_rgba(23,20,15,0.4)] animate-[fadeUp_0.25s_ease-out] ${
-              t.type === 'error'
-                ? 'bg-ink text-canvas border-ink'
-                : 'bg-canvas text-ink border-line'
+            className={`pointer-events-auto w-full max-w-sm animate-[fadeUp_0.5s_cubic-bezier(0.22,1,0.36,1)] border bg-ink px-6 py-4 text-left text-sm text-white shadow-2xl shadow-black/40 backdrop-blur sm:w-auto ${
+              t.type === 'error' ? 'border-gold' : 'border-gold/40'
             }`}
           >
-            {t.message}
+            <span className="inline-flex items-center gap-3">
+              <span aria-hidden="true" className="h-3 w-px shrink-0 bg-gold" />
+              {t.message}
+            </span>
           </button>
         ))}
       </div>

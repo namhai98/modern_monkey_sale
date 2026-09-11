@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import client from '../api/client';
 import Button from '../components/Button';
-
-const inputCls =
-  'w-full bg-transparent border-b border-line py-3 text-sm placeholder:text-stone focus:outline-none focus:border-ink transition-colors';
+import Field, { FormMessage } from '../components/Field';
+import Icon from '../components/Icon';
+import PageHero from '../components/PageHero';
+import { Container } from '../components/Section';
 
 export default function Profile() {
   const { user, updateUser, logoutEverywhere } = useAuth();
@@ -21,6 +22,11 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [savingPw, setSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState(null);
+
+  // /auth/me reports these; default to a password account so a cached user
+  // object from before social sign-in existed still renders the normal form.
+  const hasPassword = user.has_password !== false;
+  const linked = user.providers || [];
 
   async function saveName(e) {
     e.preventDefault();
@@ -42,10 +48,14 @@ export default function Profile() {
     setSavingPw(true);
     setPwMsg(null);
     try {
-      await client.put('/users/me/password', { currentPassword, newPassword });
+      await client.put('/users/me/password', {
+        ...(hasPassword ? { currentPassword } : {}),
+        newPassword,
+      });
       setCurrentPassword('');
       setNewPassword('');
       setPwMsg({ ok: true, text: t('profile.pwChanged') });
+      if (!hasPassword) updateUser({ ...user, has_password: true });
     } catch (err) {
       setPwMsg({ ok: false, text: err.response?.data?.error || t('profile.pwFail') });
     } finally {
@@ -54,73 +64,106 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-6 py-20 space-y-14">
-      <div>
-        <p className="eyebrow text-stone">{t('account.eyebrow')}</p>
-        <h1 className="font-display text-4xl mt-3 mb-1">{t('profile.title')}</h1>
-        <p className="text-sm text-stone mb-8">
-          {user.email} · <span className="capitalize">{user.role}</span>
+    <>
+      <PageHero
+        compact
+        eyebrow={t('account.eyebrow')}
+        title={t('profile.title')}
+        crumbs={[{ label: t('profile.title') }]}
+      >
+        <p className="micro mt-6 tracking-[0.2em] text-white/55">
+          {user.email} · {user.role}
         </p>
-        <form onSubmit={saveName} className="space-y-4">
-          <label className="eyebrow text-stone block">{t('profile.name')}</label>
-          <input
-            className={inputCls}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          {nameMsg && (
-            <p className={`text-sm ${nameMsg.ok ? 'text-green-700' : 'text-red-700'}`}>
-              {nameMsg.text}
+      </PageHero>
+
+      <Container className="max-w-md space-y-14 py-14 md:py-20">
+        {/* No opener here: the field's own label already says "Name", and the
+            hero above already says "Profile". */}
+        <section>
+          <form onSubmit={saveName} className="space-y-6">
+            <Field
+              label={t('profile.name')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              required
+            />
+            {nameMsg && (
+              <FormMessage tone={nameMsg.ok ? 'info' : 'error'}>{nameMsg.text}</FormMessage>
+            )}
+            <Button as="button" disabled={savingName} variant="outline-dark">
+              {savingName ? t('profile.saving') : t('profile.save')}
+            </Button>
+          </form>
+        </section>
+
+        {linked.length > 0 && (
+          <section className="border-t border-line pt-14">
+            <p className="eyebrow mb-6">{t('profile.connected')}</p>
+            <ul className="space-y-4">
+              {linked.map((p) => (
+                <li key={p} className="flex items-center gap-3 text-sm text-muted">
+                  <Icon name={p} className="h-4 w-4 text-gold" />
+                  {t(`login.with${p[0].toUpperCase()}${p.slice(1)}`)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="border-t border-line pt-14">
+          <p className="eyebrow mb-6">{hasPassword ? t('profile.changePw') : t('profile.setPw')}</p>
+          {/* An account created through Google or Facebook has no password to
+              confirm, so the current-password field would be unfillable. */}
+          {!hasPassword && (
+            <p className="mb-6 max-w-sm text-sm leading-relaxed text-muted">
+              {t('profile.setPwNote')}
             </p>
           )}
-          <Button as="button" disabled={savingName}>
-            {savingName ? t('profile.saving') : t('profile.save')}
-          </Button>
-        </form>
-      </div>
+          <form onSubmit={savePassword} className="space-y-6">
+            {hasPassword && (
+              <Field
+                label={t('profile.currentPw')}
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            )}
+            <Field
+              label={t('profile.newPw')}
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              hint={t('profile.pwNote')}
+              required
+            />
+            {pwMsg && <FormMessage tone={pwMsg.ok ? 'info' : 'error'}>{pwMsg.text}</FormMessage>}
+            <Button as="button" disabled={savingPw} variant="outline-dark">
+              {savingPw
+                ? t('profile.saving')
+                : hasPassword
+                  ? t('profile.changePw')
+                  : t('profile.setPw')}
+            </Button>
+          </form>
+        </section>
 
-      <div>
-        <h2 className="font-display text-2xl mb-5">{t('profile.changePw')}</h2>
-        <form onSubmit={savePassword} className="space-y-4">
-          <input
-            type="password"
-            className={inputCls}
-            placeholder={t('profile.currentPw')}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            className={inputCls}
-            placeholder={t('profile.newPw')}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
-          {pwMsg && (
-            <p className={`text-sm ${pwMsg.ok ? 'text-green-700' : 'text-red-700'}`}>{pwMsg.text}</p>
-          )}
-          <Button as="button" disabled={savingPw}>
-            {savingPw ? t('profile.saving') : t('profile.changePw')}
-          </Button>
-        </form>
-        <p className="text-xs text-stone mt-3">{t('profile.pwNote')}</p>
-      </div>
-
-      <div>
-        <h2 className="font-display text-2xl mb-3">{t('profile.sessions')}</h2>
-        <button
-          onClick={async () => {
-            await logoutEverywhere();
-            navigate('/login');
-          }}
-          className="text-sm text-stone link-underline"
-        >
-          {t('profile.logoutAll')}
-        </button>
-      </div>
-    </div>
+        <section className="border-t border-line pt-14">
+          <p className="eyebrow mb-6">{t('profile.sessions')}</p>
+          <button
+            onClick={async () => {
+              await logoutEverywhere();
+              navigate('/login');
+            }}
+            className="link-lux micro text-muted transition-colors hover:text-gold"
+          >
+            {t('profile.logoutAll')}
+          </button>
+        </section>
+      </Container>
+    </>
   );
 }

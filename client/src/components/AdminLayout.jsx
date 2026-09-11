@@ -9,14 +9,21 @@ import { useLocale } from '../context/LocaleContext';
 // while the next chunk loads. Before this, each admin page rendered its own
 // AdminNav and was itself the lazy-loaded, Suspense-wrapped unit, so every
 // tab switch blanked the whole screen down to a bare "Loading…" flash.
+//
+// The gold eyebrow anchors the admin in the same house voice as the storefront;
+// below it the spacing stays deliberately tighter than the editorial rhythm,
+// because these are working screens.
 export default function AdminLayout() {
   const { t } = useLocale();
   return (
-    <div className="px-3 pt-8 md:px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="container-lux pb-16 pt-10">
+      <p className="eyebrow">{t('admin.eyebrow')}</p>
+      <div className="mt-6 border-b border-line">
         <AdminNav />
       </div>
-      <Suspense fallback={<div className="max-w-6xl mx-auto pb-8 text-sm text-stone">{t('admin.loading')}</div>}>
+      <Suspense
+        fallback={<div className="micro pt-10 text-muted">{t('admin.loading')}</div>}
+      >
         <Outlet />
       </Suspense>
     </div>

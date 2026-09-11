@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import Button from '../components/Button';
-
-const field =
-  'w-full bg-transparent border-b border-line py-3 text-sm placeholder:text-stone focus:outline-none focus:border-ink transition-colors';
+import Field from '../components/Field';
+import AuthShell from '../components/AuthShell';
 
 export default function ForgotPassword() {
   const { t } = useLocale();
@@ -26,39 +25,44 @@ export default function ForgotPassword() {
     }
   }
 
-  return (
-    <div className="max-w-sm mx-auto px-6 py-24">
-      <p className="eyebrow text-stone">{t('account.eyebrow')}</p>
-      <h1 className="font-display text-4xl mt-3 mb-10">{t('forgot.title')}</h1>
+  const back = (
+    <Link
+      to="/login"
+      className="link-lux micro w-fit text-muted transition-colors hover:text-gold"
+    >
+      {t('forgot.back')}
+    </Link>
+  );
 
+  return (
+    <AuthShell
+      eyebrow={t('account.eyebrow')}
+      title={t('forgot.title')}
+      lead={sent ? null : t('forgot.lead')}
+    >
       {sent ? (
-        <div className="space-y-6">
-          <p className="text-sm text-stone leading-relaxed">
+        <div className="space-y-8">
+          <p className="border-l-2 border-gold py-1 pl-4 text-sm leading-relaxed text-foreground">
             {t('forgot.sent', { email })}
           </p>
-          <Link to="/login" className="eyebrow link-underline">
-            {t('forgot.back')}
-          </Link>
+          {back}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <p className="text-sm text-stone">{t('forgot.lead')}</p>
-          <input
+        <form onSubmit={handleSubmit} className="space-y-7">
+          <Field
+            label={t('login.email')}
             type="email"
-            placeholder={t('login.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={field}
+            autoComplete="email"
             required
           />
           <Button as="button" type="submit" disabled={submitting} full size="lg">
             {submitting ? t('forgot.sending') : t('forgot.send')}
           </Button>
-          <Link to="/login" className="block eyebrow link-underline w-fit">
-            {t('forgot.back')}
-          </Link>
+          <div className="border-t border-line pt-6">{back}</div>
         </form>
       )}
-    </div>
+    </AuthShell>
   );
 }

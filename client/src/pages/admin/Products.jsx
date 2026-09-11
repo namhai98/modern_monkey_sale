@@ -5,13 +5,8 @@ import Select from '../../components/Select';
 import Icon from '../../components/Icon';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
+import { inputCls, btnPrimary, btnGhost } from './ui';
 
-const inputCls =
-  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
-  'focus:outline-none focus:border-champagne transition-colors';
-const btnPrimary =
-  'bg-ink text-canvas border border-ink px-4 py-2 text-sm transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50';
-const btnGhost = 'px-4 py-2 text-sm text-stone transition-colors hover:text-ink';
 const MAX_IMAGES = 5;
 const emptyForm = {
   name: '',
@@ -65,44 +60,44 @@ function ProductImageManager({ productId, images: initialImages }) {
 
   return (
     <div className="md:col-span-2 border-t border-line pt-3">
-      <p className="text-xs text-stone mb-2">
+      <p className="text-xs text-muted mb-2">
         {t('admin.images.count', { n: images.length, max: MAX_IMAGES })}
       </p>
 
       {images.length > 0 && (
         <div className="flex flex-wrap gap-3 mb-3">
           {images.map((im, i) => (
-            <div key={im.id} className="w-24 text-[11px] text-stone">
+            <div key={im.id} className="w-24 text-[11px] text-muted">
               <div className="relative">
                 <ImageFallback
                   src={im.thumbnail}
                   alt=""
                   className={`h-28 w-24 object-cover border ${
-                    i === 0 ? 'border-champagne' : 'border-line'
+                    i === 0 ? 'border-gold' : 'border-line'
                   }`}
                 />
                 {i === 0 && (
-                  <span className="absolute top-1 left-1 bg-ink text-canvas px-1 text-[10px]">
+                  <span className="absolute top-1 left-1 bg-foreground text-background px-1 text-[10px]">
                     {t('admin.images.primary')}
                   </span>
                 )}
               </div>
               <div className="flex justify-between mt-1">
                 <button type="button" disabled={busy || i === 0} onClick={() => move(i, -1)}
-                  className="px-1 text-ink disabled:opacity-30">←</button>
+                  className="px-1 text-foreground disabled:opacity-30">←</button>
                 {i !== 0 && (
                   <button type="button" disabled={busy}
                     onClick={() => run(() => client.patch(`/products/${productId}/images/${im.id}/primary`))}
-                    className="text-ink hover:text-champagne">{t('admin.images.setPrimary')}</button>
+                    className="text-foreground hover:text-gold">{t('admin.images.setPrimary')}</button>
                 )}
                 <button type="button" disabled={busy || i === images.length - 1} onClick={() => move(i, 1)}
-                  className="px-1 text-ink disabled:opacity-30">→</button>
+                  className="px-1 text-foreground disabled:opacity-30">→</button>
               </div>
               <div className="flex justify-between mt-0.5">
                 <span>{im.width && im.height ? `${im.width}×${im.height}` : ''}</span>
                 <button type="button" disabled={busy}
                   onClick={() => run(() => client.delete(`/products/${productId}/images/${im.id}`))}
-                  className="text-red-400 hover:underline">{t('admin.images.delete')}</button>
+                  className="text-danger transition-opacity duration-300 hover:opacity-70">{t('admin.images.delete')}</button>
               </div>
               {im.file_size ? <div>{kb(im.file_size)}</div> : null}
             </div>
@@ -111,13 +106,13 @@ function ProductImageManager({ productId, images: initialImages }) {
       )}
 
       {images.length < MAX_IMAGES && (
-        <label className="inline-block text-sm text-stone cursor-pointer border border-line px-3 py-2 transition-colors hover:bg-ivory hover:text-ink">
+        <label className="inline-block text-sm text-muted cursor-pointer border border-line px-3 py-2 transition-colors hover:bg-surface hover:text-foreground">
           {busy ? t('admin.images.working') : t('admin.images.upload')}
           <input type="file" accept="image/jpeg,image/png" className="hidden" disabled={busy}
             onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
       )}
-      {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      {error && <p className="text-danger text-sm mt-2">{error}</p>}
     </div>
   );
 }
@@ -159,12 +154,12 @@ function ProductVariantManager({ productId, variants: initial }) {
 
   return (
     <div className="md:col-span-2 border-t border-line pt-3">
-      <p className="text-xs text-stone mb-2">{t('admin.variants.hint')}</p>
+      <p className="text-xs text-muted mb-2">{t('admin.variants.hint')}</p>
 
       {variants.length > 0 && (
         <table className="w-full text-sm mb-3">
           <thead>
-            <tr className="text-left eyebrow text-stone">
+            <tr className="text-left micro text-muted">
               <th className="py-1 font-normal">{t('admin.variants.size')}</th><th className="py-1 font-normal">{t('admin.variants.sku')}</th>
               <th className="py-1 w-28 font-normal">{t('admin.variants.stock')}</th><th className="py-1"></th>
             </tr>
@@ -172,8 +167,8 @@ function ProductVariantManager({ productId, variants: initial }) {
           <tbody>
             {variants.map((v) => (
               <tr key={v.id} className="border-t border-line/60">
-                <td className="py-1.5 font-medium text-ink">{v.label}</td>
-                <td className="py-1.5 text-stone">{v.sku || '—'}</td>
+                <td className="py-1.5 font-medium text-foreground">{v.label}</td>
+                <td className="py-1.5 text-muted">{v.sku || '—'}</td>
                 <td className="py-1.5">
                   <input
                     type="number"
@@ -184,7 +179,7 @@ function ProductVariantManager({ productId, variants: initial }) {
                       const n = Number(e.target.value);
                       if (Number.isInteger(n) && n >= 0 && n !== v.stock) setStock(v, n);
                     }}
-                    className="border border-line bg-transparent px-2 py-1 w-20 text-sm text-ink focus:outline-none focus:border-champagne"
+                    className="border border-line bg-transparent px-2 py-1 w-20 text-sm text-foreground focus:outline-none focus:border-gold"
                   />
                 </td>
                 <td className="py-1.5 text-right">
@@ -192,7 +187,7 @@ function ProductVariantManager({ productId, variants: initial }) {
                     type="button"
                     disabled={busy}
                     onClick={() => run(() => client.delete(`/products/${productId}/variants/${v.id}`))}
-                    className="text-red-400 hover:underline text-xs"
+                    className="text-danger transition-opacity duration-300 hover:opacity-70 text-xs"
                   >
                     {t('admin.variants.delete')}
                   </button>
@@ -228,7 +223,7 @@ function ProductVariantManager({ productId, variants: initial }) {
           {t('admin.variants.add')}
         </button>
       </form>
-      {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      {error && <p className="text-danger text-sm mt-2">{error}</p>}
     </div>
   );
 }
@@ -272,8 +267,8 @@ function ProductForm({ categories, brands, initial, onCancel, onSaved }) {
   }
 
   return (
-    <form onSubmit={submit} className="border border-line bg-ivory p-4 mb-6 grid gap-3 md:grid-cols-2">
-      <div className="md:col-span-2 font-display text-lg text-ink">
+    <form onSubmit={submit} className="border border-line bg-surface p-4 mb-6 grid gap-3 md:grid-cols-2">
+      <div className="md:col-span-2 heading-serif text-lg text-foreground">
         {editing ? t('admin.products.editTitle', { name: initial.name }) : t('admin.products.newTitle')}
       </div>
       <input className={inputCls} placeholder={t('admin.products.namePlaceholder')} value={form.name}
@@ -319,12 +314,12 @@ function ProductForm({ categories, brands, initial, onCancel, onSaved }) {
           <ProductVariantManager productId={initial.id} variants={initial.variants || []} />
         </>
       ) : (
-        <p className="md:col-span-2 text-xs text-stone border-t border-line pt-3">
+        <p className="md:col-span-2 text-xs text-muted border-t border-line pt-3">
           {t('admin.products.saveFirst')}
         </p>
       )}
 
-      {error && <p className="md:col-span-2 text-red-400 text-sm">{error}</p>}
+      {error && <p className="md:col-span-2 text-danger text-sm">{error}</p>}
       <div className="md:col-span-2 flex gap-2">
         <button className={btnPrimary} disabled={saving}>
           {saving ? t('admin.products.saving') : editing ? t('admin.products.saveChanges') : t('admin.products.create')}
@@ -364,7 +359,7 @@ function AdjustStock({ product, onDone }) {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-center gap-2 bg-ivory border border-line p-3 text-sm">
+    <form onSubmit={submit} className="flex flex-wrap items-center gap-2 bg-surface border border-line p-3 text-sm">
       <Select className="w-32" value={mode} onChange={(e) => setMode(e.target.value)}>
         <option value="delta">{t('admin.stock.changeBy')}</option>
         <option value="set">{t('admin.stock.setTo')}</option>
@@ -381,7 +376,7 @@ function AdjustStock({ product, onDone }) {
       <button className={btnPrimary} disabled={saving}>
         {t('admin.stock.apply')}
       </button>
-      {error && <span className="text-red-400 w-full">{error}</span>}
+      {error && <span className="text-danger w-full">{error}</span>}
     </form>
   );
 }
@@ -463,9 +458,9 @@ export default function AdminProducts() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-8">
+    <div className="max-w-5xl mx-auto pt-10 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="font-display text-2xl text-ink">{t('admin.products.title')}</h1>
+        <h1 className="heading-serif text-2xl text-foreground">{t('admin.products.title')}</h1>
         <button
           onClick={() => setFormFor(formFor === 'new' ? null : 'new')}
           className={btnPrimary}
@@ -477,11 +472,11 @@ export default function AdminProducts() {
       <div className="flex flex-wrap items-center gap-4 mb-6 text-sm">
         <input className={inputCls} placeholder={t('admin.products.searchPlaceholder')} value={search}
           onChange={(e) => setSearch(e.target.value)} />
-        <label className="flex items-center gap-1.5 text-stone">
+        <label className="flex items-center gap-1.5 text-muted">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
           {t('admin.products.showInactive')}
         </label>
-        <label className="flex items-center gap-1.5 text-stone">
+        <label className="flex items-center gap-1.5 text-muted">
           <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
           {t('admin.products.lowStockOnly')}
         </label>
@@ -497,13 +492,13 @@ export default function AdminProducts() {
           onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
-      {loading && <p className="text-stone">{t('admin.products.loading')}</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && <p className="text-muted">{t('admin.products.loading')}</p>}
+      {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left eyebrow text-stone border-b border-line">
+            <tr className="text-left micro text-muted border-b border-line">
               <th className="py-3 font-normal">{t('admin.products.colProduct')}</th>
               <th className="py-3 font-normal">{t('admin.products.colCategory')}</th>
               <th className="py-3 font-normal">{t('admin.products.colPrice')}</th>
@@ -515,32 +510,32 @@ export default function AdminProducts() {
           <tbody>
             {products.map((p) => (
               <Fragment key={p.id}>
-                <tr className={`border-b border-line/60 transition-colors hover:bg-ivory ${p.is_active ? 'text-ink' : 'text-stone'}`}>
+                <tr className={`border-b border-line/60 transition-colors hover:bg-surface ${p.is_active ? 'text-foreground' : 'text-muted'}`}>
                   <td className="py-3">
                     <div className="font-medium">{p.name}</div>
-                    {p.sku && <div className="text-xs text-stone">{p.sku}</div>}
+                    {p.sku && <div className="text-xs text-muted">{p.sku}</div>}
                   </td>
-                  <td className="py-3 text-stone">
+                  <td className="py-3 text-muted">
                     {p.category?.name || '—'}
                     {p.brand && <span className="text-xs"> · {p.brand.name}</span>}
                     {p.gender && <span className="text-xs"> · {t(`gender.${p.gender}`)}</span>}
                   </td>
                   <td className="py-3">${p.price.toFixed(2)}</td>
                   <td className="py-3">
-                    <span className={p.low_stock ? 'text-amber-400 font-medium' : ''}>{p.stock}</span>
-                    {p.low_stock && <span className="text-xs text-amber-400"> {t('admin.products.low')}</span>}
+                    <span className={p.low_stock ? 'text-gold font-medium' : ''}>{p.stock}</span>
+                    {p.low_stock && <span className="text-xs text-gold"> {t('admin.products.low')}</span>}
                     {p.has_variants ? (
-                      <span className="ml-2 text-xs text-stone">{t('admin.products.perSize')}</span>
+                      <span className="ml-2 text-xs text-muted">{t('admin.products.perSize')}</span>
                     ) : (
                       <button onClick={() => setAdjustId(adjustId === p.id ? null : p.id)}
-                        className="ml-2 text-xs text-stone hover:text-champagne">
+                        className="ml-2 text-xs text-muted hover:text-gold">
                         {adjustId === p.id ? t('admin.products.closeLower') : t('admin.products.adjust')}
                       </button>
                     )}
                   </td>
                   <td className="py-3">
                     <button onClick={() => toggleActive(p)}
-                      className={p.is_active ? 'text-green-400 hover:underline' : 'text-red-400 hover:underline'}>
+                      className={p.is_active ? 'text-gold transition-opacity duration-300 hover:opacity-70' : 'text-danger transition-opacity duration-300 hover:opacity-70'}>
                       {p.is_active ? t('admin.products.active') : t('admin.products.inactive')}
                     </button>
                   </td>
@@ -565,7 +560,7 @@ export default function AdminProducts() {
                               }
                         )
                       }
-                      className="inline-flex text-stone transition-colors hover:text-champagne"
+                      className="inline-flex text-muted transition-colors hover:text-gold"
                       aria-label={t('admin.products.edit')}
                       title={t('admin.products.edit')}
                     >

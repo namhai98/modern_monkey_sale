@@ -26,6 +26,21 @@ function signToken(user) {
   );
 }
 
+/* The session user shape, used by both /me and /refresh so a shopper's cached
+   user object is identical however the session was established.
+   has_password / providers let the profile screen offer "set a password"
+   instead of "change password" on an account created through Google or
+   Facebook, and show which of those are linked. */
+const SESSION_USER_SQL = `
+  SELECT u.id, u.name, u.email, u.role, u.is_active,
+         (u.password_hash IS NOT NULL) AS has_password,
+         COALESCE(
+           (SELECT array_agg(i.provider ORDER BY i.provider)
+              FROM user_identities i WHERE i.user_id = u.id),
+           '{}'
+         ) AS providers
+    FROM users u WHERE u.id = $1`;
+
 // Issue a fresh refresh-token family and set the cookie; return an access token.
 async function startSession(res, user, req) {
   const { raw } = await issueRefreshToken(user.id, { req });
@@ -91,6 +106,12 @@ export async function login(req, res) {
     }
 
     const user = rows[0];
+    // A social-only account has no password_hash. Answer exactly as we would
+    // for a wrong password, so this endpoint never reveals which addresses are
+    // registered or how they sign in.
+    if (!user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
+    }
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
@@ -109,10 +130,7 @@ export async function login(req, res) {
 
 export async function me(req, res) {
   try {
-    const { rows } = await query(
-      'SELECT id, name, email, role, is_active FROM users WHERE id = $1',
-      [req.user.id]
-    );
+    const { rows } = await query(SESSION_USER_SQL, [req.user.id]);
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Account no longer exists', code: 'INVALID_TOKEN' });
     }
@@ -155,10 +173,7 @@ export async function refresh(req, res) {
       return res.status(401).json({ error: 'Refresh token expired', code: 'TOKEN_EXPIRED' });
     }
 
-    const userRes = await query(
-      'SELECT id, name, email, role, is_active FROM users WHERE id = $1',
-      [record.user_id]
-    );
+    const userRes = await query(SESSION_USER_SQL, [record.user_id]);
     if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
       await revokeFamily(record.family_id);
       clearRefreshCookie(res);

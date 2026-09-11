@@ -86,6 +86,59 @@ stays first-party.
 
 ---
 
+## 4. Social sign-in (optional)
+
+Skip this and the storefront simply shows no social buttons — everything else
+works. To switch Google on:
+
+1. <https://console.cloud.google.com> → your project →
+   **APIs & Services → Credentials → Create credentials → OAuth client ID** →
+   *Web application*.
+2. Under **Authorised redirect URIs** add your Netlify URL plus the callback
+   path — this must match `APP_URL` exactly:
+
+   ```
+   https://<your-site>.netlify.app/api/auth/oauth/google/callback
+   ```
+
+   Add `http://localhost:5173/api/auth/oauth/google/callback` too if you want
+   it working in dev. Leave **Authorised JavaScript origins** empty: the flow is
+   server-side and loads none of Google's JavaScript.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on Render. The button
+   appears only when both are present.
+4. On the **OAuth consent screen**, set **App name** to what shoppers should
+   see (it defaults to the project id), and either add test users or
+   **Publish app** — while the app is in *Testing*, only listed test users can
+   sign in. `email`/`profile` are not sensitive scopes, so publishing needs no
+   Google verification review.
+
+Facebook is the same shape with `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` from
+<https://developers.facebook.com>, except that Facebook requires HTTPS for a
+live app's redirect URI — `localhost` only works in development mode.
+
+---
+
+## Schema upgrades
+
+`db:setup` creates a fresh database. For one that already has data, the files in
+`server/src/config/migrations/` bring it forward; each is idempotent. **Run the
+migration before deploying the code that needs it** — the additive migrations
+here are backwards-compatible, so the old code keeps working against the new
+schema, but the new code will fail against the old one.
+
+```bash
+cd server
+psql "$DATABASE_URL" -f src/config/migrations/012_oauth_identities.sql
+```
+
+`012_oauth_identities.sql` is required by social sign-in. It also relaxes
+`users.password_hash` to nullable (accounts created through a provider have no
+password) and is read by `/api/auth/me` and `/api/auth/refresh`, so deploying
+the API without it breaks sign-in for **existing** shoppers too, not just
+social ones.
+
+---
+
 ## Redeploys
 
 Both hosts auto-deploy on push to `main`:

@@ -4,11 +4,9 @@ import client from '../../api/client';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import Select from '../../components/Select';
 import { useLocale } from '../../context/LocaleContext';
+import { inputCls } from './ui';
 
 const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded'];
-const inputCls =
-  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
-  'focus:outline-none focus:border-champagne transition-colors';
 const LIMIT = 20;
 
 export default function AdminOrders() {
@@ -47,8 +45,8 @@ export default function AdminOrders() {
   const totalPages = Math.max(1, Math.ceil(data.total / LIMIT));
 
   return (
-    <div className="max-w-5xl mx-auto pb-8">
-      <h1 className="font-display text-2xl text-ink mb-6">{t('admin.orders.title')}</h1>
+    <div className="max-w-5xl mx-auto pt-10 pb-8">
+      <h1 className="heading-serif text-2xl text-foreground mb-6">{t('admin.orders.title')}</h1>
 
       <div className="flex flex-wrap items-center gap-2 mb-6 text-sm">
         <Select className="w-40" value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -57,20 +55,20 @@ export default function AdminOrders() {
         </Select>
         <input className={inputCls} placeholder={t('admin.orders.searchPlaceholder')} value={search}
           onChange={(e) => setSearch(e.target.value)} />
-        <label className="text-stone">{t('admin.orders.from')} <input type="date" className={inputCls} value={from}
+        <label className="text-muted">{t('admin.orders.from')} <input type="date" className={inputCls} value={from}
           onChange={(e) => setFrom(e.target.value)} /></label>
-        <label className="text-stone">{t('admin.orders.to')} <input type="date" className={inputCls} value={to}
+        <label className="text-muted">{t('admin.orders.to')} <input type="date" className={inputCls} value={to}
           onChange={(e) => setTo(e.target.value)} /></label>
       </div>
 
-      {loading && <p className="text-stone">{t('admin.orders.loading')}</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && <p className="text-muted">{t('admin.orders.loading')}</p>}
+      {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && (
         <>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left eyebrow text-stone border-b border-line">
+              <tr className="text-left micro text-muted border-b border-line">
                 <th className="py-3 font-normal">{t('admin.orders.colOrder')}</th>
                 <th className="py-3 font-normal">{t('admin.orders.colCustomer')}</th>
                 <th className="py-3 font-normal">{t('admin.orders.colDate')}</th>
@@ -81,32 +79,32 @@ export default function AdminOrders() {
             </thead>
             <tbody>
               {data.items.map((o) => (
-                <tr key={o.id} className="border-b border-line/60 transition-colors hover:bg-ivory">
+                <tr key={o.id} className="border-b border-line/60 transition-colors hover:bg-surface">
                   <td className="py-3">
-                    <Link to={`/admin/orders/${o.id}`} className="text-ink font-medium transition-colors hover:text-champagne">
+                    <Link to={`/admin/orders/${o.id}`} className="text-foreground font-medium transition-colors hover:text-gold">
                       #{o.id}
                     </Link>
                   </td>
-                  <td className="py-3 text-stone">
+                  <td className="py-3 text-muted">
                     {o.user ? (o.user.name || o.user.email || `User #${o.user.id}`) : '—'}
                   </td>
-                  <td className="py-3 text-stone">{new Date(o.created_at).toLocaleDateString()}</td>
-                  <td className="py-3 text-right text-stone">{o.item_count ?? '—'}</td>
-                  <td className="py-3 text-right text-ink">${Number(o.total).toFixed(2)}</td>
+                  <td className="py-3 text-muted">{new Date(o.created_at).toLocaleDateString()}</td>
+                  <td className="py-3 text-right text-muted">{o.item_count ?? '—'}</td>
+                  <td className="py-3 text-right text-foreground">${Number(o.total).toFixed(2)}</td>
                   <td className="py-3 text-right"><OrderStatusBadge status={o.status} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {data.items.length === 0 && <p className="text-stone mt-4">{t('admin.orders.none')}</p>}
+          {data.items.length === 0 && <p className="text-muted mt-4">{t('admin.orders.none')}</p>}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-4 mt-8 text-sm">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-3 py-1 border border-line text-ink transition-colors hover:border-champagne disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.prev')}</button>
-              <span className="text-stone">{t('admin.orders.pageOf', { page, total: totalPages })}</span>
+                className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.prev')}</button>
+              <span className="text-muted">{t('admin.orders.pageOf', { page, total: totalPages })}</span>
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-3 py-1 border border-line text-ink transition-colors hover:border-champagne disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.next')}</button>
+                className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.next')}</button>
             </div>
           )}
         </>

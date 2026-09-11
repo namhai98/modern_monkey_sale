@@ -5,13 +5,8 @@ import Select from '../../components/Select';
 import Icon from '../../components/Icon';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
+import { inputCls, btnPrimary, btnGhost } from './ui';
 
-const inputCls =
-  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
-  'focus:outline-none focus:border-champagne transition-colors';
-const btnPrimary =
-  'bg-ink text-canvas border border-ink px-4 py-2 text-sm transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50';
-const btnGhost = 'px-4 py-2 text-sm text-stone transition-colors hover:text-ink';
 const ymd = (d) => d.toISOString().slice(0, 10);
 const today = () => ymd(new Date());
 const plusDays = (n) => {
@@ -31,10 +26,10 @@ const emptyForm = {
 };
 
 const STATUS_STYLE = {
-  active: 'text-green-400',
-  scheduled: 'text-blue-400',
-  expired: 'text-stone',
-  disabled: 'text-red-400',
+  active: 'text-gold',
+  scheduled: 'text-foreground',
+  expired: 'text-muted',
+  disabled: 'text-danger',
 };
 
 function valueLabel(d) {
@@ -95,8 +90,8 @@ function ProductPicker({ selected, onChange }) {
   return (
     <div className="md:col-span-2 border-t border-line pt-3">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-stone">{t('admin.picker.products')}</p>
-        <span className="text-xs text-stone">{t('admin.picker.selected', { n: selected.length })}</span>
+        <p className="text-xs text-muted">{t('admin.picker.products')}</p>
+        <span className="text-xs text-muted">{t('admin.picker.selected', { n: selected.length })}</span>
       </div>
 
       {selected.length > 0 && (
@@ -106,7 +101,7 @@ function ProductPicker({ selected, onChange }) {
               key={pid}
               type="button"
               onClick={() => toggle(pid)}
-              className="inline-flex items-center gap-1 border border-line text-ink hover:border-champagne px-2 py-0.5 text-xs transition-colors"
+              className="inline-flex items-center gap-1 border border-line text-foreground hover:border-gold px-2 py-0.5 text-xs transition-colors"
             >
               {names[pid] || `#${pid}`}
               <span aria-hidden="true">×</span>
@@ -122,25 +117,25 @@ function ProductPicker({ selected, onChange }) {
         onChange={(e) => setTerm(e.target.value)}
       />
       <div className="max-h-56 overflow-y-auto border border-line divide-y divide-line/60">
-        {loading && <p className="text-sm text-stone p-3">{t('admin.picker.loading')}</p>}
+        {loading && <p className="text-sm text-muted p-3">{t('admin.picker.loading')}</p>}
         {!loading && results.length === 0 && (
-          <p className="text-sm text-stone p-3">{t('admin.picker.none')}</p>
+          <p className="text-sm text-muted p-3">{t('admin.picker.none')}</p>
         )}
         {results.map((p) => (
           <label
             key={p.id}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-ivory"
+            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-surface"
           >
             <input
               type="checkbox"
               checked={selectedSet.has(p.id)}
               onChange={() => toggle(p.id)}
             />
-            <span className="flex-1 text-ink">
+            <span className="flex-1 text-foreground">
               {p.name}
-              {!p.is_active && <span className="text-xs text-stone"> {t('admin.picker.inactive')}</span>}
+              {!p.is_active && <span className="text-xs text-muted"> {t('admin.picker.inactive')}</span>}
             </span>
-            <span className="text-stone text-xs">{money(p.price)}</span>
+            <span className="text-muted text-xs">{money(p.price)}</span>
           </label>
         ))}
       </div>
@@ -200,9 +195,9 @@ function DiscountForm({ initial, onCancel, onSaved }) {
   return (
     <form
       onSubmit={submit}
-      className="border border-line bg-ivory p-4 mb-6 grid gap-3 md:grid-cols-2"
+      className="border border-line bg-surface p-4 mb-6 grid gap-3 md:grid-cols-2"
     >
-      <div className="md:col-span-2 font-display text-lg text-ink">
+      <div className="md:col-span-2 heading-serif text-lg text-foreground">
         {editing ? t('admin.discounts.editTitle', { name: initial.name }) : t('admin.discounts.newTitle')}
       </div>
 
@@ -213,7 +208,7 @@ function DiscountForm({ initial, onCancel, onSaved }) {
         onChange={(e) => set('name', e.target.value)}
         required
       />
-      <label className="flex items-center gap-2 text-sm text-stone">
+      <label className="flex items-center gap-2 text-sm text-muted">
         <input
           type="checkbox"
           checked={form.is_active}
@@ -238,7 +233,7 @@ function DiscountForm({ initial, onCancel, onSaved }) {
         required
       />
 
-      <label className="text-xs text-stone">
+      <label className="text-xs text-muted">
         {t('admin.discounts.startDate')}
         <input
           className={`${inputCls} w-full mt-1`}
@@ -248,7 +243,7 @@ function DiscountForm({ initial, onCancel, onSaved }) {
           required
         />
       </label>
-      <label className="text-xs text-stone">
+      <label className="text-xs text-muted">
         {t('admin.discounts.endDate')}
         <input
           className={`${inputCls} w-full mt-1`}
@@ -261,7 +256,7 @@ function DiscountForm({ initial, onCancel, onSaved }) {
 
       <ProductPicker selected={form.product_ids} onChange={(ids) => set('product_ids', ids)} />
 
-      {error && <p className="md:col-span-2 text-red-400 text-sm">{error}</p>}
+      {error && <p className="md:col-span-2 text-danger text-sm">{error}</p>}
       <div className="md:col-span-2 flex gap-2">
         <button className={btnPrimary} disabled={saving}>
           {saving ? t('admin.discounts.saving') : editing ? t('admin.discounts.saveChanges') : t('admin.discounts.create')}
@@ -334,9 +329,9 @@ export default function AdminDiscounts() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-8">
+    <div className="max-w-5xl mx-auto pt-10 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="font-display text-2xl text-ink">{t('admin.discounts.title')}</h1>
+        <h1 className="heading-serif text-2xl text-foreground">{t('admin.discounts.title')}</h1>
         <button
           onClick={() => setFormFor(formFor === 'new' ? null : 'new')}
           className={btnPrimary}
@@ -352,13 +347,13 @@ export default function AdminDiscounts() {
         <DiscountForm initial={formFor} onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
-      {loading && <p className="text-stone">{t('admin.discounts.loading')}</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && <p className="text-muted">{t('admin.discounts.loading')}</p>}
+      {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && discounts.length === 0 && (
-        <div className="text-center text-stone py-16">
+        <div className="text-center text-muted py-16">
           <p>{t('admin.discounts.none')}</p>
-          <button onClick={() => setFormFor('new')} className="mt-2 text-ink hover:text-champagne">
+          <button onClick={() => setFormFor('new')} className="mt-2 text-foreground hover:text-gold">
             {t('admin.discounts.createFirst')}
           </button>
         </div>
@@ -367,7 +362,7 @@ export default function AdminDiscounts() {
       {!loading && !error && discounts.length > 0 && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left eyebrow text-stone border-b border-line">
+            <tr className="text-left micro text-muted border-b border-line">
               <th className="py-3 font-normal">{t('admin.discounts.colName')}</th>
               <th className="py-3 font-normal">{t('admin.discounts.colType')}</th>
               <th className="py-3 font-normal">{t('admin.discounts.colValue')}</th>
@@ -381,20 +376,20 @@ export default function AdminDiscounts() {
           <tbody>
             {discounts.map((d) => (
               <Fragment key={d.id}>
-                <tr className="border-b border-line/60 transition-colors hover:bg-ivory">
-                  <td className="py-3 font-medium text-ink">{d.name}</td>
-                  <td className="py-3 text-stone">{d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}</td>
-                  <td className="py-3 text-ink">{valueLabel(d)}</td>
-                  <td className="py-3 text-stone">{d.start_date}</td>
-                  <td className="py-3 text-stone">{d.end_date}</td>
-                  <td className="py-3 text-stone">{d.product_count}</td>
-                  <td className={`py-3 capitalize ${STATUS_STYLE[d.status] || 'text-stone'}`}>{t(`admin.discountStatus.${d.status}`)}</td>
+                <tr className="border-b border-line/60 transition-colors hover:bg-surface">
+                  <td className="py-3 font-medium text-foreground">{d.name}</td>
+                  <td className="py-3 text-muted">{d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}</td>
+                  <td className="py-3 text-foreground">{valueLabel(d)}</td>
+                  <td className="py-3 text-muted">{d.start_date}</td>
+                  <td className="py-3 text-muted">{d.end_date}</td>
+                  <td className="py-3 text-muted">{d.product_count}</td>
+                  <td className={`py-3 capitalize ${STATUS_STYLE[d.status] || 'text-muted'}`}>{t(`admin.discountStatus.${d.status}`)}</td>
                   <td className="py-3 text-right space-x-3 whitespace-nowrap">
-                    <button onClick={() => openEdit(d)} className="inline-flex text-stone transition-colors hover:text-champagne"
+                    <button onClick={() => openEdit(d)} className="inline-flex text-muted transition-colors hover:text-gold"
                       aria-label={t('admin.discounts.edit')} title={t('admin.discounts.edit')}>
                       <Icon name="edit" />
                     </button>
-                    <button onClick={() => remove(d)} className="inline-flex text-red-400 transition-colors hover:text-red-300"
+                    <button onClick={() => remove(d)} className="inline-flex text-danger transition-opacity duration-300 hover:opacity-70"
                       aria-label={t('admin.discounts.delete')} title={t('admin.discounts.delete')}>
                       <Icon name="trash" />
                     </button>

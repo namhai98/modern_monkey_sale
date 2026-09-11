@@ -1,32 +1,24 @@
 import { useTheme } from '../context/ThemeContext';
 import Icon from './Icon';
 
-const OPTIONS = [
-  { key: 'dark', icon: 'moon', label: 'Dark' },
-  { key: 'light', icon: 'sun', label: 'Light' },
-];
-
-// Same visual language as LangSwitch — two options side by side, the active
-// one in gold, separated by a hairline slash.
+/* The presentation site's theme toggle: one 36px round control — the single
+   place radius is allowed — with a hairline drawn in the current text colour,
+   turning gold on hover. It shows the theme you would switch TO (a sun while
+   the page is dark), which is the convention the marketing site follows. */
 export default function ThemeToggle({ className = '' }) {
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
+  const dark = theme === 'dark';
+  const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
-      {OPTIONS.map((o, i) => (
-        <span key={o.key} className="flex items-center gap-1.5">
-          {i > 0 && <span className="text-current/30">/</span>}
-          <button
-            type="button"
-            onClick={() => setTheme(o.key)}
-            aria-pressed={theme === o.key}
-            aria-label={o.label}
-            title={o.label}
-            className={theme === o.key ? 'text-champagne' : 'opacity-40 hover:opacity-70'}
-          >
-            <Icon name={o.icon} className="h-3.5 w-3.5" />
-          </button>
-        </span>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={label}
+      title={label}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-current/20 transition-colors duration-300 hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${className}`}
+    >
+      <Icon name={dark ? 'sun' : 'moon'} className="h-4 w-4" />
+    </button>
   );
 }

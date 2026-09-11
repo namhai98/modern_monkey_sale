@@ -31,3 +31,25 @@ pool.on('error', (err) => {
 });
 
 export const query = (text, params) => pool.query(text, params);
+
+// Run a set of statements on one client inside BEGIN/COMMIT. Used where a
+// partial write would leave the row graph inconsistent — e.g. creating a user
+// and its linked social identity together.
+export async function withTransaction(fn) {
+  const clientConn = await pool.connect();
+  try {
+    await clientConn.query('BEGIN');
+    const result = await fn((text, params) => clientConn.query(text, params));
+    await clientConn.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await clientConn.query('ROLLBACK');
+    } catch {
+      // the connection is already broken; the pool will discard it
+    }
+    throw err;
+  } finally {
+    clientConn.release();
+  }
+}

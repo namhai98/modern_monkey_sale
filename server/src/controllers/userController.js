@@ -29,10 +29,10 @@ export async function updateMe(req, res) {
 export async function changePassword(req, res) {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
+    if (!newPassword) {
       return res
         .status(400)
-        .json({ error: 'currentPassword and newPassword are required', code: 'VALIDATION_ERROR' });
+        .json({ error: 'newPassword is required', code: 'VALIDATION_ERROR' });
     }
     const pwProblem = passwordProblem(newPassword);
     if (pwProblem) {
@@ -43,11 +43,24 @@ export async function changePassword(req, res) {
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Account no longer exists', code: 'INVALID_TOKEN' });
     }
-    const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
-    if (!valid) {
-      return res
-        .status(401)
-        .json({ error: 'Current password is incorrect', code: 'INVALID_CREDENTIALS' });
+
+    // An account created through Google or Facebook has no password to confirm,
+    // so this doubles as "set a password". The request is already authenticated
+    // by a valid access token, which is the same assurance a correct current
+    // password would give us.
+    const hasPassword = Boolean(rows[0].password_hash);
+    if (hasPassword) {
+      if (!currentPassword) {
+        return res
+          .status(400)
+          .json({ error: 'currentPassword is required', code: 'VALIDATION_ERROR' });
+      }
+      const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+      if (!valid) {
+        return res
+          .status(401)
+          .json({ error: 'Current password is incorrect', code: 'INVALID_CREDENTIALS' });
+      }
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);

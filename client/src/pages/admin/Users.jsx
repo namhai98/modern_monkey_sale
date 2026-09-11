@@ -4,14 +4,10 @@ import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import Select from '../../components/Select';
 import { useLocale } from '../../context/LocaleContext';
+import { inputCls, btnPrimary } from './ui';
 
 const ROLES = ['customer', 'staff', 'manager', 'admin'];
 const NEW_USER_ROLES = ['staff', 'manager', 'admin'];
-const inputCls =
-  'border border-line bg-transparent px-3 py-2 text-sm text-ink placeholder:text-stone ' +
-  'focus:outline-none focus:border-champagne transition-colors';
-const btnPrimary =
-  'bg-ink text-canvas border border-ink px-4 py-2 text-sm transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50';
 
 export default function AdminUsers() {
   const { t } = useLocale();
@@ -78,13 +74,13 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-8">
-      <h1 className="font-display text-2xl text-ink mb-6">{t('admin.users.title')}</h1>
+    <div className="max-w-4xl mx-auto pt-10 pb-8">
+      <h1 className="heading-serif text-2xl text-foreground mb-6">{t('admin.users.title')}</h1>
 
       {isAdmin && (
         <form
           onSubmit={createUser}
-          className="flex flex-wrap gap-2 items-end mb-8 p-4 border border-line bg-ivory"
+          className="flex flex-wrap gap-2 items-end mb-8 p-4 border border-line bg-surface"
         >
           <input
             className={inputCls}
@@ -123,17 +119,17 @@ export default function AdminUsers() {
           <button className={btnPrimary} disabled={creating}>
             {creating ? t('admin.users.adding') : t('admin.users.add')}
           </button>
-          {formError && <p className="w-full text-red-400 text-sm">{formError}</p>}
+          {formError && <p className="w-full text-danger text-sm">{formError}</p>}
         </form>
       )}
 
-      {loading && <p className="text-stone">{t('admin.users.loading')}</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {loading && <p className="text-muted">{t('admin.users.loading')}</p>}
+      {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left eyebrow text-stone border-b border-line">
+            <tr className="text-left micro text-muted border-b border-line">
               <th className="py-3 font-normal">{t('admin.users.colName')}</th>
               <th className="py-3 font-normal">{t('admin.users.colEmail')}</th>
               <th className="py-3 font-normal">{t('admin.users.colRole')}</th>
@@ -144,9 +140,9 @@ export default function AdminUsers() {
             {users.map((u) => {
               const editable = isAdmin && u.id !== user.id;
               return (
-                <tr key={u.id} className="border-b border-line/60 transition-colors hover:bg-ivory">
-                  <td className="py-3 text-ink">{u.name}</td>
-                  <td className="py-3 text-stone">{u.email}</td>
+                <tr key={u.id} className="border-b border-line/60 transition-colors hover:bg-surface">
+                  <td className="py-3 text-foreground">{u.name}</td>
+                  <td className="py-3 text-muted">{u.email}</td>
                   <td className="py-3">
                     {editable ? (
                       <Select
@@ -161,7 +157,7 @@ export default function AdminUsers() {
                         ))}
                       </Select>
                     ) : (
-                      <span className="capitalize text-ink">{t(`admin.role.${u.role}`)}</span>
+                      <span className="capitalize text-foreground">{t(`admin.role.${u.role}`)}</span>
                     )}
                   </td>
                   <td className="py-3">
@@ -170,14 +166,14 @@ export default function AdminUsers() {
                         onClick={() => toggleStatus(u)}
                         className={
                           u.is_active
-                            ? 'text-green-400 hover:underline'
-                            : 'text-red-400 hover:underline'
+                            ? 'text-gold transition-opacity duration-300 hover:opacity-70'
+                            : 'text-danger transition-opacity duration-300 hover:opacity-70'
                         }
                       >
                         {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
                       </button>
                     ) : (
-                      <span className={u.is_active ? 'text-green-400' : 'text-red-400'}>
+                      <span className={u.is_active ? 'text-gold' : 'text-danger'}>
                         {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
                       </span>
                     )}

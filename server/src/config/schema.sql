@@ -5,13 +5,28 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
+  -- Nullable: an account created through Google or Facebook has no password
+  -- until the owner sets one from their profile.
+  password_hash VARCHAR(255),
   role VARCHAR(20) NOT NULL DEFAULT 'customer'
     CHECK (role IN ('customer', 'staff', 'manager', 'admin')),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Linked social accounts. The provider's own account id is the join key, never
+-- the email address (users can change those).
+CREATE TABLE IF NOT EXISTS user_identities (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(20) NOT NULL CHECK (provider IN ('google', 'facebook')),
+  provider_user_id VARCHAR(191) NOT NULL,
+  email VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE (provider, provider_user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_identities_user ON user_identities (user_id);
 
 -- Upgrading an existing database? Run src/config/migrations/001_auth_roles.sql
 -- Create the first admin with:  npm run create-admin

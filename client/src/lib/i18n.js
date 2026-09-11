@@ -8,6 +8,7 @@ export const LOCALES = [
 
 const en = {
   // nav
+  'nav.home': 'Home',
   'nav.bags': 'Bags',
   'nav.watches': 'Watches',
   'nav.apparel': 'Apparel',
@@ -26,7 +27,7 @@ const en = {
 
   // home
   'home.hero.eyebrow': 'The Autumn Collection',
-  'home.hero.title': 'Made to be kept',
+  'home.hero.title': 'Made by hand.',
   'home.hero.support': 'Leather goods, watches and ready-to-wear — considered, and made to last.',
   'home.hero.cta': 'Discover',
   'home.house.eyebrow': 'The House',
@@ -34,6 +35,8 @@ const en = {
   'home.house.body':
     'Every piece is cut, stitched and finished by a small number of hands. We work in full-grain leathers, double-faced cashmere and Swiss movements — materials chosen because they age well, not because they photograph well.',
   'home.house.cta': 'Explore the collection',
+  'home.collections.eyebrow': 'The Collections',
+  'home.collections.title': 'Three disciplines, one standard',
   'home.band.shop': 'Shop {cat}',
   'home.featured.eyebrow': 'Newly Added',
   'home.featured.title': 'This week at the Maison',
@@ -53,6 +56,9 @@ const en = {
   'shop.prev': 'Prev',
   'shop.next': 'Next',
   'shop.search': 'Search the collection',
+  'shop.offers': 'Offers',
+  'shop.sortBy': 'Sort by',
+  'shop.emptyHint': 'Try removing a filter, or browse the full collection.',
   'shop.clear': 'Clear',
   'shop.viewAll': 'View all results',
   'shop.everything': 'View everything',
@@ -116,6 +122,8 @@ const en = {
   'cart.title': 'Your Bag',
   'cart.empty': 'Your bag is empty.',
   'cart.continue': 'Continue shopping',
+  'cart.decrease': 'Decrease quantity',
+  'cart.increase': 'Increase quantity',
   'cart.remove': 'Remove',
   'cart.subtotal': 'Subtotal',
   'cart.each': '{price} each',
@@ -195,6 +203,22 @@ const en = {
   'login.toLogin': 'Already have an account? Sign in',
   'login.forgot': 'Forgot password?',
   'login.error': 'Something went wrong',
+
+  // social sign-in
+  'login.or': 'or',
+  'login.withGoogle': 'Continue with Google',
+  'login.withFacebook': 'Continue with Facebook',
+  'oauth.signingIn': 'Signing you in',
+  'oauth.wait': 'One moment — finishing your sign-in.',
+  'oauth.failedTitle': 'Sign-in incomplete',
+  'oauth.backToSignIn': 'Back to sign in',
+  'oauth.error.failed': 'We could not complete that sign-in. Please try again.',
+  'oauth.error.denied': 'You cancelled the sign-in before it finished.',
+  'oauth.error.state': 'That sign-in link expired. Please start again.',
+  'oauth.error.no_email': 'That account did not share an email address, which we need to identify you. Try the other provider, or sign in with an email and password.',
+  'oauth.error.email_taken': 'An account already uses that email address. Please sign in with your email and password instead.',
+  'oauth.error.disabled': 'That account has been disabled.',
+  'oauth.error.provider_disabled': 'That sign-in method is not available right now.',
   'login.fullName': 'Full name',
 
   // profile
@@ -207,6 +231,9 @@ const en = {
   'profile.currentPw': 'Current password',
   'profile.newPw': 'New password (min 8 chars)',
   'profile.pwNote': 'Changing your password signs out your other devices.',
+  'profile.setPw': 'Set a password',
+  'profile.setPwNote': 'Your account signs in through Google or Facebook. Add a password if you would also like to sign in with your email address.',
+  'profile.connected': 'Connected accounts',
   'profile.sessions': 'Sessions',
   'profile.logoutAll': 'Log out of all devices',
   'profile.pwChanged': 'Password changed',
@@ -249,6 +276,7 @@ const en = {
   'admin.tab.discounts': 'Discounts',
   'admin.tab.users': 'Users',
   'admin.tab.settings': 'Settings',
+  'admin.eyebrow': 'The Atelier',
   'admin.loading': 'Loading…',
   'admin.action': 'Action',
 
@@ -496,6 +524,7 @@ const en = {
   'admin.settings.lastUpdated': 'Last updated {date}',
 
   // footer
+  'footer.blurb': 'A small maison working in leather, time and cloth. Considered pieces, made in short runs, made to last.',
   'footer.letter.eyebrow': 'The Maison Letter',
   'footer.letter.title': 'Collections, before anyone else.',
   'footer.letter.placeholder': 'Email address',
@@ -512,9 +541,49 @@ const en = {
   'footer.house.sustain': 'Sustainability',
   'footer.col.account': 'Account',
   'footer.copyright': '© {year} Modern Monkey Maison. All rights reserved.',
+
+  // home — additions that mirror the presentation site's sections
+  'home.hero.title2': 'Made to be kept.',
+  'home.statement.eyebrow': 'The Maison',
+  'home.statement.before':
+    'Modern Monkey is a small maison of leather goods, watches and ready-to-wear — pieces made in short runs for those who ',
+  'home.statement.gold': 'collect quietly and choose precisely',
+  'home.statement.after': '.',
+  'home.craft.eyebrow': 'Craftsmanship',
+  'home.craft.title1': 'Made slowly,',
+  'home.craft.title2': 'on purpose.',
+  'home.craft.step1.title': 'The Material',
+  'home.craft.step1.text':
+    'Full-grain leathers, double-faced cashmere, Swiss movements. We begin only with materials worthy of the hours ahead.',
+  'home.craft.step2.title': 'The Hand',
+  'home.craft.step2.text':
+    'One artisan, one piece. Saddle-stitched seams, hand-burnished edges, every clasp fitted by eye — never on a line.',
+  'home.craft.step3.title': 'The Finish',
+  'home.craft.step3.text':
+    'Five rounds of polish. A final inspection in daylight. If a detail hesitates, the piece does not leave the atelier.',
+  'home.visit.eyebrow': 'The Boutique',
+  'home.visit.title1': 'Some things must be',
+  'home.visit.title2': ' held to be understood.',
+  'home.visit.text':
+    'Visit us at Gem Castle. Feel the leather, try the watches, and let us find the piece that is yours alone.',
+  'home.visit.address': 'Gem Castle, 5F — 512·513',
+  'home.visit.hours': 'Every Day · 10:00–20:00',
+  'home.visit.cta': 'Plan Your Visit',
+  'home.visit.call': 'Call',
+  'nav.scroll': 'Scroll',
+  'common.viewAll': 'View all',
+  'footer.col.boutique': 'Boutique',
+  'footer.hours': 'Every Day · 10:00–20:00',
+  'footer.tagline': 'Crafted by hand. Worn for life.',
+  'float.top': 'Back to top',
+  'float.facebook': 'Facebook page',
+  'float.instagram': 'Instagram',
+  'float.messenger': 'Chat on Messenger',
+  'float.call': 'Call {phone}',
 };
 
 const mn = {
+  'nav.home': 'Нүүр',
   'nav.bags': 'Цүнх',
   'nav.watches': 'Цаг',
   'nav.apparel': 'Хувцас',
@@ -532,7 +601,7 @@ const mn = {
   'nav.login': 'Нэвтрэх',
 
   'home.hero.eyebrow': 'Намрын цуглуулга',
-  'home.hero.title': 'Үеийг даван үлдэхээр',
+  'home.hero.title': 'Гараар урласан.',
   'home.hero.support': 'Арьсан эдлэл, цаг, бэлэн хувцас — нямбай сонгож, удаан эдлэхээр.',
   'home.hero.cta': 'Танилцах',
   'home.house.eyebrow': 'Бидний тухай',
@@ -540,6 +609,8 @@ const mn = {
   'home.house.body':
     'Бүтээгдэхүүн бүрийг цөөхөн хосгүй гарын урлалаар зүсэж, оёж, өнгөлдөг. Бид бүтэн ширэн арьс, хоёр талын кашемир, Швейцарийн механизмтай ажилладаг — эдгээр нь зурагт биш, жинхэнэ амьдралд сайхан хөгждөг учир сонгосон.',
   'home.house.cta': 'Цуглуулгыг үзэх',
+  'home.collections.eyebrow': 'Цуглуулгууд',
+  'home.collections.title': 'Гурван төрөл, нэг шалгуур',
   'home.band.shop': '{cat} үзэх',
   'home.featured.eyebrow': 'Шинээр нэмэгдсэн',
   'home.featured.title': 'Энэ долоо хоногт',
@@ -558,6 +629,9 @@ const mn = {
   'shop.prev': 'Өмнөх',
   'shop.next': 'Дараах',
   'shop.search': 'Цуглуулгаас хайх',
+  'shop.offers': 'Хямдрал',
+  'shop.sortBy': 'Эрэмбэлэх',
+  'shop.emptyHint': 'Шүүлтүүрийг хасаж эсвэл бүх цуглуулгыг үзээрэй.',
   'shop.clear': 'Цэвэрлэх',
   'shop.viewAll': 'Бүх илэрцийг харах',
   'shop.everything': 'Бүгдийг үзэх',
@@ -618,6 +692,8 @@ const mn = {
   'cart.title': 'Таны сагс',
   'cart.empty': 'Таны сагс хоосон байна.',
   'cart.continue': 'Дэлгүүр үзэх',
+  'cart.decrease': 'Тоог багасгах',
+  'cart.increase': 'Тоог нэмэх',
   'cart.remove': 'Хасах',
   'cart.subtotal': 'Дүн',
   'cart.each': 'тус бүр {price}',
@@ -692,6 +768,22 @@ const mn = {
   'login.toLogin': 'Бүртгэлтэй юу? Нэвтрэх',
   'login.forgot': 'Нууц үгээ мартсан уу?',
   'login.error': 'Алдаа гарлаа',
+
+  // social sign-in
+  'login.or': 'эсвэл',
+  'login.withGoogle': 'Google-ээр нэвтрэх',
+  'login.withFacebook': 'Facebook-ээр нэвтрэх',
+  'oauth.signingIn': 'Нэвтрүүлж байна',
+  'oauth.wait': 'Хэсэг хүлээнэ үү — нэвтрэлтийг баталгаажуулж байна.',
+  'oauth.failedTitle': 'Нэвтрэлт бүрэн болсонгүй',
+  'oauth.backToSignIn': 'Нэвтрэх хуудас руу',
+  'oauth.error.failed': 'Нэвтрэлтийг гүйцээж чадсангүй. Дахин оролдоно уу.',
+  'oauth.error.denied': 'Та нэвтрэлтийг дуусахаас өмнө цуцаллаа.',
+  'oauth.error.state': 'Нэвтрэх холбоосын хугацаа дууссан. Дахин эхлүүлнэ үү.',
+  'oauth.error.no_email': 'Тэр хаяг и-мэйл хуваалцсангүй, бид таныг танихад и-мэйл шаардлагатай. Өөр аргаар эсвэл и-мэйл, нууц үгээрээ нэвтэрнэ үү.',
+  'oauth.error.email_taken': 'Тэр и-мэйл хаягтай хэрэглэгч аль хэдийн байна. И-мэйл, нууц үгээрээ нэвтэрнэ үү.',
+  'oauth.error.disabled': 'Тэр хэрэглэгчийн хаягийг хаасан байна.',
+  'oauth.error.provider_disabled': 'Тэр нэвтрэх арга одоогоор боломжгүй байна.',
   'login.fullName': 'Бүтэн нэр',
 
   'profile.title': 'Профайл',
@@ -703,6 +795,9 @@ const mn = {
   'profile.currentPw': 'Одоогийн нууц үг',
   'profile.newPw': 'Шинэ нууц үг (доод тал нь 8 тэмдэгт)',
   'profile.pwNote': 'Нууц үг солиход бусад төхөөрөмжөөс гарна.',
+  'profile.setPw': 'Нууц үг тохируулах',
+  'profile.setPwNote': 'Та Google эсвэл Facebook-ээр нэвтэрдэг. И-мэйл хаягаараа нэвтрэхийг хүсвэл нууц үг нэмнэ үү.',
+  'profile.connected': 'Холбогдсон хаягууд',
   'profile.sessions': 'Сешн',
   'profile.logoutAll': 'Бүх төхөөрөмжөөс гарах',
   'profile.pwChanged': 'Нууц үг солигдлоо',
@@ -742,6 +837,7 @@ const mn = {
   'admin.tab.discounts': 'Хямдрал',
   'admin.tab.users': 'Хэрэглэгчид',
   'admin.tab.settings': 'Тохиргоо',
+  'admin.eyebrow': 'Ателье',
   'admin.loading': 'Ачаалж байна…',
   'admin.action': 'Үйлдэл',
 
@@ -988,6 +1084,7 @@ const mn = {
   'admin.settings.preview': 'Урьдчилан харах — $1,450.90 үнэтэй бараа {value} гэж харагдана',
   'admin.settings.lastUpdated': 'Сүүлд шинэчлэгдсэн {date}',
 
+  'footer.blurb': 'Арьс, цаг, даавуугаар ажилладаг жижиг маисон. Бодож зохиосон, багаар урласан, урт насалдаг бүтээгдэхүүн.',
   'footer.letter.eyebrow': 'Мэдээллийн захидал',
   'footer.letter.title': 'Цуглуулгуудыг хамгийн түрүүнд.',
   'footer.letter.placeholder': 'Имэйл хаяг',
@@ -1004,6 +1101,45 @@ const mn = {
   'footer.house.sustain': 'Тогтвортой байдал',
   'footer.col.account': 'Хаяг',
   'footer.copyright': '© {year} Modern Monkey Maison. Бүх эрх хамгаалагдсан.',
+
+  // home — additions that mirror the presentation site's sections
+  'home.hero.title2': 'Үеийг даван үлдэхээр.',
+  'home.statement.eyebrow': 'Манай маисон',
+  'home.statement.before':
+    'Modern Monkey бол арьсан эдлэл, цаг, бэлэн хувцсын жижиг маисон — багаар урласан бүтээлүүдээ ',
+  'home.statement.gold': 'нам гүм цуглуулж, нарийн оновчтой сонгодог хүмүүст',
+  'home.statement.after': ' зориулав.',
+  'home.craft.eyebrow': 'Гар урлал',
+  'home.craft.title1': 'Аажуухан бүтээнэ,',
+  'home.craft.title2': 'зориудаар.',
+  'home.craft.step1.title': 'Материал',
+  'home.craft.step1.text':
+    'Бүтэн ширхэгтэй арьс, хоёр талт кашемир, Швейцарь механизм. Бид зөвхөн олон цагийн хөдөлмөрт зохистой материалаар л эхэлдэг.',
+  'home.craft.step2.title': 'Урчийн гар',
+  'home.craft.step2.text':
+    'Нэг урч, нэг бүтээл. Эмээлийн оёдол, гараар өнгөлсөн ирмэг, нүдээр тааруулсан товч бүр — хэзээ ч конвейерээр биш.',
+  'home.craft.step3.title': 'Өнгөлгөө',
+  'home.craft.step3.text':
+    'Таван удаагийн өнгөлгөө. Өдрийн гэрэлд хийх эцсийн үзлэг. Өчүүхэн ч эргэлзээ төрвөл тэр бүтээл ательегээс гардаггүй.',
+  'home.visit.eyebrow': 'Бутик',
+  'home.visit.title1': 'Зарим зүйлийг зөвхөн',
+  'home.visit.title2': ' гартаа барьж байж ойлгодог.',
+  'home.visit.text':
+    'Gem Castle дахь бутикт маань зочлоорой. Арьсыг нь барьж, цагийг нь зүүж үзээд, зөвхөн танд зориулсан бүтээлийг хамт олцгооё.',
+  'home.visit.address': 'Gem Castle, 5 давхар — 512·513',
+  'home.visit.hours': 'Өдөр бүр · 10:00–20:00',
+  'home.visit.cta': 'Зочлохоор төлөвлөх',
+  'home.visit.call': 'Залгах',
+  'nav.scroll': 'Гүйлгэх',
+  'common.viewAll': 'Бүгдийг үзэх',
+  'footer.col.boutique': 'Бутик',
+  'footer.hours': 'Өдөр бүр · 10:00–20:00',
+  'footer.tagline': 'Гараар урласан. Насан туршид эдлэх.',
+  'float.top': 'Дээш буцах',
+  'float.facebook': 'Facebook хуудас',
+  'float.instagram': 'Instagram',
+  'float.messenger': 'Messenger-ээр бичих',
+  'float.call': '{phone} руу залгах',
 };
 
 export const dictionaries = { en, mn };

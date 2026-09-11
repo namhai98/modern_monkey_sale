@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
+import Field, { FormMessage } from '../components/Field';
+import AuthShell from '../components/AuthShell';
+import SocialSignIn from '../components/SocialSignIn';
 
 function safeRedirect(target) {
   return target && target.startsWith('/') && !target.startsWith('//') ? target : '/';
@@ -37,62 +40,62 @@ export default function Login() {
     }
   }
 
-  const field =
-    'w-full bg-transparent border-b border-line py-3 text-sm placeholder:text-stone focus:outline-none focus:border-ink transition-colors';
-
   return (
-    <div className="max-w-sm mx-auto px-6 py-24">
-      <p className="eyebrow text-stone">{t('account.eyebrow')}</p>
-      <h1 className="font-display text-4xl mt-3 mb-10">
-        {mode === 'login' ? t('login.welcome') : t('login.create')}
-      </h1>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <AuthShell
+      eyebrow={t('account.eyebrow')}
+      title={mode === 'login' ? t('login.welcome') : t('login.create')}
+    >
+      <form onSubmit={handleSubmit} className="space-y-7">
         {mode === 'register' && (
-          <input
+          <Field
+            label={t('login.fullName')}
             type="text"
-            placeholder={t('login.fullName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className={field}
+            autoComplete="name"
             required
           />
         )}
-        <input
+        <Field
+          label={t('login.email')}
           type="email"
-          placeholder={t('login.email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={field}
+          autoComplete="email"
           required
         />
-        <input
+        <Field
+          label={t('login.password')}
           type="password"
-          placeholder={t('login.password')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={field}
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           required
         />
-        {error && <p className="text-red-700 text-sm">{error}</p>}
+        <FormMessage>{error}</FormMessage>
         <Button as="button" type="submit" full size="lg">
           {mode === 'login' ? t('login.signIn') : t('login.createBtn')}
         </Button>
       </form>
 
-      <div className="mt-8 flex flex-col gap-3 text-sm text-stone">
+      <SocialSignIn redirectTo={redirectTo} />
+
+      <div className="mt-10 flex flex-col gap-4 border-t border-line pt-8">
         <button
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          className="link-underline text-left w-fit"
+          className="link-lux micro w-fit text-left text-muted transition-colors hover:text-gold"
         >
           {mode === 'login' ? t('login.toRegister') : t('login.toLogin')}
         </button>
         {mode === 'login' && (
-          <Link to="/forgot-password" className="link-underline w-fit">
+          <Link
+            to="/forgot-password"
+            className="link-lux micro w-fit text-muted transition-colors hover:text-gold"
+          >
             {t('login.forgot')}
           </Link>
         )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

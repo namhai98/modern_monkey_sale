@@ -3,9 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import Button from '../components/Button';
-
-const field =
-  'w-full bg-transparent border-b border-line py-3 text-sm placeholder:text-stone focus:outline-none focus:border-ink transition-colors';
+import Field, { FormMessage } from '../components/Field';
+import AuthShell from '../components/AuthShell';
 
 export default function ResetPassword() {
   const { t } = useLocale();
@@ -40,46 +39,47 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="max-w-sm mx-auto px-6 py-24">
-        <p className="text-sm text-stone mb-4">{t('reset.noToken')}</p>
-        <Link to="/forgot-password" className="eyebrow link-underline">
+      <AuthShell eyebrow={t('account.eyebrow')} title={t('reset.title')} lead={t('reset.noToken')}>
+        <Link
+          to="/forgot-password"
+          className="link-lux micro w-fit text-gold"
+        >
           {t('reset.requestNew')}
         </Link>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="max-w-sm mx-auto px-6 py-24">
-      <p className="eyebrow text-stone">{t('account.eyebrow')}</p>
-      <h1 className="font-display text-4xl mt-3 mb-10">{t('reset.title')}</h1>
-
+    <AuthShell eyebrow={t('account.eyebrow')} title={t('reset.title')}>
       {done ? (
-        <p className="text-sm text-stone">{t('reset.done')}</p>
+        <p className="border-l-2 border-gold py-1 pl-4 text-sm leading-relaxed text-foreground">
+          {t('reset.done')}
+        </p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <input
+        <form onSubmit={handleSubmit} className="space-y-7">
+          <Field
+            label={t('profile.newPw')}
             type="password"
-            placeholder={t('profile.newPw')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={field}
+            autoComplete="new-password"
             required
           />
-          <input
+          <Field
+            label={t('reset.confirm')}
             type="password"
-            placeholder={t('reset.confirm')}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className={field}
+            autoComplete="new-password"
             required
           />
-          {error && <p className="text-red-700 text-sm">{error}</p>}
+          <FormMessage>{error}</FormMessage>
           <Button as="button" type="submit" disabled={submitting} full size="lg">
             {submitting ? t('profile.saving') : t('reset.submit')}
           </Button>
         </form>
       )}
-    </div>
+    </AuthShell>
   );
 }

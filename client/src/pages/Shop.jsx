@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import ProductCard from '../components/ProductCard';
+import CollectionCard from '../components/CollectionCard';
 import Reveal from '../components/Reveal';
-import ImageFallback from '../components/ImageFallback';
+import Section, { Container } from '../components/Section';
+import SectionHeading from '../components/SectionHeading';
+import PageHero from '../components/PageHero';
+import Select from '../components/Select';
+import { ProductGridSkeleton } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import Button from '../components/Button';
 import { media, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
@@ -16,17 +23,23 @@ function categoryImage(slug) {
   return media.bands[slug] || media.editorialRight;
 }
 
-/* ── selectable pill ─────────────────────────────────────────── */
-function Pill({ active, children, onClick }) {
+/* The presentation site has no filters, no sort and no pagination anywhere —
+   its own spec says to build them out of the existing vocabulary rather than
+   invent a new one. So everything below is assembled from three house parts:
+   the gold eyebrow, micro-type at 0.28em, and the hairline that turns gold when
+   something is active. No filled pills, no radius, no shadows. */
+
+/* A selectable chip: hairline by default, gold rule and gold text when on. */
+function Chip({ active, children, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`shrink-0 px-3.5 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] border transition-colors ${
+      className={`micro shrink-0 border px-3.5 py-2 tracking-[0.2em] transition-colors duration-300 ${
         active
-          ? 'bg-ink text-canvas border-ink'
-          : 'bg-transparent text-ink border-line hover:border-ink'
+          ? 'border-gold text-gold'
+          : 'border-line text-muted hover:border-gold/50 hover:text-foreground'
       }`}
     >
       {children}
@@ -34,37 +47,31 @@ function Pill({ active, children, onClick }) {
   );
 }
 
-/* ── the filter rail body — shared by the desktop column and the mobile drawer ── */
+/* The filter rail body — shared by the desktop column and the mobile drawer. */
 function FilterControls({ t, locale, categories, category, brand, gender, sale, facets, patch }) {
-  const rowCls = (active) =>
-    `flex items-center gap-2.5 w-full text-left py-1 text-sm transition-colors ${
-      active ? 'text-ink' : 'text-stone hover:text-ink'
+  const row = (active) =>
+    `flex w-full items-center gap-3 py-1.5 text-left text-sm transition-colors duration-300 ${
+      active ? 'text-gold' : 'text-muted hover:text-foreground'
     }`;
-  const dot = (on) => (
-    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${on ? 'bg-ink' : 'bg-line'}`} />
+  // A 1px rule rather than a dot — the same hairline signal used everywhere else.
+  const rule = (on) => (
+    <span
+      aria-hidden="true"
+      className={`h-px shrink-0 transition-all duration-300 ${on ? 'w-5 bg-gold' : 'w-2.5 bg-line'}`}
+    />
   );
 
   return (
-    <div className="space-y-8">
-      <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={sale}
-          onChange={(e) => patch({ sale: e.target.checked ? '1' : '' })}
-          className="accent-ink"
-        />
-        <span className={sale ? 'text-ink' : 'text-stone'}>{t('filter.onSale')}</span>
-      </label>
-
+    <div className="space-y-10">
       <div>
-        <p className="eyebrow text-stone mb-3">{t('shop.category')}</p>
+        <p className="micro mb-4 text-muted">{t('shop.category')}</p>
         <ul>
           <li>
             <button
               onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
-              className={rowCls(category === '')}
+              className={row(category === '')}
             >
-              {dot(category === '')}
+              {rule(category === '')}
               {t('nav.all')}
             </button>
           </li>
@@ -72,9 +79,9 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
             <li key={c.id}>
               <button
                 onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
-                className={rowCls(c.slug === category)}
+                className={row(c.slug === category)}
               >
-                {dot(c.slug === category)}
+                {rule(c.slug === category)}
                 {categoryLabel(locale, c)}
               </button>
             </li>
@@ -82,17 +89,34 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
         </ul>
       </div>
 
+      <div>
+        <p className="micro mb-4 text-muted">{t('shop.offers')}</p>
+        <button
+          type="button"
+          onClick={() => patch({ sale: sale ? '' : '1' })}
+          aria-pressed={sale}
+          className={row(sale)}
+        >
+          {rule(sale)}
+          {t('filter.onSale')}
+        </button>
+      </div>
+
       {facets.genders.length > 0 && (
         <div>
-          <p className="eyebrow text-stone mb-3">{t('filter.gender')}</p>
+          <p className="micro mb-4 text-muted">{t('filter.gender')}</p>
           <div className="flex flex-wrap gap-2">
-            <Pill active={gender === ''} onClick={() => patch({ gender: '' })}>
+            <Chip active={gender === ''} onClick={() => patch({ gender: '' })}>
               {t('filter.all')}
-            </Pill>
+            </Chip>
             {facets.genders.map((g) => (
-              <Pill key={g.value} active={gender === g.value} onClick={() => patch({ gender: g.value })}>
+              <Chip
+                key={g.value}
+                active={gender === g.value}
+                onClick={() => patch({ gender: g.value })}
+              >
                 {t(`gender.${g.value}`)}
-              </Pill>
+              </Chip>
             ))}
           </div>
         </div>
@@ -100,15 +124,15 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
 
       {facets.brands.length > 0 && (
         <div>
-          <p className="eyebrow text-stone mb-3">{t('filter.brand')}</p>
+          <p className="micro mb-4 text-muted">{t('filter.brand')}</p>
           <div className="flex flex-wrap gap-2">
-            <Pill active={brand === ''} onClick={() => patch({ brand: '' })}>
+            <Chip active={brand === ''} onClick={() => patch({ brand: '' })}>
               {t('filter.all')}
-            </Pill>
+            </Chip>
             {facets.brands.map((b) => (
-              <Pill key={b.slug} active={brand === b.slug} onClick={() => patch({ brand: b.slug })}>
+              <Chip key={b.slug} active={brand === b.slug} onClick={() => patch({ brand: b.slug })}>
                 {b.name}
-              </Pill>
+              </Chip>
             ))}
           </div>
         </div>
@@ -118,7 +142,7 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
         <button
           type="button"
           onClick={() => patch({ brand: '', gender: '', sale: '' })}
-          className="eyebrow text-stone hover:text-ink underline underline-offset-4"
+          className="link-lux micro text-gold"
         >
           {t('shop.clear')}
         </button>
@@ -127,7 +151,7 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
   );
 }
 
-/* ── "All" landing: pick a category, or search ────────────────── */
+/* "All" landing: pick a collection, or search. */
 function CategoryChooser({ categories }) {
   const { t, locale } = useLocale();
   useDocumentTitle(t('shop.collection'));
@@ -141,59 +165,60 @@ function CategoryChooser({ categories }) {
   }
 
   return (
-    <div>
-      <div className="px-4 md:px-8 pt-16 pb-10 text-center">
-        <p className="eyebrow text-stone">{t('shop.allPieces')}</p>
-        <h1 className="font-display text-4xl md:text-5xl mt-3">{t('shop.collection')}</h1>
-        <p className="text-stone text-sm mt-4">{t('shop.choose')}</p>
-
-        <form onSubmit={submit} className="mt-8 max-w-md mx-auto">
+    <>
+      <PageHero
+        eyebrow={t('shop.allPieces')}
+        title={t('shop.collection')}
+        lead={t('shop.choose')}
+        image={resizeUnsplash(media.hero, 2000)}
+        crumbs={[{ label: t('shop.collection') }]}
+      >
+        <form onSubmit={submit} className="mt-10 max-w-md">
+          <label htmlFor="shop-search" className="micro mb-2 block text-white/55">
+            {t('shop.search')}
+          </label>
           <input
+            id="shop-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('shop.search')}
-            aria-label={t('shop.search')}
-            className="w-full bg-transparent border-b border-line pb-2 text-center text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:border-ink transition-colors"
+            className="w-full border-b border-white/25 bg-transparent py-3 text-sm text-white transition-colors duration-300 placeholder:text-white/35 focus:border-gold focus:outline-none"
           />
         </form>
-        <div className="mt-5 flex items-center justify-center gap-6">
-          <Link to="/shop?all=1" className="eyebrow link-underline">
-            {t('shop.everything')}
-          </Link>
-          <Link to="/shop?sale=1" className="eyebrow link-underline text-champagne">
+        <div className="mt-8 flex flex-wrap gap-5">
+          <Button to="/shop?all=1">{t('shop.everything')}</Button>
+          <Button to="/shop?sale=1" variant="outline">
             {t('nav.sale')}
-          </Link>
+          </Button>
         </div>
-      </div>
+      </PageHero>
 
-      <div className="grid md:grid-cols-3">
-        {categories.map((c, i) => (
-          <Reveal key={c.id} delay={i * 0.08}>
-            <Link
-              to={`/shop?category=${c.slug}`}
-              className="group relative block aspect-[3/4] md:aspect-auto md:h-[78vh] overflow-hidden"
-            >
-              <ImageFallback
-                src={resizeUnsplash(categoryImage(c.slug), 1200)}
-                alt={categoryLabel(locale, c)}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+      <Section>
+        <SectionHeading
+          eyebrow={t('home.collections.eyebrow')}
+          title={t('home.collections.title')}
+          align="center"
+        />
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3">
+          {categories.map((c, i) => (
+            <Reveal key={c.id} delay={i * 0.1} className={i % 2 === 1 ? 'lg:mt-12' : ''}>
+              <CollectionCard
+                to={`/shop?category=${c.slug}`}
+                label={categoryLabel(locale, c)}
+                index={i}
+                image={resizeUnsplash(categoryImage(c.slug), 1200)}
+                meta={t('shop.pieces', { n: c.product_count })}
               />
-              <div className="absolute inset-0 bg-ink/25 group-hover:bg-ink/35 transition-colors duration-500" />
-              <div className="relative h-full flex flex-col items-center justify-center text-canvas text-center">
-                <p className="eyebrow">{`0${i + 1}`}</p>
-                <h2 className="font-display text-4xl md:text-5xl mt-2">{categoryLabel(locale, c)}</h2>
-                <p className="eyebrow mt-4 text-canvas/70">{t('shop.pieces', { n: c.product_count })}</p>
-                <span className="mt-6 eyebrow link-underline">{t('shop.explore')}</span>
-              </div>
-            </Link>
-          </Reveal>
-        ))}
-      </div>
-    </div>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+    </>
   );
 }
 
-/* ── Listing: left filter rail + grid, all state lives in the URL ── */
+/* Listing: a filter rail and a grid, with every control's state living in the
+   URL. None of that logic changed here — only what it looks like. */
 function Listing({ categories }) {
   const { t, locale } = useLocale();
   const [params, setParams] = useSearchParams();
@@ -252,8 +277,13 @@ function Listing({ categories }) {
     if (!drawerOpen) return undefined;
     const mq = window.matchMedia('(min-width: 1024px)');
     const onChange = () => mq.matches && setDrawerOpen(false);
+    const onKey = (e) => e.key === 'Escape' && setDrawerOpen(false);
     mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      mq.removeEventListener('change', onChange);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [drawerOpen]);
 
   const SORTS = useMemo(
@@ -315,153 +345,187 @@ function Listing({ categories }) {
   const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0);
   const controlProps = { t, locale, categories, category, brand, gender, sale, facets, patch };
 
+  const crumbs = [{ label: t('shop.collection'), to: '/shop' }];
+  if (activeCat || q || sale) crumbs.push({ label: heading });
+
   return (
-    <div className="px-4 md:px-8 py-8 md:py-12">
-      <div className="lg:grid lg:grid-cols-[13rem_1fr] xl:grid-cols-[15rem_1fr] lg:gap-10 xl:gap-14">
-        {/* desktop rail */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24">
-            <FilterControls {...controlProps} />
-          </div>
-        </aside>
+    <>
+      {/* A compact hero: the storefront keeps the presentation site's entry
+          rhythm, but a full-height opener would push the grid off the fold on
+          a page whose whole job is browsing. */}
+      <PageHero
+        compact
+        eyebrow={t('shop.pieces', { n: total })}
+        title={heading}
+        crumbs={crumbs}
+      />
 
-        {/* content */}
-        <div className="min-w-0">
-          <div className="pb-5 border-b border-line mb-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <h1 className="font-display text-2xl md:text-3xl leading-tight">{heading}</h1>
-                <p className="text-xs text-stone mt-1 tabular-nums">{t('shop.pieces', { n: total })}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setDrawerOpen(true)}
-                  className="lg:hidden inline-flex items-center gap-1.5 border border-line px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] hover:border-ink transition-colors"
-                >
-                  {t('shop.filters')}
-                  {activeCount > 0 && <span className="text-champagne">({activeCount})</span>}
-                </button>
-                <select
-                  value={sort}
-                  onChange={(e) => patch({ sort: e.target.value === DEFAULT_SORT ? '' : e.target.value })}
-                  className="border border-line bg-canvas px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.14em] text-ink cursor-pointer focus:outline-none focus:border-ink"
-                >
-                  {SORTS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
+      <Container className="py-12 md:py-16">
+        <div className="lg:grid lg:grid-cols-[14rem_1fr] lg:gap-12 xl:grid-cols-[16rem_1fr] xl:gap-16">
+          <aside className="hidden lg:block">
+            <div className="sticky top-28">
+              <FilterControls {...controlProps} />
+            </div>
+          </aside>
+
+          <div className="min-w-0">
+            <div className="mb-10 border-b border-line pb-6">
+              <div className="flex flex-wrap items-end justify-between gap-5">
+                <div className="relative min-w-0 flex-1 sm:max-w-sm">
+                  <label htmlFor="listing-search" className="micro mb-1 block text-muted">
+                    {t('shop.search')}
+                  </label>
+                  <input
+                    id="listing-search"
+                    value={qDraft}
+                    onChange={(e) => setQDraft(e.target.value)}
+                    placeholder={t('shop.search')}
+                    className="field pr-7"
+                  />
+                  {qDraft && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQDraft('');
+                        patch({ q: '' });
+                      }}
+                      aria-label={t('shop.clear')}
+                      className="absolute bottom-3 right-0 text-muted transition-colors hover:text-gold"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex shrink-0 items-end gap-5">
+                  <button
+                    type="button"
+                    onClick={() => setDrawerOpen(true)}
+                    className="micro inline-flex items-center gap-1.5 border-b border-line py-3 transition-colors duration-300 hover:border-gold hover:text-gold lg:hidden"
+                  >
+                    {t('shop.filters')}
+                    {activeCount > 0 && <span className="text-gold">({activeCount})</span>}
+                  </button>
+                  <div className="w-40">
+                    <label htmlFor="listing-sort" className="micro mb-1 block text-muted">
+                      {t('shop.sortBy')}
+                    </label>
+                    <Select
+                      id="listing-sort"
+                      value={sort}
+                      onChange={(e) =>
+                        patch({ sort: e.target.value === DEFAULT_SORT ? '' : e.target.value })
+                      }
+                    >
+                      {SORTS.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="relative mt-4 w-full sm:max-w-sm">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-stone"
-              >
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <input
-                value={qDraft}
-                onChange={(e) => setQDraft(e.target.value)}
-                placeholder={t('shop.search')}
-                aria-label={t('shop.search')}
-                className="w-full bg-transparent border-b border-line pl-6 pr-6 py-1.5 text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:border-ink transition-colors"
+            {loading ? (
+              <ProductGridSkeleton />
+            ) : products.length === 0 ? (
+              <EmptyState
+                inline
+                eyebrow={t('shop.collection')}
+                title={q ? t('search.none', { q }) : t('shop.empty')}
+                body={t('shop.emptyHint')}
+                actions={
+                  <Button
+                    variant="outline-dark"
+                    onClick={() => patch({ q: '', brand: '', gender: '', sale: '', category: '', all: '1' })}
+                  >
+                    {t('shop.everything')}
+                  </Button>
+                }
               />
-              {qDraft && (
+            ) : (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-3 md:gap-y-16 xl:grid-cols-4">
+                {products.map((p, i) => (
+                  <Reveal key={p.id} delay={(i % 4) * 0.06}>
+                    <ProductCard product={p} />
+                  </Reveal>
+                ))}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-16 flex items-center justify-center gap-8 border-t border-line pt-10 md:mt-24">
                 <button
-                  type="button"
-                  onClick={() => {
-                    setQDraft('');
-                    patch({ q: '' });
-                  }}
-                  aria-label={t('shop.clear')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-stone hover:text-ink text-lg leading-none"
+                  onClick={() => patch({ page: page > 2 ? page - 1 : '' })}
+                  disabled={page <= 1}
+                  className="link-lux micro text-muted transition-colors hover:text-gold disabled:pointer-events-none disabled:opacity-30"
                 >
-                  ×
+                  {t('shop.prev')}
                 </button>
-              )}
-            </div>
+                <span className="micro tabular-nums">
+                  <span className="text-gold">{page}</span>
+                  <span className="text-muted"> / {totalPages}</span>
+                </span>
+                <button
+                  onClick={() => patch({ page: page + 1 })}
+                  disabled={page >= totalPages}
+                  className="link-lux micro text-muted transition-colors hover:text-gold disabled:pointer-events-none disabled:opacity-30"
+                >
+                  {t('shop.next')}
+                </button>
+              </div>
+            )}
           </div>
-
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="aspect-[4/5] bg-ivory animate-pulse" />
-              ))}
-            </div>
-          ) : products.length === 0 ? (
-            <p className="text-center text-stone py-20">
-              {q ? t('search.none', { q }) : t('shop.empty')}
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
-              {products.map((p, i) => (
-                <Reveal key={p.id} delay={(i % 4) * 0.04}>
-                  <ProductCard product={p} />
-                </Reveal>
-              ))}
-            </div>
-          )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-8 mt-20 eyebrow">
-              <button
-                onClick={() => patch({ page: page > 2 ? page - 1 : '' })}
-                disabled={page <= 1}
-                className="link-underline disabled:opacity-30 disabled:no-underline"
-              >
-                {t('shop.prev')}
-              </button>
-              <span className="text-stone">{page} / {totalPages}</span>
-              <button
-                onClick={() => patch({ page: page + 1 })}
-                disabled={page >= totalPages}
-                className="link-underline disabled:opacity-30"
-              >
-                {t('shop.next')}
-              </button>
-            </div>
-          )}
         </div>
-      </div>
+      </Container>
 
-      {/* mobile drawer */}
+      {/* Mobile filter drawer — ink scrim plus blur, panel held by a hairline. */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden">
           <div
-            className="absolute inset-0 bg-ink/30 animate-[fadeIn_0.2s_ease-out]"
+            className="absolute inset-0 animate-[fadeIn_0.25s_ease-out] bg-ink/80 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-canvas flex flex-col shadow-[1px_0_0_0_var(--color-line)]">
-            <div className="flex items-center justify-between px-6 h-16 border-b border-line shrink-0">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('shop.filters')}
+            className="absolute left-0 top-0 flex h-full w-80 max-w-[85vw] flex-col border-r border-line bg-background"
+          >
+            <div className="flex h-20 shrink-0 items-center justify-between border-b border-line px-6">
               <span className="eyebrow">{t('shop.filters')}</span>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="text-sm text-stone hover:text-ink"
+                className="link-lux micro text-muted transition-colors hover:text-gold"
                 aria-label={t('nav.close')}
               >
                 {t('nav.close')}
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex-1 overflow-y-auto px-6 py-8">
               <FilterControls {...controlProps} />
             </div>
-            <div className="p-4 border-t border-line shrink-0">
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="w-full bg-ink text-canvas h-11 eyebrow"
-              >
+            <div className="shrink-0 border-t border-line p-5">
+              <Button full onClick={() => setDrawerOpen(false)}>
                 {t('shop.pieces', { n: total })}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -474,7 +538,10 @@ export default function Shop() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    client.get('/categories').then((res) => setCategories(res.data)).catch(() => {});
+    client
+      .get('/categories')
+      .then((res) => setCategories(res.data))
+      .catch(() => {});
   }, []);
 
   if (!category && !q && !all && !sale) return <CategoryChooser categories={categories} />;

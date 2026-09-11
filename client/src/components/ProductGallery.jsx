@@ -1,5 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import ImageFallback from './ImageFallback';
+import IconButton from './IconButton';
+
+function Arrow({ className = 'h-4 w-4' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
 
 // `images`: [{ id, thumbnail, card, detail, width, height }]
 export default function ProductGallery({ images = [], alt = '' }) {
@@ -29,8 +47,10 @@ export default function ProductGallery({ images = [], alt = '' }) {
 
   if (pics.length === 0) {
     return (
-      <div className={`${FRAME} bg-ivory flex items-center justify-center`}>
-        <span className="font-display text-6xl text-mist">MM</span>
+      <div className={`${FRAME} flex items-center justify-center bg-surface`}>
+        <span className="heading-serif text-6xl uppercase tracking-[0.12em] text-foreground/10">
+          MM
+        </span>
       </div>
     );
   }
@@ -57,7 +77,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
   return (
     <div>
       <div
-        className={`relative ${FRAME} overflow-hidden bg-ivory`}
+        className={`relative ${FRAME} overflow-hidden bg-surface`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -87,27 +107,34 @@ export default function ProductGallery({ images = [], alt = '' }) {
 
         {pics.length > 1 && (
           <>
-            <button
+            {/* The round icon button is the one place radius is allowed, and
+                these share the component with every other close/prev/next
+                control in the storefront. */}
+            <IconButton
+              tone="dark"
               onClick={() => go(index - 1)}
               disabled={index === 0}
-              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-canvas/85 text-ink text-lg disabled:opacity-0 transition-opacity"
+              className="absolute left-4 top-1/2 hidden -translate-y-1/2 bg-ink/50 backdrop-blur disabled:opacity-0 md:flex"
               aria-label="Previous image"
             >
-              ‹
-            </button>
-            <button
+              <Arrow className="h-4 w-4 rotate-180" />
+            </IconButton>
+            <IconButton
+              tone="dark"
               onClick={() => go(index + 1)}
               disabled={index === pics.length - 1}
-              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center bg-canvas/85 text-ink text-lg disabled:opacity-0 transition-opacity"
+              className="absolute right-4 top-1/2 hidden -translate-y-1/2 bg-ink/50 backdrop-blur disabled:opacity-0 md:flex"
               aria-label="Next image"
             >
-              ›
-            </button>
-            <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5">
+              <Arrow className="h-4 w-4" />
+            </IconButton>
+            <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1.5">
               {pics.map((p, i) => (
                 <span
                   key={p.id ?? i}
-                  className={`h-1 w-6 transition-colors ${i === index ? 'bg-canvas' : 'bg-canvas/40'}`}
+                  className={`h-px w-7 transition-colors duration-500 ${
+                    i === index ? 'bg-gold' : 'bg-white/35'
+                  }`}
                 />
               ))}
             </div>
@@ -116,13 +143,13 @@ export default function ProductGallery({ images = [], alt = '' }) {
       </div>
 
       {pics.length > 1 && (
-        <div className="flex gap-2 mt-3 px-4 overflow-x-auto lg:justify-center">
+        <div className="mt-3 flex gap-2 overflow-x-auto px-4 lg:justify-center">
           {pics.map((p, i) => (
             <button
               key={p.id ?? i}
               onClick={() => go(i)}
-              className={`h-16 w-14 md:h-20 md:w-16 shrink-0 overflow-hidden border transition ${
-                i === index ? 'border-ink' : 'border-transparent opacity-50 hover:opacity-100'
+              className={`h-16 w-14 shrink-0 overflow-hidden border transition-all duration-300 md:h-20 md:w-16 ${
+                i === index ? 'border-gold' : 'border-transparent opacity-50 hover:opacity-100'
               }`}
               aria-label={`View image ${i + 1}`}
             >
@@ -132,14 +159,43 @@ export default function ProductGallery({ images = [], alt = '' }) {
         </div>
       )}
 
+      {/* Lightbox — ink scrim at 95% plus a blur, never a neutral grey. */}
       {zoom && (
         <div
-          className="fixed inset-0 z-50 bg-ink/95 flex items-center justify-center p-6 cursor-zoom-out animate-[fadeIn_0.2s_ease-out]"
+          className="fixed inset-0 z-[70] flex animate-[fadeIn_0.2s_ease-out] cursor-zoom-out items-center justify-center bg-ink/95 p-6 backdrop-blur-sm"
           onClick={() => setZoom(false)}
           role="dialog"
+          aria-modal="true"
           aria-label={alt}
         >
-          <img src={main(pics[index])} alt={alt} className="max-h-full max-w-full object-contain" />
+          <IconButton
+            tone="dark"
+            onClick={() => setZoom(false)}
+            className="absolute right-5 top-5"
+            aria-label="Close"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </IconButton>
+          <figure onClick={(e) => e.stopPropagation()} className="max-h-full">
+            <img
+              src={main(pics[index])}
+              alt={alt}
+              className="max-h-[82svh] max-w-full object-contain"
+            />
+            <figcaption className="micro mt-5 text-center tracking-[0.24em] text-gold">
+              {index + 1} / {pics.length}
+            </figcaption>
+          </figure>
         </div>
       )}
     </div>
