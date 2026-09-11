@@ -41,6 +41,38 @@ const SESSION_USER_SQL = `
          ) AS providers
     FROM users u WHERE u.id = $1`;
 
+// Same columns minus the social bits, for a database that has not had
+// migration 012 applied yet.
+const SESSION_USER_SQL_LEGACY =
+  'SELECT id, name, email, role, is_active FROM users WHERE id = $1';
+
+let warnedMissingIdentities = false;
+
+/* Load the user behind a session.
+ *
+ * Deliberately tolerant of a database still on the pre-012 schema: this runs on
+ * every page load (/me) and every token renewal (/refresh), so if the API ships
+ * ahead of the migration an outright failure here would sign out every shopper,
+ * social or not. Falling back means the deploy order does not matter — the
+ * enriched columns simply start appearing once the migration lands, with no
+ * restart. Remove this once 012 is applied everywhere. */
+async function loadSessionUser(userId) {
+  try {
+    return await query(SESSION_USER_SQL, [userId]);
+  } catch (err) {
+    // 42P01 = undefined_table
+    if (err?.code !== '42P01') throw err;
+    if (!warnedMissingIdentities) {
+      warnedMissingIdentities = true;
+      console.warn(
+        '[auth] user_identities is missing — run migration 012_oauth_identities.sql. ' +
+          'Serving sessions without has_password/providers until then.'
+      );
+    }
+    return query(SESSION_USER_SQL_LEGACY, [userId]);
+  }
+}
+
 // Issue a fresh refresh-token family and set the cookie; return an access token.
 async function startSession(res, user, req) {
   const { raw } = await issueRefreshToken(user.id, { req });
@@ -130,7 +162,7 @@ export async function login(req, res) {
 
 export async function me(req, res) {
   try {
-    const { rows } = await query(SESSION_USER_SQL, [req.user.id]);
+    const { rows } = await loadSessionUser(req.user.id);
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Account no longer exists', code: 'INVALID_TOKEN' });
     }
@@ -173,7 +205,7 @@ export async function refresh(req, res) {
       return res.status(401).json({ error: 'Refresh token expired', code: 'TOKEN_EXPIRED' });
     }
 
-    const userRes = await query(SESSION_USER_SQL, [record.user_id]);
+    const userRes = await loadSessionUser(record.user_id);
     if (userRes.rows.length === 0 || !userRes.rows[0].is_active) {
       await revokeFamily(record.family_id);
       clearRefreshCookie(res);
