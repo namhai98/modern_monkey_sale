@@ -111,7 +111,7 @@ export default function CartDrawer() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="heading-serif text-lg leading-tight">{item.name}</p>
+                      <p className="font-catalog text-[0.95rem] font-medium leading-snug">{item.name}</p>
                       {item.variant_label && (
                         <p className="micro mt-1.5 tracking-[0.2em] text-muted">{item.variant_label}</p>
                       )}

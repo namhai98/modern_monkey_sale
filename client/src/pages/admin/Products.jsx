@@ -267,8 +267,17 @@ function ProductForm({ categories, brands, initial, onCancel, onSaved }) {
   }
 
   return (
-    <form onSubmit={submit} className="border border-line bg-surface p-4 mb-6 grid gap-3 md:grid-cols-2">
-      <div className="md:col-span-2 heading-serif text-lg text-foreground">
+    // The register form is set in the catalogue's own face, so a name reads the
+    // same while it is being typed as it will on the shelf. Tailwind's preflight
+    // gives form controls `font: inherit`, so one class on the form carries
+    // every input, select and textarea inside it. The fields keep the admin's
+    // own 14px, which Montserrat holds comfortably — the size override the
+    // previous serif needed is gone.
+    <form
+      onSubmit={submit}
+      className="font-catalog mb-6 grid gap-3 border border-line bg-surface p-4 md:grid-cols-2"
+    >
+      <div className="md:col-span-2 text-base font-medium text-foreground">
         {editing ? t('admin.products.editTitle', { name: initial.name }) : t('admin.products.newTitle')}
       </div>
       <input className={inputCls} placeholder={t('admin.products.namePlaceholder')} value={form.name}
@@ -512,7 +521,7 @@ export default function AdminProducts() {
               <Fragment key={p.id}>
                 <tr className={`border-b border-line/60 transition-colors hover:bg-surface ${p.is_active ? 'text-foreground' : 'text-muted'}`}>
                   <td className="py-3">
-                    <div className="font-medium">{p.name}</div>
+                    <div className="font-catalog text-sm font-medium">{p.name}</div>
                     {p.sku && <div className="text-xs text-muted">{p.sku}</div>}
                   </td>
                   <td className="py-3 text-muted">

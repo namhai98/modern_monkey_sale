@@ -190,7 +190,7 @@ export default function ProductDetail() {
               {product.category && (
                 <Link
                   to={`/shop?category=${product.category.slug}`}
-                  className="link-lux micro text-muted transition-colors hover:text-gold"
+                  className="link-lux font-catalog text-[0.7rem] uppercase tracking-[0.2em] text-muted transition-colors hover:text-gold"
                 >
                   {categoryLabel(locale, product.category)}
                 </Link>
@@ -200,7 +200,7 @@ export default function ProductDetail() {
               )}
             </div>
 
-            <h1 className="heading-serif mt-5 text-4xl leading-[1.08] md:text-5xl">
+            <h1 className="font-catalog mt-5 text-[1.9rem] font-medium leading-[1.12] tracking-[-0.015em] md:text-[2.6rem]">
               {product.name}
             </h1>
 

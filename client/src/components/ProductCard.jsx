@@ -75,11 +75,14 @@ export default function ProductCard({ product }) {
 
       <div className="mt-5 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="heading-serif text-lg leading-snug transition-colors duration-300 group-hover:text-gold md:text-xl">
+          {/* Montserrat carries a large x-height, so it reads a size bigger
+              than it is set — the name sits a notch below the serif it
+              replaced rather than matching its nominal size. */}
+          <h3 className="font-catalog text-[0.95rem] font-medium leading-snug transition-colors duration-300 group-hover:text-gold md:text-base">
             {product.name}
           </h3>
           {(product.brand || product.category) && (
-            <p className="mt-1.5 truncate text-xs uppercase tracking-[0.2em] text-muted">
+            <p className="font-catalog mt-1.5 truncate text-[0.7rem] uppercase tracking-[0.18em] text-muted">
               {product.brand?.name || categoryLabel(locale, product.category)}
             </p>
           )}

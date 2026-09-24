@@ -4,10 +4,12 @@ import client from '../api/client';
 import ProductCard from '../components/ProductCard';
 import CollectionCard from '../components/CollectionCard';
 import Reveal from '../components/Reveal';
-import Section, { Container } from '../components/Section';
+import Section from '../components/Section';
 import SectionHeading from '../components/SectionHeading';
 import PageHero from '../components/PageHero';
 import Select from '../components/Select';
+import Icon from '../components/Icon';
+import Breadcrumb from '../components/Breadcrumb';
 import { ProductGridSkeleton } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
@@ -47,8 +49,33 @@ function Chip({ active, children, onClick }) {
   );
 }
 
-/* The filter rail body — shared by the desktop column and the mobile drawer. */
-function FilterControls({ t, locale, categories, category, brand, gender, sale, facets, patch }) {
+/* A collapsible rail section: label left, −/+ right, a hairline underneath.
+   Open by default — a filter a shopper cannot see is a filter they will not
+   use; the toggle is there to get a long list out of the way, not to hide the
+   rail's contents on arrival. */
+function FilterSection({ title, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-line py-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 text-left transition-colors duration-300 hover:text-gold"
+      >
+        <span className="micro text-foreground">{title}</span>
+        <Icon name={open ? 'minus' : 'plus'} className="h-3.5 w-3.5 shrink-0 text-muted" />
+      </button>
+      {open && <div className="mt-5">{children}</div>}
+    </div>
+  );
+}
+
+/* The filter rail body — shared by the desktop column and the mobile drawer.
+   Category is NOT here: it runs along the top of the page as its own bar, the
+   way the reference layout arranges it, so the rail is left to the refinements
+   that narrow a category rather than choose one. */
+function FilterControls({ t, brand, gender, sale, facets, patch }) {
   const row = (active) =>
     `flex w-full items-center gap-3 py-1.5 text-left text-sm transition-colors duration-300 ${
       active ? 'text-gold' : 'text-muted hover:text-foreground'
@@ -62,35 +89,13 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
   );
 
   return (
-    <div className="space-y-10">
-      <div>
-        <p className="micro mb-4 text-muted">{t('shop.category')}</p>
-        <ul>
-          <li>
-            <button
-              onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
-              className={row(category === '')}
-            >
-              {rule(category === '')}
-              {t('nav.all')}
-            </button>
-          </li>
-          {categories.map((c) => (
-            <li key={c.id}>
-              <button
-                onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
-                className={row(c.slug === category)}
-              >
-                {rule(c.slug === category)}
-                {categoryLabel(locale, c)}
-              </button>
-            </li>
-          ))}
-        </ul>
+    <div>
+      <div className="flex items-center gap-2.5 border-b border-line pb-4">
+        <Icon name="filter" className="h-4 w-4 text-gold" />
+        <span className="micro tracking-[0.32em] text-foreground">{t('shop.filters')}</span>
       </div>
 
-      <div>
-        <p className="micro mb-4 text-muted">{t('shop.offers')}</p>
+      <FilterSection title={t('shop.offers')}>
         <button
           type="button"
           onClick={() => patch({ sale: sale ? '' : '1' })}
@@ -100,11 +105,10 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
           {rule(sale)}
           {t('filter.onSale')}
         </button>
-      </div>
+      </FilterSection>
 
       {facets.genders.length > 0 && (
-        <div>
-          <p className="micro mb-4 text-muted">{t('filter.gender')}</p>
+        <FilterSection title={t('filter.gender')}>
           <div className="flex flex-wrap gap-2">
             <Chip active={gender === ''} onClick={() => patch({ gender: '' })}>
               {t('filter.all')}
@@ -119,12 +123,11 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
               </Chip>
             ))}
           </div>
-        </div>
+        </FilterSection>
       )}
 
       {facets.brands.length > 0 && (
-        <div>
-          <p className="micro mb-4 text-muted">{t('filter.brand')}</p>
+        <FilterSection title={t('filter.brand')}>
           <div className="flex flex-wrap gap-2">
             <Chip active={brand === ''} onClick={() => patch({ brand: '' })}>
               {t('filter.all')}
@@ -135,19 +138,53 @@ function FilterControls({ t, locale, categories, category, brand, gender, sale, 
               </Chip>
             ))}
           </div>
-        </div>
+        </FilterSection>
       )}
 
       {(brand || gender || sale) && (
         <button
           type="button"
           onClick={() => patch({ brand: '', gender: '', sale: '' })}
-          className="link-lux micro text-gold"
+          className="link-lux micro mt-6 text-gold"
         >
           {t('shop.clear')}
         </button>
       )}
     </div>
+  );
+}
+
+/* The category bar: the listing's top-level choice, running the full width of
+   the page above everything else. It scrolls horizontally rather than wrapping,
+   so a shop with many categories keeps its first row intact on a phone. */
+function CategoryBar({ t, locale, categories, category, onAll, patch }) {
+  const item = (active) =>
+    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-[0.7rem] font-medium uppercase tracking-[0.22em] transition-colors duration-300 ${
+      active ? 'text-gold' : 'text-muted hover:text-foreground'
+    }`;
+
+  return (
+    <nav aria-label={t('shop.category')} className="border-b border-line">
+      <div className="container-bar flex items-center gap-7 overflow-x-auto py-4 lg:gap-9">
+        <button
+          type="button"
+          onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
+          className={item(category === '' && onAll)}
+        >
+          {t('nav.all')}
+        </button>
+        {categories.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
+            className={item(c.slug === category)}
+          >
+            {categoryLabel(locale, c)}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -229,6 +266,9 @@ function Listing({ categories }) {
   const brand = params.get('brand') || '';
   const gender = params.get('gender') || '';
   const sale = params.get('sale') === '1';
+  // Drives the category bar's "All" state — the listing is the all view when no
+  // category is chosen and ?all=1 is what brought us here.
+  const onAll = params.get('all') === '1';
   const sort = params.get('sort') || DEFAULT_SORT;
   const page = Math.max(1, parseInt(params.get('page') || '1', 10));
 
@@ -405,28 +445,49 @@ function Listing({ categories }) {
 
   return (
     <>
-      {/* A compact hero: the storefront keeps the presentation site's entry
-          rhythm, but a full-height opener would push the grid off the fold on
-          a page whose whole job is browsing. */}
-      <PageHero
-        compact
-        eyebrow={t('shop.pieces', { n: total })}
-        title={heading}
-        crumbs={crumbs}
+      {/* The listing is arranged as a working browse page rather than an
+          editorial opener: category bar across the top, breadcrumb, then the
+          filter rail and the grid side by side — all on the full-bleed rail so
+          a wide screen is spent on products. The house vocabulary is unchanged
+          throughout: micro type at 0.28em, gold for what is active, hairlines
+          for every division, no pills, no radius, no shadows. */}
+      <CategoryBar
+        t={t}
+        locale={locale}
+        categories={categories}
+        category={category}
+        onAll={onAll}
+        patch={patch}
       />
 
-      <Container className="py-12 md:py-16">
-        <div className="lg:grid lg:grid-cols-[14rem_1fr] lg:gap-12 xl:grid-cols-[16rem_1fr] xl:gap-16">
+      <div className="container-bar py-5">
+        <Breadcrumb items={crumbs} />
+      </div>
+
+      <div className="container-bar pb-16 md:pb-24">
+        <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10 xl:grid-cols-[17rem_1fr] xl:gap-14">
           <aside className="hidden lg:block">
-            <div className="sticky top-28">
+            {/* The rule between rail and grid is the same hairline the rest of
+                the page divides with. */}
+            <div className="sticky top-28 lg:border-r lg:border-line lg:pr-8 xl:pr-10">
               <FilterControls {...controlProps} />
             </div>
           </aside>
 
           <div className="min-w-0">
-            <div className="mb-10 border-b border-line pb-6">
-              <div className="flex flex-wrap items-end justify-between gap-5">
-                <div className="relative min-w-0 flex-1 sm:max-w-sm">
+            <div className="mb-8 border-b border-line pb-5">
+              {/* Stacked below lg and spread across one line above it. Left to
+                  wrap, the count, the search field and the two controls land in
+                  three ragged rows on a phone. */}
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+                {/* The result count is the page's heading here — it is the one
+                    fact a shopper checks after every filter. */}
+                <h1 className="heading-serif shrink-0 text-xl text-foreground md:text-2xl">
+                  {t('shop.pieces', { n: total })}
+                </h1>
+
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6 lg:flex-1 lg:justify-end">
+                <div className="relative min-w-0 sm:flex-1 sm:max-w-sm">
                   <label htmlFor="listing-search" className="micro mb-1 block text-muted">
                     {t('shop.search')}
                   </label>
@@ -462,12 +523,13 @@ function Listing({ categories }) {
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-end gap-5">
+                <div className="flex shrink-0 items-end justify-between gap-5 sm:justify-start">
                   <button
                     type="button"
                     onClick={() => setDrawerOpen(true)}
                     className="micro inline-flex items-center gap-1.5 border-b border-line py-3 transition-colors duration-300 hover:border-gold hover:text-gold lg:hidden"
                   >
+                    <Icon name="filter" className="h-3.5 w-3.5" />
                     {t('shop.filters')}
                     {activeCount > 0 && <span className="text-gold">({activeCount})</span>}
                   </button>
@@ -489,6 +551,7 @@ function Listing({ categories }) {
                       ))}
                     </Select>
                   </div>
+                </div>
                 </div>
               </div>
             </div>
@@ -521,7 +584,12 @@ function Listing({ categories }) {
               ) : (
                 <div
                   aria-busy={loading}
-                  className={`grid grid-cols-2 gap-x-6 gap-y-12 transition-opacity duration-300 ease-[var(--ease-luxe)] md:grid-cols-3 md:gap-y-16 xl:grid-cols-4 ${
+                  /* A fifth column past 1700px: the page is full-bleed now, so
+                     on a wide monitor the extra width goes to products rather
+                     than to margins. In rem, not px — Tailwind sorts breakpoint
+                     media queries by raw number, so a px value lands before the
+                     rem-based xl and loses to it. 106.25rem = 1700px. */
+                  className={`grid grid-cols-2 gap-x-6 gap-y-12 transition-opacity duration-300 ease-[var(--ease-luxe)] md:grid-cols-3 md:gap-y-16 xl:grid-cols-4 min-[106.25rem]:grid-cols-5 ${
                     loading ? 'opacity-45' : 'opacity-100'
                   }`}
                 >
@@ -562,7 +630,7 @@ function Listing({ categories }) {
             )}
           </div>
         </div>
-      </Container>
+      </div>
 
       {/* Mobile filter drawer — ink scrim plus blur, panel held by a hairline. */}
       {drawerOpen && (

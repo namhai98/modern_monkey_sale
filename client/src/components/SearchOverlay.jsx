@@ -132,7 +132,7 @@ export default function SearchOverlay() {
                   className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
                 />
               </div>
-              <span className="heading-serif min-w-0 flex-1 truncate text-lg transition-colors duration-300 group-hover:text-gold">
+              <span className="font-catalog min-w-0 flex-1 truncate text-base font-medium transition-colors duration-300 group-hover:text-gold">
                 {p.name}
               </span>
               <Price product={p} tone="dark" className="shrink-0" />

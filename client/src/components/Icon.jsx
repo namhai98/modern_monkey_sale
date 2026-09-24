@@ -62,6 +62,9 @@ const PATHS = {
     </>
   ),
   menu: <path d="M3 6h18M3 12h18M3 18h18" />,
+  filter: <path d="M3 5h18l-7 8v6l-4 2v-8Z" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
   messageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
   facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
   // Monochrome Google "G". Both Google and Meta allow a custom sign-in button

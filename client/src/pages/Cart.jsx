@@ -65,7 +65,7 @@ export default function Cart() {
                     <div className="flex min-w-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="heading-serif text-xl leading-snug">{item.name}</p>
+                          <p className="font-catalog text-base font-medium leading-snug">{item.name}</p>
                           {item.variant_label && (
                             <p className="micro mt-1.5 tracking-[0.2em] text-muted">
                               {item.variant_label}
