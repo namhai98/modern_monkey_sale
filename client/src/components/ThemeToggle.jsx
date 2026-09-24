@@ -1,4 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
+import { useLocale } from '../context/LocaleContext';
 import Icon from './Icon';
 
 /* The presentation site's theme toggle: one 36px round control — the single
@@ -7,8 +8,11 @@ import Icon from './Icon';
    the page is dark), which is the convention the marketing site follows. */
 export default function ThemeToggle({ className = '' }) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLocale();
   const dark = theme === 'dark';
-  const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+  // The only text this control has is its label, so it is the only thing a
+  // screen-reader user hears — it cannot stay English on a Mongolian site.
+  const label = t(dark ? 'theme.toLight' : 'theme.toDark');
 
   return (
     <button

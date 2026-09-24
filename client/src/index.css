@@ -44,6 +44,40 @@
   --color-danger: var(--danger);
 
   --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* One content-driven breakpoint beyond Tailwind's defaults, for the header.
+     It is the width at which the full desktop row — brand lockup, five nav
+     items set in Mongolian at 0.28em tracking, and the action cluster — stops
+     competing for space inside container-lux. Below it the header switches to
+     its tablet composition; that is a different layout, not a smaller one.
+
+     Declared in rem, not px: Tailwind orders its breakpoint media queries by
+     raw numeric value, so a px-valued custom breakpoint sorts against the
+     defaults' rem numbers and lands BEFORE md/lg in the cascade — where every
+     tablet rule then overrides it at desktop width. 73.75rem = 1180px sorts
+     where it belongs, between lg (64rem) and xl (80rem). */
+  --breakpoint-hdr: 73.75rem;
+}
+
+/* The fixed header's height, in one place.
+   <main> clears it, and PageHero / EmptyState cancel that clearance so their
+   dark band runs up behind the glass. All three used to write the literal 80px
+   themselves, which is why the header could not change height without leaving a
+   strip of page background above the inner-page hero — or eating into it.
+   Three values because the header is composed three times: row only on phones
+   and tablets, and a utility tier above the row on desktop. */
+:root {
+  --header-h: 4rem;
+}
+@media (width >= 48rem) {
+  :root {
+    --header-h: 4.5rem;
+  }
+}
+@media (width >= 73.75rem) {
+  :root {
+    --header-h: 6.75rem;
+  }
 }
 
 :root {
@@ -173,6 +207,23 @@
   }
 }
 
+/* The header's rail. Unlike container-lux it has no max-width: the header is
+   chrome, not content, so it spans the viewport at any size and its gutters
+   grow instead of stopping at a centred 80rem column. Used by the header row,
+   the utility tier, the mega panel and the menu, so all four align to one edge.
+   Page content still uses container-lux — this is the one deliberate exception
+   to "container-lux is the only page container". */
+@utility container-bar {
+  width: 100%;
+  padding-inline: 1.5rem;
+  @media (min-width: 768px) {
+    padding-inline: 2rem;
+  }
+  @media (min-width: 73.75rem) {
+    padding-inline: 3rem;
+  }
+}
+
 /* ── Interaction ──────────────────────────────────────────────────────────── */
 
 /* The house link: a hairline that sweeps out from the right and in from the
@@ -267,6 +318,40 @@
 }
 .drop-in {
   animation: dropIn 0.16s var(--ease-luxe) both;
+}
+
+/* Header chrome. The mega panel unfurls downward from under the header; the
+   mobile menu is the same gesture at full height, and slow enough to read as
+   deliberate rather than as a page repaint.
+
+   Every one of these ends on `transform: none`, not translateY(0): with
+   fill-mode `both` the end state persists, and any non-none transform makes
+   the element a containing block for its fixed descendants — the same trap
+   .page-in documents above. */
+@keyframes megaIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+.mega-in {
+  animation: megaIn 0.28s var(--ease-luxe) both;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panelOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-12px); }
+}
+.panel-in {
+  animation: panelIn 0.34s var(--ease-luxe) both;
+}
+/* Paired with a timer in Navbar, never with animationend: a background tab can
+   swallow the event, and a menu that never unmounts is worse than one that
+   closes a frame early. */
+.panel-out {
+  animation: panelOut 0.22s var(--ease-luxe) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client from '../api/client';
-import Reveal, { RevealScale } from '../components/Reveal';
-import ProductCard from '../components/ProductCard';
-import CollectionCard from '../components/CollectionCard';
-import Section from '../components/Section';
-import SectionHeading, { RowHeading } from '../components/SectionHeading';
 import Button from '../components/Button';
+import CollectionCard from '../components/CollectionCard';
 import Icon from '../components/Icon';
 import ImageFallback from '../components/ImageFallback';
-import { homeMedia, resizeUnsplash } from '../lib/media';
-import { site, mapsUrl, telHref } from '../lib/site';
+import ProductCard from '../components/ProductCard';
+import Reveal, { RevealScale } from '../components/Reveal';
+import Section from '../components/Section';
+import SectionHeading, { RowHeading } from '../components/SectionHeading';
 import { useLocale } from '../context/LocaleContext';
+import { homeMedia, resizeUnsplash } from '../lib/media';
+import { mapsUrl, site, telHref } from '../lib/site';
 
 /* The home page as a stack of sections in the presentation site's rhythm and
    order: a full-bleed cinematic hero → a centred maison statement → the
@@ -277,7 +277,7 @@ function Featured() {
     client
       .get('/products', { params: { sort: 'created_at', order: 'desc', limit: 4 } })
       .then((res) => setItems(res.data.items))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   if (items.length === 0) return null;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import ProductCard from '../components/ProductCard';
@@ -236,6 +236,16 @@ function Listing({ categories }) {
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState({ brands: [], genders: [] });
   const [loading, setLoading] = useState(true);
+  // Whether a result has ever landed. It separates "the page is still empty"
+  // from "this filter refines a list already on screen" — the first deserves a
+  // skeleton, the second must never take the grid away.
+  const [loaded, setLoaded] = useState(false);
+  const requestRef = useRef(0);
+  const gridRef = useRef(null);
+  // True only while the very first grid is being painted. The first list to
+  // appear on an empty page earns its staggered entrance; every list after it
+  // is a refinement of something already on screen and must simply be there.
+  const firstPaint = useRef(true);
 
   const activeCat = categories.find((c) => c.slug === category);
 
@@ -266,11 +276,30 @@ function Listing({ categories }) {
     return () => clearTimeout(id);
   }, [qDraft, q, patch]);
 
-  // lock body scroll + auto-close the mobile drawer once we reach desktop
+  // Lock body scroll while the mobile filter drawer is open, and put the
+  // shopper back where they were when it closes. overflow:hidden alone collapses
+  // the scrollable area and loses the position — which used to go unnoticed
+  // because every filter change scrolled to the top regardless. The fixed-body
+  // approach is the same one the navbar menu uses, and it is the one iOS Safari
+  // actually honours.
   useEffect(() => {
-    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    if (!drawerOpen) return undefined;
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    style.position = 'fixed';
+    style.top = `-${scrollY}px`;
+    style.left = '0';
+    style.right = '0';
+    style.width = '100%';
+    style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      style.position = '';
+      style.top = '';
+      style.left = '';
+      style.right = '';
+      style.width = '';
+      style.overflow = '';
+      window.scrollTo({ top: scrollY, behavior: 'instant' });
     };
   }, [drawerOpen]);
   useEffect(() => {
@@ -311,6 +340,10 @@ function Listing({ categories }) {
 
   useEffect(() => {
     const [field, order] = sort.split(':');
+    // Two filter clicks in quick succession start two requests, and they can
+    // land out of order — the first one back is not necessarily the one asked
+    // for last. Only the newest request is allowed to write state.
+    const request = (requestRef.current += 1);
     setLoading(true);
     client
       .get('/products', {
@@ -327,11 +360,33 @@ function Listing({ categories }) {
         },
       })
       .then((res) => {
+        if (request !== requestRef.current) return;
         setProducts(res.data.items);
         setTotal(res.data.total);
+        setLoaded(true);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        // Leave the list a shopper is reading on screen rather than blanking it
+        // over a dropped request; the next filter change retries.
+      })
+      .finally(() => {
+        if (request === requestRef.current) setLoading(false);
+      });
   }, [category, q, brand, gender, sale, sort, page]);
+
+  // Runs after the render in which `loaded` first turns true — so that render,
+  // the one that paints the first grid, still sees firstPaint.current === true.
+  useEffect(() => {
+    if (loaded) firstPaint.current = false;
+  }, [loaded]);
+
+  // Paging is the one control where holding the scroll position is wrong: you
+  // ask for the next page from the bottom of this one, and want its top.
+  useEffect(() => {
+    if (!loaded) return;
+    gridRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
   const heading = activeCat
@@ -438,32 +493,50 @@ function Listing({ categories }) {
               </div>
             </div>
 
-            {loading ? (
-              <ProductGridSkeleton />
-            ) : products.length === 0 ? (
-              <EmptyState
-                inline
-                eyebrow={t('shop.collection')}
-                title={q ? t('search.none', { q }) : t('shop.empty')}
-                body={t('shop.emptyHint')}
-                actions={
-                  <Button
-                    variant="outline-dark"
-                    onClick={() => patch({ q: '', brand: '', gender: '', sale: '', category: '', all: '1' })}
-                  >
-                    {t('shop.everything')}
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-3 md:gap-y-16 xl:grid-cols-4">
-                {products.map((p, i) => (
-                  <Reveal key={p.id} delay={(i % 4) * 0.06}>
-                    <ProductCard product={p} />
-                  </Reveal>
-                ))}
-              </div>
-            )}
+            {/* The skeleton is for a page that has nothing yet — the first
+                load. Once a list is on screen a filter change refines it in
+                place: the same grid element stays mounted, cards keep their
+                DOM nodes (and therefore their decoded images) wherever the id
+                survives the filter, and the whole block simply dims while the
+                new set is on its way. Swapping the grid out for a skeleton is
+                what made it blink, and it took the scroll position with it. */}
+            <div ref={gridRef} className="scroll-mt-32">
+              {!loaded ? (
+                <ProductGridSkeleton />
+              ) : products.length === 0 ? (
+                <EmptyState
+                  inline
+                  eyebrow={t('shop.collection')}
+                  title={q ? t('search.none', { q }) : t('shop.empty')}
+                  body={t('shop.emptyHint')}
+                  actions={
+                    <Button
+                      variant="outline-dark"
+                      onClick={() => patch({ q: '', brand: '', gender: '', sale: '', category: '', all: '1' })}
+                    >
+                      {t('shop.everything')}
+                    </Button>
+                  }
+                />
+              ) : (
+                <div
+                  aria-busy={loading}
+                  className={`grid grid-cols-2 gap-x-6 gap-y-12 transition-opacity duration-300 ease-[var(--ease-luxe)] md:grid-cols-3 md:gap-y-16 xl:grid-cols-4 ${
+                    loading ? 'opacity-45' : 'opacity-100'
+                  }`}
+                >
+                  {products.map((p, i) => (
+                    /* startShown once a list exists: a card arriving as part of
+                       a refine should be there, not rise from opacity 0 —
+                       that fade was the second half of the flicker. The very
+                       first paint keeps its staggered entrance. */
+                    <Reveal key={p.id} delay={(i % 4) * 0.06} startShown={!firstPaint.current}>
+                      <ProductCard product={p} />
+                    </Reveal>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {totalPages > 1 && (
               <div className="mt-16 flex items-center justify-center gap-8 border-t border-line pt-10 md:mt-24">

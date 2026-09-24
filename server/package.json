@@ -10,7 +10,8 @@
     "test": "node --test \"src/**/*.test.js\"",
     "db:setup": "node src/scripts/setupDb.js",
     "create-admin": "node src/scripts/createAdmin.js",
-    "seed:catalog": "node src/scripts/seedCatalog.js"
+    "seed:catalog": "node src/scripts/seedCatalog.js",
+    "seed:test": "node src/scripts/seedTestProducts.js"
   },
   "keywords": [],
   "author": "",

@@ -87,7 +87,10 @@ export default function ProductCard({ product }) {
             <p className="micro mt-2 tracking-[0.24em] text-gold">{t('product.lowStock')}</p>
           )}
         </div>
-        <Price product={product} className="shrink-0 pt-0.5 text-right" />
+        {/* Stacked so a sale pair stays one price wide. The name owns the rest
+            of the row; in a two-up grid there is no version of this row where a
+            side-by-side pair and a serif name both fit. */}
+        <Price product={product} stack className="shrink-0 pt-0.5 text-right" />
       </div>
     </Link>
   );

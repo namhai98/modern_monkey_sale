@@ -1,23 +1,20 @@
 import { query } from '../config/db.js';
+import { getRateSettings } from '../services/exchangeRate.js';
 
-async function readRate() {
-  const { rows } = await query(
-    "SELECT value, updated_at FROM settings WHERE key = 'mnt_rate'"
-  );
-  if (rows.length === 0) return { mnt_rate: null, updated_at: null };
-  return { mnt_rate: Number(rows[0].value), updated_at: rows[0].updated_at };
-}
-
-// Public — the storefront reads this to show MN prices in tögrög.
+// Public — the storefront reads this to price the catalogue in tögrög.
+// `mnt_rate` is the effective rate: the live feed when it answers, the
+// admin-entered fallback when it doesn't.
 export async function getSettings(req, res) {
   try {
-    res.json(await readRate());
+    res.json(await getRateSettings());
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 }
 
+// The admin rate is no longer what shoppers normally see — it is the fallback
+// used when no exchange-rate provider can be reached.
 export async function updateSettings(req, res) {
   try {
     const rate = Number(req.body?.mnt_rate);
@@ -31,7 +28,7 @@ export async function updateSettings(req, res) {
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
       [String(rate)]
     );
-    res.json(await readRate());
+    res.json(await getRateSettings());
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update settings' });

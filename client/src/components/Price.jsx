@@ -25,6 +25,12 @@ export default function Price({
   // they bypass the theme tokens the same way the presentation site's dark
   // bands do.
   tone = 'theme',
+  // Set the was-price under the now-price instead of beside it. A sale pair
+  // side by side is twice as wide as a single price, and in tögrög a single
+  // price is already ~90px — wider than half a product card. On a card that
+  // pair ate the whole meta row and printed itself over the product name.
+  // Stacked, a discounted card measures exactly like an undiscounted one.
+  stack = false,
   className = '',
 }) {
   const money = useMoney();
@@ -43,7 +49,11 @@ export default function Price({
   }
 
   return (
-    <span className={`inline-flex flex-wrap items-baseline gap-2 ${className}`}>
+    <span
+      className={`inline-flex ${
+        stack ? 'flex-col items-end gap-y-0.5' : 'flex-wrap items-baseline gap-2'
+      } ${className}`}
+    >
       <span className={`${s.now} ${nowColor} tabular-nums`}>{money(now)}</span>
       <s className={`${s.was} ${wasColor} tabular-nums`}>{money(was)}</s>
       {showPercent && (

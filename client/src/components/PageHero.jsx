@@ -8,11 +8,12 @@ import ImageFallback from './ImageFallback';
    serif H1 → lead. Every inner page opens with one so the storefront has the
    same entry rhythm as the marketing site.
 
-   The `-mt-20` cancels the `pt-20` Layout puts on <main> to clear the fixed
+   The negative margin cancels the clearance Layout puts on <main> for the fixed
    header, so the dark band starts at the very top of the viewport and the
    header's glass sits over it — otherwise the clearance is counted twice and a
-   strip of page background shows above the band. The top padding then puts the
-   content back below the header.
+   strip of page background shows above the band. Both sides read --header-h, so
+   the two stay in step whatever height the header is composed at. The top
+   padding then puts the content back below the header.
 
    `compact` trims that padding for utility pages (account, cart, listing) that
    don't warrant a full cinematic opener. */
@@ -27,8 +28,10 @@ export default function PageHero({
 }) {
   return (
     <section
-      className={`relative -mt-20 overflow-hidden bg-ink text-white ${
-        compact ? 'pb-10 pt-28 md:pb-16 md:pt-32' : 'pb-14 pt-32 md:pb-24 md:pt-48'
+      className={`relative -mt-[var(--header-h)] overflow-hidden bg-ink text-white ${
+        /* The extra step at hdr keeps the breadcrumb clear of the taller
+           desktop header; the full variant's md padding already clears it. */
+        compact ? 'pb-10 pt-28 md:pb-16 md:pt-32 hdr:pt-36' : 'pb-14 pt-32 md:pb-24 md:pt-48'
       }`}
     >
       {image && (

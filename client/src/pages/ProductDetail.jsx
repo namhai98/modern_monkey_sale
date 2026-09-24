@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
-import { useCart } from '../context/CartContext';
-import { useUI } from '../context/UIContext';
-import { useLocale } from '../context/LocaleContext';
-import { useToast } from '../context/ToastContext';
-import { categoryLabel } from '../lib/i18n';
-import Reveal from '../components/Reveal';
+import Breadcrumb from '../components/Breadcrumb';
+import Button from '../components/Button';
+import EmptyState from '../components/EmptyState';
+import Price from '../components/Price';
 import ProductCard from '../components/ProductCard';
 import ProductGallery from '../components/ProductGallery';
-import Button from '../components/Button';
-import Breadcrumb from '../components/Breadcrumb';
-import Price from '../components/Price';
 import QuantityStepper from '../components/QuantityStepper';
+import Reveal from '../components/Reveal';
 import Section, { Container } from '../components/Section';
 import { RowHeading } from '../components/SectionHeading';
-import EmptyState from '../components/EmptyState';
 import { ProductDetailSkeleton } from '../components/Skeleton';
-import { useMoney, isDiscounted } from '../lib/price';
+import { useCart } from '../context/CartContext';
+import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
+import { useUI } from '../context/UIContext';
+import { categoryLabel } from '../lib/i18n';
+import { isDiscounted, useMoney } from '../lib/price';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 /* A hairline-divided accordion — the same shape as the presentation site's FAQ:
@@ -30,16 +30,14 @@ function Accordion({ title, body, open, onToggle }) {
       <button
         onClick={onToggle}
         aria-expanded={open}
-        className={`micro flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-300 ${
-          open ? 'text-gold' : 'text-foreground hover:text-gold'
-        }`}
+        className={`micro flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-300 ${open ? 'text-gold' : 'text-foreground hover:text-gold'
+          }`}
       >
         {title}
         <span
           aria-hidden="true"
-          className={`shrink-0 text-base leading-none transition-transform duration-300 ${
-            open ? 'rotate-45' : ''
-          }`}
+          className={`shrink-0 text-base leading-none transition-transform duration-300 ${open ? 'rotate-45' : ''
+            }`}
         >
           +
         </span>
@@ -91,7 +89,7 @@ export default function ProductDetail() {
     client
       .get('/products', { params: { category: product.category.slug, limit: 5 } })
       .then((res) => setRelated(res.data.items.filter((p) => p.id !== product.id).slice(0, 4)))
-      .catch(() => {});
+      .catch(() => { });
   }, [product]);
 
   if (notFound) {
@@ -115,20 +113,20 @@ export default function ProductDetail() {
   const categorySections =
     slug === 'bags'
       ? [
-          { title: t('pdp.acc.dimensions'), body: t('pdp.body.bags.dimensions') },
-          { title: t('pdp.acc.craftsmanship'), body: t('pdp.body.bags.craftsmanship') },
-        ]
+        { title: t('pdp.acc.dimensions'), body: t('pdp.body.bags.dimensions') },
+        { title: t('pdp.acc.craftsmanship'), body: t('pdp.body.bags.craftsmanship') },
+      ]
       : slug === 'watches'
-      ? [
+        ? [
           { title: t('pdp.acc.specs'), body: t('pdp.body.watches.specs') },
           { title: t('pdp.acc.service'), body: t('pdp.body.watches.service') },
         ]
-      : slug === 'apparel'
-      ? [
-          { title: t('pdp.acc.sizeFit'), body: t('pdp.body.apparel.sizeFit') },
-          { title: t('pdp.acc.materials'), body: t('pdp.body.apparel.materials') },
-        ]
-      : [{ title: t('pdp.acc.materials'), body: t('pdp.body.materialsDefault') }];
+        : slug === 'apparel'
+          ? [
+            { title: t('pdp.acc.sizeFit'), body: t('pdp.body.apparel.sizeFit') },
+            { title: t('pdp.acc.materials'), body: t('pdp.body.apparel.materials') },
+          ]
+          : [{ title: t('pdp.acc.materials'), body: t('pdp.body.materialsDefault') }];
 
   const sections = [
     { title: t('pdp.acc.description'), body: product.description || t('pdp.body.default') },
@@ -169,8 +167,8 @@ export default function ProductDetail() {
               product.images?.length
                 ? product.images
                 : product.image_url
-                ? [{ detail: product.image_url, card: product.image_url, thumbnail: product.image_url }]
-                : []
+                  ? [{ detail: product.image_url, card: product.image_url, thumbnail: product.image_url }]
+                  : []
             }
             alt={product.name}
           />
@@ -199,7 +197,7 @@ export default function ProductDetail() {
               )}
               {product.gender && (
                 <span className="micro text-muted">{t(`gender.${product.gender}`)}</span>
-            )}
+              )}
             </div>
 
             <h1 className="heading-serif mt-5 text-4xl leading-[1.08] md:text-5xl">
@@ -232,13 +230,12 @@ export default function ProductDetail() {
                           setQty((q) => Math.min(Math.max(1, q), v.stock || 1));
                         }}
                         aria-pressed={active}
-                        className={`min-w-12 border px-4 py-2.5 text-sm transition-colors duration-300 ${
-                          active
-                            ? 'border-gold text-gold'
-                            : out
+                        className={`min-w-12 border px-4 py-2.5 text-sm transition-colors duration-300 ${active
+                          ? 'border-gold text-gold'
+                          : out
                             ? 'cursor-not-allowed border-line text-muted/40 line-through'
                             : 'border-line text-foreground hover:border-gold/50 hover:text-gold'
-                        }`}
+                          }`}
                       >
                         {v.label}
                       </button>
@@ -267,10 +264,10 @@ export default function ProductDetail() {
                 {soldOut
                   ? t('product.soldOut')
                   : needsSize
-                  ? t('pdp.selectSize')
-                  : added
-                  ? t('pdp.added')
-                  : t('pdp.addToBag')}
+                    ? t('pdp.selectSize')
+                    : added
+                      ? t('pdp.added')
+                      : t('pdp.addToBag')}
               </Button>
             </div>
 

@@ -1,9 +1,11 @@
 // Lightweight i18n. t(key, vars) looks up the active locale, falls back to en,
 // then to the key itself; {tokens} in the string are replaced from `vars`.
 
+// Mongolian first — it is the site's main language, and the switch reads in
+// the order the house speaks.
 export const LOCALES = [
-  { code: 'en', label: 'EN' },
   { code: 'mn', label: 'МОН' },
+  { code: 'en', label: 'EN' },
 ];
 
 const en = {
@@ -24,6 +26,16 @@ const en = {
   'nav.admin': 'Admin',
   'nav.signout': 'Sign out',
   'nav.login': 'Login',
+  'nav.products': 'Products',
+  'nav.discover': 'Discover',
+  'nav.newIn': 'New in',
+  'nav.language': 'Language',
+  'nav.currency': 'Currency',
+  'nav.theme': 'Theme',
+  'nav.currencyRate': "Today's rate — $1 = {rate}₮",
+  'nav.currencyUsd': 'Prices are shown in US dollars',
+  'theme.toLight': 'Switch to the light theme',
+  'theme.toDark': 'Switch to the dark theme',
 
   // home
   'home.hero.eyebrow': 'The Autumn Collection',
@@ -513,9 +525,17 @@ const en = {
   'admin.settings.title': 'Settings',
   'admin.settings.loading': 'Loading...',
   'admin.settings.loadFailed': 'Failed to load settings',
-  'admin.settings.rateTitle': 'Tugrug exchange rate',
+  'admin.settings.liveTitle': 'Live tugrug rate',
+  'admin.settings.liveBody':
+    'USD → MNT comes from a public exchange-rate feed and refreshes through the day. Every price in the shop is converted with this rate and rounded down to the nearest thousand tögrög.',
+  'admin.settings.liveRate': '$1 = {value}₮',
+  'admin.settings.sourceLive': 'Live feed — read {date}',
+  'admin.settings.sourceStale': "Live feed — last answered {date}, and hasn't refreshed since.",
+  'admin.settings.sourceManual': 'The feed is unreachable, so the fallback rate below is in use.',
+  'admin.settings.sourceUnavailable': 'No rate available — the shop is showing prices in USD.',
+  'admin.settings.rateTitle': 'Fallback rate',
   'admin.settings.rateBody':
-    'How many ₮ per $1. Shoppers who switch the site to Mongolian see prices converted with this rate and rounded down to the nearest thousand tögrög.',
+    'Used only when no exchange-rate provider can be reached. Keep it roughly current so an outage never prices the shop far off the market.',
   'admin.settings.saving': 'Saving...',
   'admin.settings.save': 'Save',
   'admin.settings.saveFailed': 'Save failed',
@@ -604,6 +624,16 @@ const mn = {
   'nav.admin': 'Админ',
   'nav.signout': 'Гарах',
   'nav.login': 'Нэвтрэх',
+  'nav.products': 'Бараанууд',
+  'nav.discover': 'Танилцах',
+  'nav.newIn': 'Шинээр ирсэн',
+  'nav.language': 'Хэл',
+  'nav.currency': 'Валют',
+  'nav.theme': 'Дэлгэцийн горим',
+  'nav.currencyRate': 'Өнөөдрийн ханш — $1 = {rate}₮',
+  'nav.currencyUsd': 'Үнийг ам.доллараар харуулж байна',
+  'theme.toLight': 'Цайвар горимд шилжих',
+  'theme.toDark': 'Бараан горимд шилжих',
 
   'home.hero.eyebrow': 'Намрын цуглуулга',
   'home.hero.title': 'Гараар урласан.',
@@ -1079,9 +1109,18 @@ const mn = {
   'admin.settings.title': 'Тохиргоо',
   'admin.settings.loading': 'Ачаалж байна...',
   'admin.settings.loadFailed': 'Тохиргоо ачаалахад алдаа гарлаа',
-  'admin.settings.rateTitle': 'Төгрөгийн ханш',
+  'admin.settings.liveTitle': 'Төгрөгийн шууд ханш',
+  'admin.settings.liveBody':
+    'Ам.доллар → төгрөгийн ханшийг олон нийтэд нээлттэй ханшийн үйлчилгээнээс өдөр тутам шинэчилж авдаг. Дэлгүүрийн бүх үнэ энэ ханшаар хөрвүүлэгдэж, мянгатаар доош бүхэлчилж харагдана.',
+  'admin.settings.liveRate': '$1 = {value}₮',
+  'admin.settings.sourceLive': 'Шууд ханш — {date}-д авсан',
+  'admin.settings.sourceStale': 'Шууд ханш — сүүлд {date}-д шинэчлэгдсэн, тэрнээс хойш шинэчлэгдээгүй байна.',
+  'admin.settings.sourceManual':
+    'Ханшийн үйлчилгээ холбогдохгүй байгаа тул доорх нөөц ханшийг ашиглаж байна.',
+  'admin.settings.sourceUnavailable': 'Ханш байхгүй тул дэлгүүр үнийг ам.доллараар харуулж байна.',
+  'admin.settings.rateTitle': 'Нөөц ханш',
   'admin.settings.rateBody':
-    '1 доллар хэдэн төгрөг болохыг оруулна уу. Монгол хэл рүү шилжсэн худалдан авагчид энэ ханшаар хөрвүүлж, мянгатаар бүхэлчилсэн үнийг харах болно.',
+    'Зөвхөн ханшийн үйлчилгээ холбогдохгүй үед хэрэглэгдэнэ. Тасалдал гарсан ч зах зээлийн ханшаас хэт хазайхгүйн тулд ойролцоо утгыг нь шинэчилж байгаарай.',
   'admin.settings.saving': 'Хадгалж байна...',
   'admin.settings.save': 'Хадгалах',
   'admin.settings.saveFailed': 'Хадгалахад алдаа гарлаа',

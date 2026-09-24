@@ -41,6 +41,27 @@ const PATHS = {
   arrowUp: <path d="M12 19V5M5 12l7-7 7 7" />,
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  // A structured shopping bag rather than a cart — the house sells pieces that
+  // leave the boutique in one.
+  bag: (
+    <>
+      <path d="M4 7h16l-1.2 13.2a1 1 0 0 1-1 .8H6.2a1 1 0 0 1-1-.8Z" />
+      <path d="M9 10V6a3 3 0 0 1 6 0v4" />
+    </>
+  ),
+  menu: <path d="M3 6h18M3 12h18M3 18h18" />,
   messageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
   facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
   // Monochrome Google "G". Both Google and Meta allow a custom sign-in button

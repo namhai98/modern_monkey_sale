@@ -26,11 +26,12 @@ export default function EmptyState({
   }
 
   // Full-bleed variant: always the whole page, so like PageHero it cancels the
-  // pt-20 Layout adds for the fixed header and puts the clearance back as its
-  // own padding — the dark band then reaches the top of the viewport.
+  // clearance Layout adds for the fixed header and puts it back as its own
+  // padding — the dark band then reaches the top of the viewport. Both read
+  // --header-h so they track whatever height the header is composed at.
   return (
     <section
-      className={`-mt-20 flex min-h-svh items-center bg-ink pt-20 text-center text-white ${className}`}
+      className={`-mt-[var(--header-h)] flex min-h-svh items-center bg-ink pt-[var(--header-h)] text-center text-white ${className}`}
     >
       <div className="container-lux py-20">
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}

@@ -1,9 +1,10 @@
 // Money + discount display helpers. The backend is the source of truth for
 // `final_price` / `discount_amount`; the frontend only formats what it sends.
-// Base prices are USD; MN shoppers see tögrög via useMoney().
+// Prices are *stored* in USD — that is bookkeeping, not what a shopper sees.
+// The storefront quotes tögrög at the day's live rate, via useMoney().
 import { useLocale } from '../context/LocaleContext';
 
-// USD — the base currency (admin screens always use this).
+// USD — the base currency the catalogue is priced in (admin screens use this).
 export function money(n) {
   return `$${Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -11,21 +12,25 @@ export function money(n) {
   })}`;
 }
 
-// Locale-aware. In Mongolian, convert with the admin rate and round the amount
-// DOWN to the nearest thousand tögrög (e.g. 1,450,896 → 1,450,000₮).
-export function formatMoney(n, locale, mntRate) {
+// Tögrög — the storefront's currency, in both languages, so a price never
+// changes meaning when someone flips the language switch. Converted at the
+// live rate and rounded DOWN to the nearest thousand (1,450,896 → 1,450,000₮).
+//
+// No rate means the feed is down: fall back to the stored USD figure rather
+// than print a converted number we can't stand behind.
+export function formatMoney(n, mntRate) {
   const rate = Number(mntRate);
-  if (locale === 'mn' && Number.isFinite(rate) && rate > 0) {
+  if (Number.isFinite(rate) && rate > 0) {
     const mnt = Math.floor((Number(n || 0) * rate) / 1000) * 1000;
     return `${mnt.toLocaleString('en-US')}₮`;
   }
   return money(n);
 }
 
-// Hook: `const m = useMoney(); m(product.price)` — formats for the active locale.
+// Hook: `const m = useMoney(); m(product.price)` — prices at the live rate.
 export function useMoney() {
-  const { locale, mntRate } = useLocale();
-  return (n) => formatMoney(n, locale, mntRate);
+  const { mntRate } = useLocale();
+  return (n) => formatMoney(n, mntRate);
 }
 
 // A product from the API is on offer when its final_price is below its price.

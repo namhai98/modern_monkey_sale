@@ -5,11 +5,19 @@ const EASE = 'cubic-bezier(0.22,1,0.36,1)';
 // Shared once-only viewport trigger: flips to true the first time the element
 // scrolls into view, with a timed safety net so content can never be left
 // stranded at opacity 0 if the observer never fires.
-function useInView(rootMargin) {
+//
+// `startShown` mounts the element already visible. It is read once, as the
+// initial state, so passing it can never re-hide something already on screen —
+// it only decides how a NEW element arrives. The grid uses it for cards that
+// replace an existing list: an entrance animation is right when a page first
+// paints, and wrong when a shopper flips a filter and the grid they are already
+// reading fades out from zero.
+function useInView(rootMargin, startShown = false) {
   const ref = useRef(null);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(startShown);
 
   useEffect(() => {
+    if (shown) return undefined;
     const el = ref.current;
     if (!el) return undefined;
 
@@ -35,7 +43,7 @@ function useInView(rootMargin) {
       clearTimeout(fallback);
       io?.disconnect();
     };
-  }, [rootMargin]);
+  }, [rootMargin, shown]);
 
   return [ref, shown];
 }
@@ -46,8 +54,15 @@ function useInView(rootMargin) {
 //
 // Travel (28px) and duration (900ms) match the presentation site's <Reveal>, as
 // does the house easing curve. Grid children stagger with delay={i * 0.06–0.12}.
-export default function Reveal({ children, className = '', delay = 0, y = 28, as: Tag = 'div' }) {
-  const [ref, shown] = useInView('-10% 0px');
+export default function Reveal({
+  children,
+  className = '',
+  delay = 0,
+  y = 28,
+  as: Tag = 'div',
+  startShown = false,
+}) {
+  const [ref, shown] = useInView('-10% 0px', startShown);
 
   return (
     <Tag

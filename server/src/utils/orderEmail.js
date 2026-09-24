@@ -1,10 +1,23 @@
 import { sendMail } from './mailer.js';
+import { getRateSettings } from '../services/exchangeRate.js';
 
-const fmt = (n) => `$${Number(n).toFixed(2)}`;
+const usd = (n) => `$${Number(n).toFixed(2)}`;
+
+// Mirrors the storefront's formatMoney(): convert at the live rate and round
+// down to the nearest thousand tögrög. A confirmation has to quote the number
+// the shopper actually agreed to, so the two rules have to stay identical —
+// and when there is no rate, both fall back to the stored USD figure.
+const mnt = (n, rate) =>
+  `${(Math.floor((Number(n) * rate) / 1000) * 1000).toLocaleString('en-US')}₮`;
 
 // Fire-and-forget order confirmation. No-ops (logs) until SMTP is configured.
-export function sendOrderConfirmation({ to, orderId, items, total, shippingAddress }) {
-  if (!to) return Promise.resolve({ skipped: true });
+export async function sendOrderConfirmation({ to, orderId, items, total, shippingAddress }) {
+  if (!to) return { skipped: true };
+
+  const rate = await getRateSettings()
+    .then((s) => Number(s.mnt_rate))
+    .catch(() => null);
+  const fmt = Number.isFinite(rate) && rate > 0 ? (n) => mnt(n, rate) : usd;
 
   const rows = items.map((i) => ({
     label: `${i.quantity} × ${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ''}`,
