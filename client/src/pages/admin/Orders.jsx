@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client from '../../api/client';
+import EmptyState from '../../components/EmptyState';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import Select from '../../components/Select';
+import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls } from './ui';
+import { inputCls, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded'];
 const LIMIT = 20;
@@ -61,42 +63,51 @@ export default function AdminOrders() {
           onChange={(e) => setTo(e.target.value)} /></label>
       </div>
 
-      {loading && <p className="text-muted">{t('admin.orders.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
       {error && <p className="text-danger">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && data.items.length === 0 && (
+        <EmptyState inline title={t('admin.orders.none')} />
+      )}
+
+      {!loading && !error && data.items.length > 0 && (
         <>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left micro text-muted border-b border-line">
-                <th className="py-3 font-normal">{t('admin.orders.colOrder')}</th>
-                <th className="py-3 font-normal">{t('admin.orders.colCustomer')}</th>
-                <th className="py-3 font-normal">{t('admin.orders.colDate')}</th>
-                <th className="py-3 text-right font-normal">{t('admin.orders.colItems')}</th>
-                <th className="py-3 text-right font-normal">{t('admin.orders.colTotal')}</th>
-                <th className="py-3 text-right font-normal">{t('admin.orders.colStatus')}</th>
+              <tr className={trCls}>
+                <th className={thCls}>{t('admin.orders.colOrder')}</th>
+                <th className={thCls}>{t('admin.orders.colCustomer')}</th>
+                <th className={thCls}>{t('admin.orders.colDate')}</th>
+                <th className={thNumCls}>{t('admin.orders.colItems')}</th>
+                <th className={thNumCls}>{t('admin.orders.colTotal')}</th>
+                <th className={thNumCls}>{t('admin.orders.colStatus')}</th>
               </tr>
             </thead>
             <tbody>
               {data.items.map((o) => (
-                <tr key={o.id} className="border-b border-line/60 transition-colors hover:bg-surface">
-                  <td className="py-3">
+                <tr key={o.id} className={`${trCls} transition-colors hover:bg-surface`}>
+                  <td className={tdCls}>
                     <Link to={`/admin/orders/${o.id}`} className="text-foreground font-medium transition-colors hover:text-gold">
                       #{o.id}
                     </Link>
                   </td>
-                  <td className="py-3 text-muted">
+                  <td className={`${tdCls} text-muted`}>
                     {o.user ? (o.user.name || o.user.email || `User #${o.user.id}`) : '—'}
                   </td>
-                  <td className="py-3 text-muted">{new Date(o.created_at).toLocaleDateString()}</td>
-                  <td className="py-3 text-right text-muted">{o.item_count ?? '—'}</td>
-                  <td className="py-3 text-right text-foreground">${Number(o.total).toFixed(2)}</td>
-                  <td className="py-3 text-right"><OrderStatusBadge status={o.status} /></td>
+                  <td className={`${tdCls} text-muted`}>{new Date(o.created_at).toLocaleDateString()}</td>
+                  <td className={`${tdNumCls} text-muted`}>{o.item_count ?? '—'}</td>
+                  <td className={`${tdNumCls} text-foreground`}>${Number(o.total).toFixed(2)}</td>
+                  <td className={tdNumCls}><OrderStatusBadge status={o.status} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {data.items.length === 0 && <p className="text-muted mt-4">{t('admin.orders.none')}</p>}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-4 mt-8 text-sm">

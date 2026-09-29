@@ -3,9 +3,10 @@ import client from '../../api/client';
 import ImageFallback from '../../components/ImageFallback';
 import Select from '../../components/Select';
 import Icon from '../../components/Icon';
+import Skeleton from '../../components/Skeleton';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls, btnPrimary, btnGhost } from './ui';
+import { inputCls, btnPrimary, btnGhost, stateOn, stateOff, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const MAX_IMAGES = 5;
 const emptyForm = {
@@ -501,36 +502,42 @@ export default function AdminProducts() {
           onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
-      {loading && <p className="text-muted">{t('admin.products.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
       {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left micro text-muted border-b border-line">
-              <th className="py-3 font-normal">{t('admin.products.colProduct')}</th>
-              <th className="py-3 font-normal">{t('admin.products.colCategory')}</th>
-              <th className="py-3 font-normal">{t('admin.products.colPrice')}</th>
-              <th className="py-3 font-normal">{t('admin.products.colStock')}</th>
-              <th className="py-3 font-normal">{t('admin.products.colStatus')}</th>
-              <th className="py-3 text-right font-normal">{t('admin.action')}</th>
+            <tr className={trCls}>
+              <th className={thCls}>{t('admin.products.colProduct')}</th>
+              <th className={thCls}>{t('admin.products.colCategory')}</th>
+              <th className={thCls}>{t('admin.products.colPrice')}</th>
+              <th className={thCls}>{t('admin.products.colStock')}</th>
+              <th className={thCls}>{t('admin.products.colStatus')}</th>
+              <th className={thNumCls}>{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
             {products.map((p) => (
               <Fragment key={p.id}>
-                <tr className={`border-b border-line/60 transition-colors hover:bg-surface ${p.is_active ? 'text-foreground' : 'text-muted'}`}>
-                  <td className="py-3">
+                <tr className={`${trCls} transition-colors hover:bg-surface ${p.is_active ? 'text-foreground' : 'text-muted'}`}>
+                  <td className={tdCls}>
                     <div className="font-catalog text-sm font-medium">{p.name}</div>
                     {p.sku && <div className="text-xs text-muted">{p.sku}</div>}
                   </td>
-                  <td className="py-3 text-muted">
+                  <td className={`${tdCls} text-muted`}>
                     {p.category?.name || '—'}
                     {p.brand && <span className="text-xs"> · {p.brand.name}</span>}
                     {p.gender && <span className="text-xs"> · {t(`gender.${p.gender}`)}</span>}
                   </td>
-                  <td className="py-3">${p.price.toFixed(2)}</td>
-                  <td className="py-3">
+                  <td className={tdCls}>${p.price.toFixed(2)}</td>
+                  <td className={tdCls}>
                     <span className={p.low_stock ? 'text-gold font-medium' : ''}>{p.stock}</span>
                     {p.low_stock && <span className="text-xs text-gold"> {t('admin.products.low')}</span>}
                     {p.has_variants ? (
@@ -542,13 +549,13 @@ export default function AdminProducts() {
                       </button>
                     )}
                   </td>
-                  <td className="py-3">
+                  <td className={tdCls}>
                     <button onClick={() => toggleActive(p)}
-                      className={p.is_active ? 'text-gold transition-opacity duration-300 hover:opacity-70' : 'text-danger transition-opacity duration-300 hover:opacity-70'}>
+                      className={`transition-opacity duration-300 hover:opacity-70 ${p.is_active ? stateOn : stateOff}`}>
                       {p.is_active ? t('admin.products.active') : t('admin.products.inactive')}
                     </button>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className={tdNumCls}>
                     <button
                       onClick={() =>
                         setFormFor(

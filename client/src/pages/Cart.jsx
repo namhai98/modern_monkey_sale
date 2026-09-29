@@ -12,7 +12,7 @@ import PageHero from '../components/PageHero';
 import Price from '../components/Price';
 import QuantityStepper from '../components/QuantityStepper';
 import EmptyState from '../components/EmptyState';
-import { Container } from '../components/Section';
+import Section from '../components/Section';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
@@ -40,7 +40,7 @@ export default function Cart() {
         crumbs={[{ label: t('cart.title') }]}
       />
 
-      <Container className="max-w-3xl py-14 md:py-20">
+      <Section containerClassName="max-w-3xl">
         {items.length === 0 ? (
           <EmptyState
             inline
@@ -118,7 +118,7 @@ export default function Cart() {
             </div>
           </>
         )}
-      </Container>
+      </Section>
     </>
   );
 }

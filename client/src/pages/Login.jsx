@@ -42,7 +42,6 @@ export default function Login() {
 
   return (
     <AuthShell
-      eyebrow={t('account.eyebrow')}
       title={mode === 'login' ? t('login.welcome') : t('login.create')}
     >
       <form onSubmit={handleSubmit} className="space-y-7">

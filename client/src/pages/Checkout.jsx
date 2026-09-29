@@ -13,7 +13,7 @@ import Field, { FormMessage } from '../components/Field';
 import Price from '../components/Price';
 import PageHero from '../components/PageHero';
 import EmptyState from '../components/EmptyState';
-import { Container } from '../components/Section';
+import Section from '../components/Section';
 
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
@@ -73,7 +73,7 @@ export default function Checkout() {
       <PageHero compact eyebrow={t('checkout.step.details')} title={t('checkout.title')}>
         {/* Step rail — micro-type with the current step in gold, the single
             signal this design uses for "you are here". */}
-        <ol className="micro mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-white/45">
+        <ol className="micro mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
           <li>{t('checkout.step.bag')}</li>
           <li aria-hidden="true">—</li>
           <li aria-current="step" className="text-gold">
@@ -84,7 +84,7 @@ export default function Checkout() {
         </ol>
       </PageHero>
 
-      <Container className="py-14 md:py-20 lg:grid lg:grid-cols-[1fr_380px] lg:gap-16 xl:gap-20">
+      <Section containerClassName="lg:grid lg:grid-cols-[1fr_380px] lg:gap-16 xl:gap-20">
         <div>
           <p className="text-sm text-muted">{t('checkout.signedIn', { email: user?.email })}</p>
 
@@ -177,7 +177,7 @@ export default function Checkout() {
           </div>
           <p className="mt-6 text-xs leading-relaxed text-muted">{t('checkout.trust')}</p>
         </aside>
-      </Container>
+      </Section>
     </>
   );
 }

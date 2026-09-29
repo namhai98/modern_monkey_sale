@@ -9,7 +9,7 @@ import Skeleton from '../components/Skeleton';
 import PageHero from '../components/PageHero';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
-import { Container } from '../components/Section';
+import Section from '../components/Section';
 
 export default function Orders() {
   const { t } = useLocale();
@@ -34,7 +34,7 @@ export default function Orders() {
         crumbs={[{ label: t('orders.title') }]}
       />
 
-      <Container className="max-w-3xl py-14 md:py-20">
+      <Section containerClassName="max-w-3xl">
         {loading && (
           <div className="divide-y divide-line border-y border-line">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -82,7 +82,7 @@ export default function Orders() {
             ))}
           </div>
         )}
-      </Container>
+      </Section>
     </>
   );
 }

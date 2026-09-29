@@ -24,6 +24,7 @@ import Profile from './pages/Profile';
 import Forbidden from './pages/Forbidden';
 import NotFound from './pages/NotFound';
 import Privacy from './pages/Privacy';
+import ProductCare from './pages/ProductCare';
 
 // Admin bundles are behind auth and rarely hit by shoppers — load on demand.
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -58,6 +59,7 @@ export default function App() {
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/product-care" element={<ProductCare />} />
                   <Route path="/forbidden" element={<Forbidden />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />

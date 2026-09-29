@@ -11,11 +11,11 @@
 
 const PAD = {
   // Standard section.
-  default: 'py-14 md:py-24 lg:py-36',
+  default: 'py-14 md:py-20 lg:py-28',
   // Inner-page content sections sit slightly tighter.
-  content: 'py-14 md:py-24 lg:py-32',
+  content: 'py-12 md:py-16 lg:py-24',
   // For a section that only needs to clear the one below it.
-  tight: 'py-12 md:py-16',
+  tight: 'py-10 md:py-14',
   none: '',
 };
 

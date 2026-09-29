@@ -1,65 +1,40 @@
 import Breadcrumb from './Breadcrumb';
 import Reveal from './Reveal';
-import ImageFallback from './ImageFallback';
 
-/* The unified inner-page hero, same as the presentation site's <PageHero>: a
-   fixed-dark band that runs up behind the 80px header, with an optional image
-   layer at 50% opacity under a gradient scrim, then breadcrumb → eyebrow →
-   serif H1 → lead. Every inner page opens with one so the storefront has the
-   same entry rhythm as the marketing site.
+/* The inner-page header: breadcrumb → eyebrow → serif H1 → lead, sitting in
+   normal page flow on the theme's own background. No dark band, no full-bleed
+   image — <main>'s own pt-[var(--header-h)] (see Layout.jsx) already clears
+   the fixed header, so this needs no margin tricks of its own.
 
-   The negative margin cancels the clearance Layout puts on <main> for the fixed
-   header, so the dark band starts at the very top of the viewport and the
-   header's glass sits over it — otherwise the clearance is counted twice and a
-   strip of page background shows above the band. Both sides read --header-h, so
-   the two stay in step whatever height the header is composed at. The top
-   padding then puts the content back below the header.
-
-   `compact` trims that padding for utility pages (account, cart, listing) that
-   don't warrant a full cinematic opener. */
+   `compact` trims the type scale for utility pages (account, cart, checkout)
+   that don't need as much weight as a section opener like Shop's. */
 export default function PageHero({
   eyebrow,
   title,
   lead,
-  image,
   crumbs = [],
   compact = false,
   children,
 }) {
   return (
     <section
-      className={`relative -mt-[var(--header-h)] overflow-hidden bg-ink text-white ${
-        /* The extra step at hdr keeps the breadcrumb clear of the taller
-           desktop header; the full variant's md padding already clears it. */
-        compact ? 'pb-10 pt-28 md:pb-16 md:pt-32 hdr:pt-36' : 'pb-14 pt-32 md:pb-24 md:pt-48'
+      className={`border-b border-line ${
+        compact ? 'pb-8 pt-10 md:pb-10 md:pt-14' : 'pb-10 pt-12 md:pb-14 md:pt-16'
       }`}
     >
-      {image && (
-        <>
-          <ImageFallback
-            src={image}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-50"
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/40 to-ink"
-            aria-hidden="true"
-          />
-        </>
-      )}
-      <div className="container-lux relative z-10">
+      <div className="container-lux">
         <Reveal>
-          {crumbs.length > 0 && <Breadcrumb items={crumbs} dark />}
-          {eyebrow && <p className={`eyebrow ${crumbs.length > 0 ? 'mt-6 md:mt-10' : ''}`}>{eyebrow}</p>}
+          {crumbs.length > 0 && <Breadcrumb items={crumbs} className="mb-6" />}
+          {eyebrow && <p className="eyebrow">{eyebrow}</p>}
           <h1
-            className={`heading-serif max-w-3xl leading-[1.05] ${
-              compact ? 'mt-4 text-3xl md:text-5xl' : 'mt-5 text-4xl md:mt-6 md:text-7xl'
+            className={`heading-serif mt-4 max-w-3xl leading-[1.05] ${
+              compact ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl lg:text-6xl'
             }`}
           >
             {title}
           </h1>
           {lead && (
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/60 md:mt-8 md:text-lg">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
               {lead}
             </p>
           )}

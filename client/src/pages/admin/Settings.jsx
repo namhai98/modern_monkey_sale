@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import client from '../../api/client';
+import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
 import { inputCls, btnPrimary } from './ui';
 
@@ -72,7 +73,10 @@ export default function AdminSettings() {
       <h1 className="heading-serif text-2xl text-foreground mb-6">{t('admin.settings.title')}</h1>
 
       {loading ? (
-        <p className="text-muted">{t('admin.settings.loading')}</p>
+        <div className="max-w-md space-y-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
       ) : (
         <div className="max-w-md space-y-6">
           <div className="border border-line bg-surface p-6">

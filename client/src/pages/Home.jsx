@@ -11,7 +11,7 @@ import Section from '../components/Section';
 import SectionHeading, { RowHeading } from '../components/SectionHeading';
 import { useLocale } from '../context/LocaleContext';
 import { homeMedia, resizeUnsplash } from '../lib/media';
-import { mapsUrl, site, telHref } from '../lib/site';
+import { site, telHref } from '../lib/site';
 
 /* The home page as a stack of sections in the presentation site's rhythm and
    order: a full-bleed cinematic hero → a centred maison statement → the
@@ -109,9 +109,10 @@ function Hero() {
           className="heading-serif mt-8 max-w-4xl text-[clamp(2.6rem,8vw,6.5rem)] leading-[1.02]"
         >
           {lines.map((line, i) => (
-            <span key={line} className="block overflow-hidden">
+            <span key={line} className="block overflow-hidden pb-2">
               <span
-                className={`line-in block ${i === 1 ? 'text-gold' : ''}`}
+                className={`line-in block ${i === 1 ? 'heading-script text-[1.3em] leading-[1.15] text-gold' : ''
+                  }`}
                 style={{ animationDelay: `${0.45 + i * 0.18}s` }}
               >
                 {line}
@@ -185,7 +186,7 @@ function House() {
           <SectionHeading
             eyebrow={t('home.house.eyebrow')}
             title={t('home.house.title')}
-            lead={t('home.house.body')}
+            lead={`${t('home.house.body')} ${t('home.house.body2')}`}
             action={<TextLink to="/shop?all=1">{t('home.house.cta')}</TextLink>}
           />
         </div>
@@ -199,6 +200,12 @@ const BAND_SLUGS = ['bags', 'watches', 'apparel'];
 /* The category entry points. Odd cards drop by 48px on large screens for the
    staggered editorial grid the presentation site uses, and the heading row
    carries the "view all" link on its right, as on the marketing site. */
+const BAND_DESC_KEYS = {
+  bags: 'home.collections.bagsDesc',
+  watches: 'home.collections.watchesDesc',
+  apparel: 'home.collections.apparelDesc',
+};
+
 function CollectionCards({ labels }) {
   const { t } = useLocale();
   return (
@@ -207,6 +214,7 @@ function CollectionCards({ labels }) {
         <SectionHeading
           eyebrow={t('home.collections.eyebrow')}
           title={t('home.collections.title')}
+          lead={t('home.collections.body')}
         />
         <Reveal delay={0.2}>
           <TextLink to="/shop">{t('common.viewAll')}</TextLink>
@@ -221,6 +229,7 @@ function CollectionCards({ labels }) {
                 label={labels[slug]}
                 index={i}
                 image={homeMedia.bands[slug]}
+                meta={t(BAND_DESC_KEYS[slug])}
               />
             </RevealScale>
           </Reveal>
@@ -286,6 +295,7 @@ function Featured() {
       <SectionHeading
         eyebrow={t('home.featured.eyebrow')}
         title={t('home.featured.title')}
+        lead={t('home.featured.body')}
         align="center"
       />
       <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
@@ -298,6 +308,80 @@ function Featured() {
       <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
         <Button to="/shop?all=1" variant="outline-dark">
           {t('shop.everything')}
+        </Button>
+      </Reveal>
+    </Section>
+  );
+}
+
+/* The next-newest batch of products (page 2 of the "recent" sort), so this
+   row reads as a distinct set from Featured rather than repeating it. */
+function NewArrivals() {
+  const { t } = useLocale();
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    client
+      .get('/products', { params: { sort: 'created_at', order: 'desc', limit: 4, page: 2 } })
+      .then((res) => setItems(res.data.items))
+      .catch(() => { });
+  }, []);
+
+  if (items.length === 0) return null;
+  return (
+    <Section tone="surface">
+      <SectionHeading
+        title={t('home.newArrivals.title')}
+        lead={t('home.newArrivals.body')}
+        align="center"
+      />
+      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
+        {items.map((p, i) => (
+          <Reveal key={p.id} delay={i * 0.08}>
+            <ProductCard product={p} />
+          </Reveal>
+        ))}
+      </div>
+      <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
+        <Button to="/shop?sort=created_at:desc" variant="outline-dark">
+          {t('home.newArrivals.cta')}
+        </Button>
+      </Reveal>
+    </Section>
+  );
+}
+
+/* Currently-discounted products, pulled with the same on_sale filter the
+   shop page's "Sale" nav link uses. Hidden entirely when nothing is on sale. */
+function DiscountBand() {
+  const { t } = useLocale();
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    client
+      .get('/products', { params: { on_sale: '1', limit: 4 } })
+      .then((res) => setItems(res.data.items))
+      .catch(() => { });
+  }, []);
+
+  if (items.length === 0) return null;
+  return (
+    <Section>
+      <SectionHeading
+        title={t('home.discount.title')}
+        lead={t('home.discount.body')}
+        align="center"
+      />
+      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
+        {items.map((p, i) => (
+          <Reveal key={p.id} delay={i * 0.08}>
+            <ProductCard product={p} />
+          </Reveal>
+        ))}
+      </div>
+      <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
+        <Button to="/shop?sale=1" variant="outline-dark">
+          {t('home.discount.cta')}
         </Button>
       </Reveal>
     </Section>
@@ -412,9 +496,7 @@ function Visit() {
         </Reveal>
         <Reveal delay={0.3}>
           <div className="mt-10 flex flex-wrap justify-center gap-4 md:mt-12 md:gap-5">
-            <Button href={mapsUrl} target="_blank" rel="noopener noreferrer">
-              {t('home.visit.cta')}
-            </Button>
+            <Button to="/shop?all=1">{t('home.visit.cta')}</Button>
             <Button href={telHref(phone)} variant="outline">
               {t('home.visit.call')} {phone}
             </Button>
@@ -434,15 +516,17 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div className="font-home">
       <Hero />
       <Statement />
       <CollectionCards labels={labels} />
       <House />
       <CategoryStrips labels={labels} />
       <Featured />
+      <NewArrivals />
+      <DiscountBand />
       <Craftsmanship />
       <Visit />
-    </>
+    </div>
   );
 }

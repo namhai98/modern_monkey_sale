@@ -1,19 +1,21 @@
-// Add 50 test products to the existing catalogue.
+// Add test products to the existing catalogue.
 //
 // Deliberately NOT seed:catalog, which wipes products, categories AND orders to
 // regenerate the demo shop. This one only ever adds: every row it writes carries
 // a TEST- SKU, so the set is trivial to find, refresh or remove, and nothing
 // already in the shop is touched.
 //
-//   npm run seed:test            add (or refresh) the 50
-//   npm run seed:test -- --remove   delete them again
+//   npm run seed:test                 add (or refresh) 50
+//   npm run seed:test -- --count=30   add (or refresh) a different amount
+//   npm run seed:test -- --remove     delete them again
 //
 // Re-runnable: ON CONFLICT on the unique sku means a second run updates the
-// same 50 rows rather than erroring or duplicating.
+// same rows rather than erroring or duplicating.
 import 'dotenv/config';
 import { pool } from '../config/db.js';
 
-const COUNT = 50;
+const countArg = process.argv.find((a) => a.startsWith('--count='));
+const COUNT = countArg ? Number(countArg.slice('--count='.length)) : 50;
 const SKU_PREFIX = 'TEST-';
 
 const IMG = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1400&q=80`;

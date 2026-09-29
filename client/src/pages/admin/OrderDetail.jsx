@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../../api/client';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
+import Skeleton from '../../components/Skeleton';
 import { money } from '../../lib/price';
 import { useLocale } from '../../context/LocaleContext';
 import { btnPrimary } from './ui';
@@ -88,8 +89,10 @@ export default function AdminOrderDetail() {
   }
   if (!order) {
     return (
-      <div className="max-w-3xl mx-auto pt-10 pb-8">
-        <p className="text-muted">{t('admin.orderDetail.loading')}</p>
+      <div className="max-w-3xl mx-auto pt-10 pb-8 space-y-3">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }

@@ -207,11 +207,10 @@ function CategoryChooser({ categories }) {
         eyebrow={t('shop.allPieces')}
         title={t('shop.collection')}
         lead={t('shop.choose')}
-        image={resizeUnsplash(media.hero, 2000)}
         crumbs={[{ label: t('shop.collection') }]}
       >
         <form onSubmit={submit} className="mt-10 max-w-md">
-          <label htmlFor="shop-search" className="micro mb-2 block text-white/55">
+          <label htmlFor="shop-search" className="micro mb-2 block text-muted">
             {t('shop.search')}
           </label>
           <input
@@ -219,7 +218,7 @@ function CategoryChooser({ categories }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('shop.search')}
-            className="w-full border-b border-white/25 bg-transparent py-3 text-sm text-white transition-colors duration-300 placeholder:text-white/35 focus:border-gold focus:outline-none"
+            className="field"
           />
         </form>
         <div className="mt-8 flex flex-wrap gap-5">

@@ -32,6 +32,15 @@
      `font-catalog` rather than the name of whatever is current. */
   --font-catalog: "Montserrat", ui-sans-serif, "Inter", system-ui, sans-serif;
 
+  /* Home page only — an accent script for the hero's gold line. Marck Script,
+     not a Latin-only calligraphy face: the site's default language is
+     Mongolian Cyrillic, and almost every elegant Western script font (the
+     brief's original reference included) has no Cyrillic glyphs at all, so it
+     silently falls back to a plain face for MN visitors. This one carries
+     genuine Cyrillic glyphs, so the accent actually renders as a script in
+     both locales instead of just in English. */
+  --font-script: "Marck Script", cursive;
+
   /* Theme-reactive */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -200,6 +209,22 @@
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.01em;
+}
+
+/* Home page only — swaps the display face to Cormorant Garamond. Overriding
+   the custom property on this wrapper is enough: every descendant
+   `heading-serif` reads --font-display through inheritance, so nothing else
+   about the treatment (weight, tracking) has to be duplicated. */
+.font-home {
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
+}
+
+/* Accent script — the home hero's gold line only. Not a general heading
+   treatment: script faces stop being legible past a word or two. */
+@utility heading-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */

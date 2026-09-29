@@ -6,17 +6,33 @@ import Button from '../components/Button';
 import Field from '../components/Field';
 import AuthShell from '../components/AuthShell';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function ForgotPassword() {
   const { t } = useLocale();
   const [email, setEmail] = useState('');
+  const [error, setError] = useState(null);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submitting) return;
+
+    const value = email.trim();
+    if (!value) {
+      setError(t('forgot.emailRequired'));
+      return;
+    }
+    if (!EMAIL_RE.test(value)) {
+      setError(t('forgot.emailInvalid'));
+      return;
+    }
+
+    setError(null);
     setSubmitting(true);
     try {
-      await client.post('/auth/forgot-password', { email });
+      await client.post('/auth/forgot-password', { email: value });
     } catch {
       // The endpoint always succeeds; ignore transport errors for the same UX.
     } finally {
@@ -36,7 +52,6 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell
-      eyebrow={t('account.eyebrow')}
       title={t('forgot.title')}
       lead={sent ? null : t('forgot.lead')}
     >
@@ -48,13 +63,18 @@ export default function ForgotPassword() {
           {back}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-7">
+        <form onSubmit={handleSubmit} noValidate className="space-y-7">
           <Field
-            label={t('login.email')}
+            label={t('forgot.emailLabel')}
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError(null);
+            }}
+            error={error}
             autoComplete="email"
+            disabled={submitting}
             required
           />
           <Button as="button" type="submit" disabled={submitting} full size="lg">

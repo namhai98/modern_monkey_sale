@@ -39,7 +39,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <AuthShell eyebrow={t('account.eyebrow')} title={t('reset.title')} lead={t('reset.noToken')}>
+      <AuthShell title={t('reset.title')} lead={t('reset.noToken')}>
         <Link
           to="/forgot-password"
           className="link-lux micro w-fit text-gold"
@@ -51,7 +51,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <AuthShell eyebrow={t('account.eyebrow')} title={t('reset.title')}>
+    <AuthShell title={t('reset.title')}>
       {done ? (
         <p className="border-l-2 border-gold py-1 pl-4 text-sm leading-relaxed text-foreground">
           {t('reset.done')}

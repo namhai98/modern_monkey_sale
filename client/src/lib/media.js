@@ -28,6 +28,16 @@ export const homeMedia = {
   atelier: '/home/banner.jpg', // wide product still-life
 };
 
+// Product Care page — clean, logo-free care/detail shots (the existing bags/
+// watches band photography shows visible third-party brand marks, wrong for a
+// page about caring for a piece, so this gets its own small set instead).
+export const productCareMedia = {
+  hero: U('1732613839533-ac54fcee9d9c', 2000), // bag with a cleaning cloth and care kit, styled still life
+  bags: U('1637759292654-a12cb2be085e', 1600), // tan leather bag, handle and stitching detail
+  watches: U('1617317376997-8748e6862c01', 1600), // minimalist watch on dark fabric
+  general: media.editorialLeft, // reuses the House section's own shot for a consistent, simple layout
+};
+
 export function resizeUnsplash(url, w) {
   if (!url || !url.includes('images.unsplash.com')) return url;
   return url.replace(/([?&])w=\d+/, `$1w=${w}`);

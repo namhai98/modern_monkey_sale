@@ -3,9 +3,11 @@ import client from '../../api/client';
 import { money } from '../../lib/price';
 import Select from '../../components/Select';
 import Icon from '../../components/Icon';
+import EmptyState from '../../components/EmptyState';
+import Skeleton from '../../components/Skeleton';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls, btnPrimary, btnGhost } from './ui';
+import { inputCls, btnPrimary, btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const ymd = (d) => d.toISOString().slice(0, 10);
 const today = () => ymd(new Date());
@@ -347,44 +349,53 @@ export default function AdminDiscounts() {
         <DiscountForm initial={formFor} onCancel={() => setFormFor(null)} onSaved={afterSave} />
       )}
 
-      {loading && <p className="text-muted">{t('admin.discounts.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
       {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && discounts.length === 0 && (
-        <div className="text-center text-muted py-16">
-          <p>{t('admin.discounts.none')}</p>
-          <button onClick={() => setFormFor('new')} className="mt-2 text-foreground hover:text-gold">
-            {t('admin.discounts.createFirst')}
-          </button>
-        </div>
+        <EmptyState
+          inline
+          title={t('admin.discounts.none')}
+          actions={
+            <button onClick={() => setFormFor('new')} className={btnPrimary}>
+              {t('admin.discounts.createFirst')}
+            </button>
+          }
+        />
       )}
 
       {!loading && !error && discounts.length > 0 && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left micro text-muted border-b border-line">
-              <th className="py-3 font-normal">{t('admin.discounts.colName')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colType')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colValue')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colStart')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colEnd')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colProducts')}</th>
-              <th className="py-3 font-normal">{t('admin.discounts.colStatus')}</th>
-              <th className="py-3 text-right font-normal">{t('admin.action')}</th>
+            <tr className={trCls}>
+              <th className={thCls}>{t('admin.discounts.colName')}</th>
+              <th className={thCls}>{t('admin.discounts.colType')}</th>
+              <th className={thCls}>{t('admin.discounts.colValue')}</th>
+              <th className={thCls}>{t('admin.discounts.colStart')}</th>
+              <th className={thCls}>{t('admin.discounts.colEnd')}</th>
+              <th className={thCls}>{t('admin.discounts.colProducts')}</th>
+              <th className={thCls}>{t('admin.discounts.colStatus')}</th>
+              <th className={thNumCls}>{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
             {discounts.map((d) => (
               <Fragment key={d.id}>
-                <tr className="border-b border-line/60 transition-colors hover:bg-surface">
-                  <td className="py-3 font-medium text-foreground">{d.name}</td>
-                  <td className="py-3 text-muted">{d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}</td>
-                  <td className="py-3 text-foreground">{valueLabel(d)}</td>
-                  <td className="py-3 text-muted">{d.start_date}</td>
-                  <td className="py-3 text-muted">{d.end_date}</td>
-                  <td className="py-3 text-muted">{d.product_count}</td>
-                  <td className={`py-3 capitalize ${STATUS_STYLE[d.status] || 'text-muted'}`}>{t(`admin.discountStatus.${d.status}`)}</td>
-                  <td className="py-3 text-right space-x-3 whitespace-nowrap">
+                <tr className={`${trCls} transition-colors hover:bg-surface`}>
+                  <td className={`${tdCls} font-medium text-foreground`}>{d.name}</td>
+                  <td className={`${tdCls} text-muted`}>{d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}</td>
+                  <td className={`${tdCls} text-foreground`}>{valueLabel(d)}</td>
+                  <td className={`${tdCls} text-muted`}>{d.start_date}</td>
+                  <td className={`${tdCls} text-muted`}>{d.end_date}</td>
+                  <td className={`${tdCls} text-muted`}>{d.product_count}</td>
+                  <td className={`${tdCls} capitalize ${STATUS_STYLE[d.status] || 'text-muted'}`}>{t(`admin.discountStatus.${d.status}`)}</td>
+                  <td className={`${tdNumCls} space-x-3 whitespace-nowrap`}>
                     <button onClick={() => openEdit(d)} className="inline-flex text-muted transition-colors hover:text-gold"
                       aria-label={t('admin.discounts.edit')} title={t('admin.discounts.edit')}>
                       <Icon name="edit" />

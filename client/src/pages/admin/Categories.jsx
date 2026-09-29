@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
+import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
-import { inputCls, btnPrimary } from './ui';
+import Skeleton from '../../components/Skeleton';
+import { inputCls, btnPrimary, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 
 export default function AdminCategories() {
@@ -75,22 +77,32 @@ export default function AdminCategories() {
       </form>
 
       {error && <p className="text-danger text-sm mb-3">{error}</p>}
-      {loading && <p className="text-muted">{t('admin.categories.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
 
-      {!loading && (
+      {!loading && categories.length === 0 && (
+        <EmptyState inline title={t('admin.categories.none')} />
+      )}
+
+      {!loading && categories.length > 0 && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left micro text-muted border-b border-line">
-              <th className="py-3 font-normal">{t('admin.categories.colName')}</th>
-              <th className="py-3 font-normal">{t('admin.categories.colSlug')}</th>
-              <th className="py-3 font-normal">{t('admin.categories.colProducts')}</th>
-              <th className="py-3 text-right font-normal">{t('admin.action')}</th>
+            <tr className={trCls}>
+              <th className={thCls}>{t('admin.categories.colName')}</th>
+              <th className={thCls}>{t('admin.categories.colSlug')}</th>
+              <th className={thCls}>{t('admin.categories.colProducts')}</th>
+              <th className={thNumCls}>{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
             {categories.map((c) => (
-              <tr key={c.id} className="border-b border-line/60 transition-colors hover:bg-surface">
-                <td className="py-3 text-foreground">
+              <tr key={c.id} className={`${trCls} transition-colors hover:bg-surface`}>
+                <td className={`${tdCls} text-foreground`}>
                   {editing?.id === c.id ? (
                     <input className={inputCls} value={editing.name}
                       onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
@@ -98,9 +110,9 @@ export default function AdminCategories() {
                     c.name
                   )}
                 </td>
-                <td className="py-3 text-muted">{c.slug}</td>
-                <td className="py-3 text-muted">{c.product_count}</td>
-                <td className="py-3 text-right space-x-3">
+                <td className={`${tdCls} text-muted`}>{c.slug}</td>
+                <td className={`${tdCls} text-muted`}>{c.product_count}</td>
+                <td className={`${tdNumCls} space-x-3`}>
                   {editing?.id === c.id ? (
                     <>
                       <button onClick={saveEdit} className="inline-flex text-foreground transition-colors hover:text-gold"

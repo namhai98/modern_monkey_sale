@@ -118,8 +118,11 @@ export default function SiteFooter({ flush = false }) {
         <div>
           <p className={COL_HEAD}>{t('footer.col.care')}</p>
           <ul className="mt-6 space-y-3.5 text-sm text-white/65">
-            <li>{t('footer.care.shipping')}</li>
-            <li>{t('footer.care.product')}</li>
+            <li>
+              <Link to="/product-care" className={COL_LINK}>
+                {t('footer.care.product')}
+              </Link>
+            </li>
             <li>{t('footer.care.contact')}</li>
           </ul>
 

@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import EmptyState from '../../components/EmptyState';
+import Icon from '../../components/Icon';
 import Select from '../../components/Select';
+import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls, btnPrimary } from './ui';
+import { inputCls, btnPrimary, stateOn, stateOff, thCls, tdCls, trCls } from './ui';
 
 const ROLES = ['customer', 'staff', 'manager', 'admin'];
 const NEW_USER_ROLES = ['staff', 'manager', 'admin'];
@@ -55,9 +58,10 @@ export default function AdminUsers() {
     }
   }
 
-  async function changeRole(id, role) {
+  async function changeRole(u, role) {
+    if (!confirm(t('admin.users.confirmRole', { name: u.name, role: t(`admin.role.${role}`) }))) return;
     try {
-      await client.patch(`/users/${id}/role`, { role });
+      await client.patch(`/users/${u.id}/role`, { role });
       await load();
     } catch (err) {
       toastError(err.response?.data?.error || t('admin.users.roleFailed'));
@@ -65,6 +69,8 @@ export default function AdminUsers() {
   }
 
   async function toggleStatus(u) {
+    const key = u.is_active ? 'admin.users.confirmDisable' : 'admin.users.confirmEnable';
+    if (!confirm(t(key, { name: u.name }))) return;
     try {
       await client.patch(`/users/${u.id}/status`, { is_active: !u.is_active });
       await load();
@@ -123,32 +129,42 @@ export default function AdminUsers() {
         </form>
       )}
 
-      {loading && <p className="text-muted">{t('admin.users.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
       {error && <p className="text-danger">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && users.length === 0 && (
+        <EmptyState inline title={t('admin.users.none')} />
+      )}
+
+      {!loading && !error && users.length > 0 && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left micro text-muted border-b border-line">
-              <th className="py-3 font-normal">{t('admin.users.colName')}</th>
-              <th className="py-3 font-normal">{t('admin.users.colEmail')}</th>
-              <th className="py-3 font-normal">{t('admin.users.colRole')}</th>
-              <th className="py-3 font-normal">{t('admin.users.colStatus')}</th>
+            <tr className={trCls}>
+              <th className={thCls}>{t('admin.users.colName')}</th>
+              <th className={thCls}>{t('admin.users.colEmail')}</th>
+              <th className={thCls}>{t('admin.users.colRole')}</th>
+              <th className={thCls}>{t('admin.users.colStatus')}</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => {
               const editable = isAdmin && u.id !== user.id;
               return (
-                <tr key={u.id} className="border-b border-line/60 transition-colors hover:bg-surface">
-                  <td className="py-3 text-foreground">{u.name}</td>
-                  <td className="py-3 text-muted">{u.email}</td>
-                  <td className="py-3">
+                <tr key={u.id} className={`${trCls} transition-colors hover:bg-surface`}>
+                  <td className={`${tdCls} text-foreground`}>{u.name}</td>
+                  <td className={`${tdCls} text-muted`}>{u.email}</td>
+                  <td className={tdCls}>
                     {editable ? (
                       <Select
                         className="w-28"
                         value={u.role}
-                        onChange={(e) => changeRole(u.id, e.target.value)}
+                        onChange={(e) => changeRole(u, e.target.value)}
                       >
                         {ROLES.map((r) => (
                           <option key={r} value={r}>
@@ -160,20 +176,22 @@ export default function AdminUsers() {
                       <span className="capitalize text-foreground">{t(`admin.role.${u.role}`)}</span>
                     )}
                   </td>
-                  <td className="py-3">
+                  <td className={tdCls}>
                     {editable ? (
                       <button
                         onClick={() => toggleStatus(u)}
-                        className={
-                          u.is_active
-                            ? 'text-gold transition-opacity duration-300 hover:opacity-70'
-                            : 'text-danger transition-opacity duration-300 hover:opacity-70'
-                        }
+                        aria-label={u.is_active ? t('admin.users.disable') : t('admin.users.enable')}
+                        title={u.is_active ? t('admin.users.disable') : t('admin.users.enable')}
+                        className={`inline-flex items-center gap-1.5 transition-opacity duration-300 hover:opacity-70 ${
+                          u.is_active ? stateOn : stateOff
+                        }`}
                       >
+                        <Icon name={u.is_active ? 'check' : 'x'} className="h-3.5 w-3.5" />
                         {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
                       </button>
                     ) : (
-                      <span className={u.is_active ? 'text-gold' : 'text-danger'}>
+                      <span className={`inline-flex items-center gap-1.5 ${u.is_active ? stateOn : stateOff}`}>
+                        <Icon name={u.is_active ? 'check' : 'x'} className="h-3.5 w-3.5" />
                         {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
                       </span>
                     )}

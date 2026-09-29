@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
+import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
-import { inputCls, btnPrimary } from './ui';
+import Skeleton from '../../components/Skeleton';
+import { inputCls, btnPrimary, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 
 export default function AdminBrands() {
@@ -75,22 +77,32 @@ export default function AdminBrands() {
       </form>
 
       {error && <p className="text-danger text-sm mb-3">{error}</p>}
-      {loading && <p className="text-muted">{t('admin.brands.loading')}</p>}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      )}
 
-      {!loading && (
+      {!loading && brands.length === 0 && (
+        <EmptyState inline title={t('admin.brands.none')} />
+      )}
+
+      {!loading && brands.length > 0 && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left micro text-muted border-b border-line">
-              <th className="py-3 font-normal">{t('admin.brands.colName')}</th>
-              <th className="py-3 font-normal">{t('admin.brands.colSlug')}</th>
-              <th className="py-3 font-normal">{t('admin.brands.colProducts')}</th>
-              <th className="py-3 text-right font-normal">{t('admin.action')}</th>
+            <tr className={trCls}>
+              <th className={thCls}>{t('admin.brands.colName')}</th>
+              <th className={thCls}>{t('admin.brands.colSlug')}</th>
+              <th className={thCls}>{t('admin.brands.colProducts')}</th>
+              <th className={thNumCls}>{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
             {brands.map((b) => (
-              <tr key={b.id} className="border-b border-line/60 transition-colors hover:bg-surface">
-                <td className="py-3 text-foreground">
+              <tr key={b.id} className={`${trCls} transition-colors hover:bg-surface`}>
+                <td className={`${tdCls} text-foreground`}>
                   {editing?.id === b.id ? (
                     <input className={inputCls} value={editing.name}
                       onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
@@ -98,9 +110,9 @@ export default function AdminBrands() {
                     b.name
                   )}
                 </td>
-                <td className="py-3 text-muted">{b.slug}</td>
-                <td className="py-3 text-muted">{b.product_count}</td>
-                <td className="py-3 text-right space-x-3">
+                <td className={`${tdCls} text-muted`}>{b.slug}</td>
+                <td className={`${tdCls} text-muted`}>{b.product_count}</td>
+                <td className={`${tdNumCls} space-x-3`}>
                   {editing?.id === b.id ? (
                     <>
                       <button onClick={saveEdit} className="inline-flex text-foreground transition-colors hover:text-gold"

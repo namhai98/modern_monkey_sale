@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) NOT NULL DEFAULT 'customer'
     CHECK (role IN ('customer', 'staff', 'manager', 'admin')),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  -- Storage key for the uploaded profile photo (see storage/index.js); NULL
+  -- means no avatar, and the client shows its "no image" placeholder.
+  avatar_key VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

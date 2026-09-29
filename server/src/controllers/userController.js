@@ -1,8 +1,11 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { query } from '../config/db.js';
 import { serializeUser } from '../utils/serializeUser.js';
 import { normalizeEmail, isValidEmail, passwordProblem } from '../utils/validators.js';
 import { REFRESH_COOKIE, familyForToken, revokeAllForUser } from '../utils/refreshTokens.js';
+import { storage } from '../storage/index.js';
+import { processImage, ImageError } from '../services/imageProcessor.js';
 
 const ASSIGNABLE_ROLES = ['staff', 'manager', 'admin']; // roles an admin may create
 const ALL_ROLES = ['customer', 'staff', 'manager', 'admin'];
@@ -23,6 +26,83 @@ export async function updateMe(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+}
+
+// A single small square-ish variant is enough for an avatar (shown at most a
+// few dozen px across); the card/detail sizes processImage also produces are
+// wasted bytes here, so only the thumbnail variant is kept.
+export async function updateMyAvatar(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image uploaded', code: 'VALIDATION_ERROR' });
+    }
+
+    let processed;
+    try {
+      processed = await processImage(req.file.buffer);
+    } catch (e) {
+      if (e instanceof ImageError) {
+        return res.status(400).json({ error: e.message, code: e.code });
+      }
+      throw e;
+    }
+    const thumb = processed.variants.find((v) => v.name === 'thumbnail');
+
+    const { rows: existingRows } = await query('SELECT avatar_key FROM users WHERE id = $1', [
+      req.user.id,
+    ]);
+    const previousKey = existingRows[0]?.avatar_key;
+
+    const storageKey = `users/${req.user.id}/${crypto.randomUUID()}`;
+    await storage.put(`${storageKey}/avatar.${thumb.ext}`, thumb.buffer, {
+      contentType: thumb.contentType,
+    });
+
+    const { rows } = await query(
+      `UPDATE users SET avatar_key = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, name, email, role, is_active, avatar_key`,
+      [storageKey, req.user.id]
+    );
+
+    if (previousKey) {
+      await storage
+        .deletePrefix(previousKey)
+        .catch((e) => console.error('[avatar] storage cleanup failed', previousKey, e));
+    }
+
+    res.json({ user: serializeUser(rows[0]) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to upload avatar' });
+  }
+}
+
+export async function removeMyAvatar(req, res) {
+  try {
+    const { rows: existingRows } = await query('SELECT avatar_key FROM users WHERE id = $1', [
+      req.user.id,
+    ]);
+    const previousKey = existingRows[0]?.avatar_key;
+
+    const { rows } = await query(
+      `UPDATE users SET avatar_key = NULL, updated_at = NOW()
+       WHERE id = $1
+       RETURNING id, name, email, role, is_active, avatar_key`,
+      [req.user.id]
+    );
+
+    if (previousKey) {
+      await storage
+        .deletePrefix(previousKey)
+        .catch((e) => console.error('[avatar] storage cleanup failed', previousKey, e));
+    }
+
+    res.json({ user: serializeUser(rows[0]) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove avatar' });
   }
 }
 

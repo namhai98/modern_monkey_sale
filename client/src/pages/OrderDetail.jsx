@@ -9,7 +9,8 @@ import { useDocumentTitle } from '../lib/useDocumentTitle';
 import PageHero from '../components/PageHero';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
-import { Container } from '../components/Section';
+import Section from '../components/Section';
+import Skeleton from '../components/Skeleton';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -59,9 +60,27 @@ export default function OrderDetail() {
   }
   if (!order) {
     return (
-      <Container className="max-w-3xl py-24">
-        <p className="micro text-muted">{t('orders.loading')}</p>
-      </Container>
+      <>
+        <PageHero
+          compact
+          eyebrow={t('account.eyebrow')}
+          title={t('orders.loading')}
+          crumbs={[{ label: t('orders.title'), to: '/orders' }]}
+        />
+        <Section containerClassName="max-w-3xl">
+          <div className="divide-y divide-line border-y border-line">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
+        </Section>
+      </>
     );
   }
 
@@ -80,7 +99,7 @@ export default function OrderDetail() {
         </div>
       </PageHero>
 
-      <Container className="max-w-3xl py-14 md:py-20">
+      <Section containerClassName="max-w-3xl">
         {/* The presentation site has no tables at all, so this one is built from
             the same parts as everything else: micro-type column heads over a
             hairline, hairline row rules, and no fills or zebra striping. */}
@@ -174,7 +193,7 @@ export default function OrderDetail() {
             </button>
           </div>
         )}
-      </Container>
+      </Section>
     </>
   );
 }

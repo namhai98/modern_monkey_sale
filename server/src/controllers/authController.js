@@ -32,7 +32,7 @@ function signToken(user) {
    instead of "change password" on an account created through Google or
    Facebook, and show which of those are linked. */
 const SESSION_USER_SQL = `
-  SELECT u.id, u.name, u.email, u.role, u.is_active,
+  SELECT u.id, u.name, u.email, u.role, u.is_active, u.avatar_key,
          (u.password_hash IS NOT NULL) AS has_password,
          COALESCE(
            (SELECT array_agg(i.provider ORDER BY i.provider)
