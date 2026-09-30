@@ -51,7 +51,7 @@ export default function Checkout() {
       .filter(Boolean)
       .join('\n');
     try {
-      await client.post('/orders', {
+      const { data } = await client.post('/orders', {
         items: items.map((i) => ({
           product_id: i.id,
           quantity: i.quantity,
@@ -60,7 +60,7 @@ export default function Checkout() {
         shipping_address,
       });
       clearCart();
-      navigate('/orders');
+      navigate(`/orders/${data.id}`, { state: { justPlaced: true } });
     } catch (err) {
       setError(err.response?.data?.error || t('checkout.fail'));
     } finally {

@@ -9,6 +9,8 @@ import { processImage, ImageError } from '../services/imageProcessor.js';
 
 const ASSIGNABLE_ROLES = ['staff', 'manager', 'admin']; // roles an admin may create
 const ALL_ROLES = ['customer', 'staff', 'manager', 'admin'];
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
 
 export async function updateMe(req, res) {
   try {
@@ -165,19 +167,35 @@ export async function changePassword(req, res) {
 export async function listUsers(req, res) {
   try {
     const { role, search } = req.query;
-    let sql = 'SELECT id, name, email, role, is_active, created_at FROM users WHERE 1=1';
+    let whereSql = 'WHERE 1=1';
     const params = [];
     if (role) {
       params.push(role);
-      sql += ` AND role = $${params.length}`;
+      whereSql += ` AND role = $${params.length}`;
     }
     if (search) {
       params.push(`%${search}%`);
-      sql += ` AND (name ILIKE $${params.length} OR email ILIKE $${params.length})`;
+      whereSql += ` AND (name ILIKE $${params.length} OR email ILIKE $${params.length})`;
     }
-    sql += ' ORDER BY created_at DESC';
-    const { rows } = await query(sql, params);
-    res.json(rows.map(serializeUser));
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_LIMIT));
+    const offset = (page - 1) * limit;
+
+    const countRes = await query(`SELECT COUNT(*)::int AS total FROM users ${whereSql}`, params);
+    const rowsRes = await query(
+      `SELECT id, name, email, role, is_active, created_at FROM users ${whereSql}
+       ORDER BY created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+
+    res.json({
+      items: rowsRes.rows.map(serializeUser),
+      total: countRes.rows[0].total,
+      page,
+      limit,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users' });

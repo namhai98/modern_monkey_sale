@@ -5,7 +5,6 @@ import { site, telHref } from '../lib/site';
 import Icon from './Icon';
 import LangSwitch from './LangSwitch';
 import ThemeToggle from './ThemeToggle';
-import CurrencyBadge from './CurrencyBadge';
 
 const STAFF_ROLES = ['staff', 'manager', 'admin'];
 
@@ -109,10 +108,6 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
             <div className={SETTING_ROW}>
               <span className={SETTING_LABEL}>{t('nav.language')}</span>
               <LangSwitch className={TAP_44} />
-            </div>
-            <div className={SETTING_ROW}>
-              <span className={SETTING_LABEL}>{t('nav.currency')}</span>
-              <CurrencyBadge className="text-white/70 opacity-100" />
             </div>
             <div className={`${SETTING_ROW} ${TAP_DISC}`}>
               <span className={SETTING_LABEL}>{t('nav.theme')}</span>

@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import productRoutes from './routes/products.js';
 import authRoutes from './routes/auth.js';
@@ -14,12 +15,19 @@ import categoryRoutes from './routes/categories.js';
 import brandRoutes from './routes/brands.js';
 import discountRoutes from './routes/discounts.js';
 import settingsRoutes from './routes/settings.js';
+import newsletterRoutes from './routes/newsletter.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { storage, STORAGE_PROVIDER, IMMUTABLE_CACHE_CONTROL } from './storage/index.js';
 
 dotenv.config();
 
 const app = express();
+
+// Render sits as a single reverse-proxy hop in front of this service, so
+// req.ip needs exactly one hop of X-Forwarded-For trust — otherwise every
+// request resolves to Render's own edge IP and the rate limiter below buckets
+// all traffic together instead of per real client.
+app.set('trust proxy', 1);
 
 // Security headers. No CSP here (this is a JSON API + optional /media static;
 // the frontend host sets its own), and cross-origin resource policy is relaxed
@@ -66,6 +74,8 @@ if (fs.existsSync(legacyUploads)) {
 // Coarse ceiling for all auth traffic (refresh runs often); login / reset get a
 // stricter per-route limit in routes/auth.js
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
+// Public, unauthenticated endpoint — reuse the same coarse ceiling to deter abuse.
+app.use('/api/newsletter', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -75,6 +85,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 // 404 fallback
 app.use((req, res) => {
@@ -87,7 +98,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`modern_monkey_sale API listening on port ${PORT}`);
-});
+// Only bind a port when this file is run directly (`node src/index.js`),
+// never when it's imported — the integration tests import `app` and drive it
+// through supertest, which needs no listening socket of its own.
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`modern_monkey_sale API listening on port ${PORT}`);
+  });
+}
+
+export default app;

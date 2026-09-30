@@ -11,6 +11,7 @@ import { inputCls, btnPrimary, stateOn, stateOff, thCls, tdCls, trCls } from './
 
 const ROLES = ['customer', 'staff', 'manager', 'admin'];
 const NEW_USER_ROLES = ['staff', 'manager', 'admin'];
+const LIMIT = 20;
 
 export default function AdminUsers() {
   const { t } = useLocale();
@@ -19,6 +20,8 @@ export default function AdminUsers() {
   const isAdmin = user.role === 'admin';
 
   const [users, setUsers] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,8 +32,9 @@ export default function AdminUsers() {
   async function load() {
     setLoading(true);
     try {
-      const { data } = await client.get('/users');
-      setUsers(data);
+      const { data } = await client.get('/users', { params: { page, limit: LIMIT } });
+      setUsers(data.items);
+      setTotal(data.total);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.error || t('admin.users.loadFailed'));
@@ -41,7 +45,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
 
   async function createUser(e) {
     e.preventDefault();
@@ -143,6 +147,7 @@ export default function AdminUsers() {
       )}
 
       {!loading && !error && users.length > 0 && (
+        <>
         <table className="w-full text-sm">
           <thead>
             <tr className={trCls}>
@@ -201,6 +206,17 @@ export default function AdminUsers() {
             })}
           </tbody>
         </table>
+
+        {total > LIMIT && (
+          <div className="flex items-center justify-center gap-4 mt-8 text-sm">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.prev')}</button>
+            <span className="text-muted">{t('admin.orders.pageOf', { page, total: Math.max(1, Math.ceil(total / LIMIT)) })}</span>
+            <button onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / LIMIT)), p + 1))} disabled={page >= Math.ceil(total / LIMIT)}
+              className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.next')}</button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

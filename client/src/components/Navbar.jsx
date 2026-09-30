@@ -5,17 +5,18 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
-import { site, telHref } from '../lib/site';
 import Icon from './Icon';
 import LangSwitch from './LangSwitch';
 import ThemeToggle from './ThemeToggle';
 import BrandLockup from './BrandLockup';
-import CurrencyBadge from './CurrencyBadge';
 import NavMegaPanel from './NavMegaPanel';
 import MobileMenu from './MobileMenu';
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   The header, composed three times rather than scaled once.
+   The header, composed three times rather than scaled once — but one constant
+   height per breakpoint, not two stacked rows: language and theme used to
+   live in their own utility tier above the main row on desktop; they're folded
+   into the row itself now, so there's nothing left to expand or collapse.
 
    MOBILE (<768)   64px. Hamburger · brand lockup · search + bag. Everything
                    else lives in the menu, whose rows sit in the thumb zone.
@@ -23,9 +24,10 @@ import MobileMenu from './MobileMenu';
                    a real nav row, and the secondary controls collapse into the
                    same menu. Touch, so no hover surfaces: every nav item is a
                    direct link.
-   DESKTOP (≥1180) 96px, tightening to 72px on scroll. Nav left of the centred
-                   lockup, action cluster right, and Products opens a panel on
-                   hover while still going straight to the catalogue on click.
+   DESKTOP (≥1180) 72px, constant. Nav left of the centred lockup, action
+                   cluster right (language flags, theme, then search/
+                   account/cart), and Products opens a panel on hover while
+                   still going straight to the catalogue on click.
 
    The header lists no categories. It carries one way into the shop — Products,
    the whole catalogue — and leaves narrowing to the filter rail on the listing
@@ -280,17 +282,12 @@ export default function Navbar() {
   // Glass: whenever something is behind the header — any page but the home
   // hero, a scrolled page, or an open menu/panel of our own.
   const solid = !overHero || !atTop || menuOpen || Boolean(mega);
-  // Height: the header stands at full height while the page is at the top and
-  // tightens once it moves, on every route. An open mega panel keeps it tall —
-  // condensing under a panel that is unfurling from it reads as a stutter.
-  const condensed = !atTop && !mega;
 
   const search = new URLSearchParams(location.search);
   const onSale = search.get('sale') === '1';
   // Products reads as current on any listing that is not the sale view — a
   // shopper who has narrowed to one brand is still inside Products.
   const onShop = location.pathname.startsWith('/shop') && !onSale;
-  const phone = site.phones[0];
 
   const menuLinks = [
     { to: SHOP_ALL, label: t('nav.products') },
@@ -315,45 +312,6 @@ export default function Navbar() {
           solid ? 'opacity-100' : 'opacity-0'
         }`}
       />
-
-      {/* ── Desktop utility tier ─────────────────────────────────────────────
-          Site-level settings — the boutique line, language, currency, theme —
-          live above the shop's own controls rather than beside them, which is
-          what lets the nav sit on the row's true centre: equal-basis flex only
-          centres while neither side's content exceeds half the free space, and
-          a single row carrying all seven controls does exceed it.
-
-          It collapses on scroll, so the header gives the page back 36px the
-          moment you start reading. Height + opacity, no transform: the fixed
-          menu below must not inherit a containing block from this. */}
-      <div
-        /* `inert`, not aria-hidden: the tier keeps painting through its fade,
-           so its controls must leave the tab order and the accessibility tree
-           together — aria-hiding a still-focusable phone link would strand a
-           keyboard user on a control they cannot see. React 19 passes this
-           through to the DOM. */
-        inert={condensed}
-        className={`hidden overflow-hidden transition-[height,opacity] duration-500 ease-[var(--ease-luxe)] hdr:block ${
-          condensed ? 'h-0 opacity-0' : 'h-9 border-b border-white/10 opacity-100'
-        }`}
-      >
-        <div className="container-bar flex h-9 items-center justify-between">
-          <a
-            href={telHref(phone)}
-            className="link-lux inline-flex items-center gap-2 text-[11px] tracking-[0.2em] text-white/55 transition-colors duration-300 hover:text-gold"
-          >
-            <Icon name="phone" className="h-3.5 w-3.5" />
-            {phone}
-          </a>
-          <div className="flex items-center gap-5">
-            <LangSwitch />
-            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <CurrencyBadge />
-            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <ThemeToggle className="h-7 w-7" />
-          </div>
-        </div>
-      </div>
 
       <div
         /* The brand sits on the row's true centre — absolutely, not as the
@@ -430,7 +388,16 @@ export default function Navbar() {
             className="ml-2 hidden items-center gap-6 hdr:flex min-[1440px]:gap-9"
             aria-label={t('nav.menu')}
           >
-            <div onMouseEnter={() => openMega(true)} onFocus={() => openMega(true)}>
+            {/* flex items-center: without it this Link renders inline (its
+                only block-level sibling here, the plain `Хямдрал` Link below,
+                is a direct flex child of `nav` and gets blockified + centered
+                by the nav's own `items-center`) — a couple of px off the
+                baseline the sibling sits on. */}
+            <div
+              className="flex items-center"
+              onMouseEnter={() => openMega(true)}
+              onFocus={() => openMega(true)}
+            >
               <Link
                 to={SHOP_ALL}
                 aria-expanded={Boolean(mega)}
@@ -455,6 +422,15 @@ export default function Navbar() {
             into the gutter so they stay full size at 320px without pushing the
             brand lockup into a horizontal scroll. */}
         <div className="-mr-2.5 flex items-center justify-end gap-0.5 md:gap-1 hdr:mr-0 hdr:gap-2">
+          {/* Desktop only — below hdr these ride in the hamburger panel (see
+              MobileMenu). Placed before the icon trio so search/account/bag
+              stay grouped at the row's edge. */}
+          <div className="hidden items-center gap-5 hdr:mr-4 hdr:flex" onMouseEnter={scheduleMegaClose}>
+            <LangSwitch />
+            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
+            <ThemeToggle className="h-7 w-7" />
+          </div>
+
           <button
             type="button"
             onClick={openSearch}
@@ -490,8 +466,6 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Below hdr there is no utility tier, so language, currency and
-              theme ride in the hamburger panel — see MobileMenu. */}
         </div>
       </div>
 

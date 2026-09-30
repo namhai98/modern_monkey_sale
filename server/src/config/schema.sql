@@ -209,6 +209,13 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO settings (key, value) VALUES ('mnt_rate', '3450')
 ON CONFLICT (key) DO NOTHING;
 
+-- Footer newsletter signup (see migration 014)
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Sample seed data — a small luxury demo catalogue (bags, watches, apparel)
 INSERT INTO categories (name, slug) VALUES
   ('Bags', 'bags'),

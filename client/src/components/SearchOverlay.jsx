@@ -8,7 +8,7 @@ import ImageFallback from './ImageFallback';
 import Price from './Price';
 
 /* Full-screen search, in the presentation site's overlay language: an ink
-   ground at 97% with a blur behind it, the query set in Playfair at display
+   ground at 97% with a blur behind it, the query set in Montserrat at display
    size over a single hairline that turns gold on focus, and results as plain
    rows separated by hairlines — no cards, no shadows. */
 export default function SearchOverlay() {

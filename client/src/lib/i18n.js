@@ -3,9 +3,11 @@
 
 // Mongolian first — it is the site's main language, and the switch reads in
 // the order the house speaks.
+// `name` is each language in its own tongue — the switch shows flags, so this
+// is what screen readers announce and what the tooltip says.
 export const LOCALES = [
-  { code: 'mn', label: 'МОН' },
-  { code: 'en', label: 'EN' },
+  { code: 'mn', label: 'МОН', name: 'Монгол' },
+  { code: 'en', label: 'EN', name: 'English' },
 ];
 
 const en = {
@@ -30,10 +32,7 @@ const en = {
   'nav.discover': 'Discover',
   'nav.newIn': 'New in',
   'nav.language': 'Language',
-  'nav.currency': 'Currency',
   'nav.theme': 'Theme',
-  'nav.currencyRate': "Today's rate — $1 = {rate}₮",
-  'nav.currencyUsd': 'Prices are shown in US dollars',
   'theme.toLight': 'Switch to the light theme',
   'theme.toDark': 'Switch to the dark theme',
 
@@ -187,6 +186,9 @@ const en = {
   'checkout.total': 'Total',
   'checkout.trust': 'Secure checkout · Insured delivery · 14-day returns',
   'checkout.emptyBag': 'Your bag is empty.',
+  'checkout.confirmedEyebrow': 'Order confirmed',
+  'checkout.confirmedNote':
+    'Thank you — we have received your order and will be in touch about delivery.',
 
   // order status
   'status.pending': 'Pending',
@@ -574,6 +576,7 @@ const en = {
   'footer.letter.placeholder': 'Email address',
   'footer.letter.subscribe': 'Subscribe',
   'footer.letter.thanks': 'Thank you — you’re on the list.',
+  'footer.letter.fail': 'Something went wrong — please try again.',
   'footer.col.shop': 'Shop',
   'footer.col.care': 'Client Care',
   'footer.care.product': 'Product Care',
@@ -651,10 +654,7 @@ const mn = {
   'nav.discover': 'Танилцах',
   'nav.newIn': 'Шинээр ирсэн',
   'nav.language': 'Хэл',
-  'nav.currency': 'Валют',
   'nav.theme': 'Дэлгэцийн горим',
-  'nav.currencyRate': 'Өнөөдрийн ханш — $1 = {rate}₮',
-  'nav.currencyUsd': 'Үнийг ам.доллараар харуулж байна',
   'theme.toLight': 'Цайвар горимд шилжих',
   'theme.toDark': 'Бараан горимд шилжих',
 
@@ -801,6 +801,9 @@ const mn = {
   'checkout.total': 'Нийт',
   'checkout.trust': 'Найдвартай төлбөр · Даатгалтай хүргэлт · 14 хоногийн буцаалт',
   'checkout.emptyBag': 'Таны сагс хоосон байна.',
+  'checkout.confirmedEyebrow': 'Захиалга баталгаажлаа',
+  'checkout.confirmedNote':
+    'Баярлалаа — таны захиалгыг хүлээн авлаа, хүргэлтийн талаар тантай холбогдох болно.',
 
   'status.pending': 'Хүлээгдэж буй',
   'status.paid': 'Төлөгдсөн',
@@ -1181,6 +1184,7 @@ const mn = {
   'footer.letter.placeholder': 'Имэйл хаяг',
   'footer.letter.subscribe': 'Бүртгүүлэх',
   'footer.letter.thanks': 'Баярлалаа — та жагсаалтад орлоо.',
+  'footer.letter.fail': 'Алдаа гарлаа — дахин оролдоно уу.',
   'footer.col.shop': 'Дэлгүүр',
   'footer.col.care': 'Үйлчлүүлэгчийн тусламж',
   'footer.care.product': 'Барааны арчилгаа',

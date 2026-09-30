@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
-import ProductCard from '../components/ProductCard';
+import Button from '../components/Button';
 import CollectionCard from '../components/CollectionCard';
+import EmptyState from '../components/EmptyState';
+import Icon from '../components/Icon';
+import PageHero from '../components/PageHero';
+import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
 import Section from '../components/Section';
 import SectionHeading from '../components/SectionHeading';
-import PageHero from '../components/PageHero';
 import Select from '../components/Select';
-import Icon from '../components/Icon';
-import Breadcrumb from '../components/Breadcrumb';
 import { ProductGridSkeleton } from '../components/Skeleton';
-import EmptyState from '../components/EmptyState';
-import Button from '../components/Button';
-import { media, resizeUnsplash } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
+import { media, resizeUnsplash } from '../lib/media';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 const LIMIT = 15;
@@ -38,25 +38,24 @@ function Chip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`micro shrink-0 border px-3.5 py-2 tracking-[0.2em] transition-colors duration-300 ${
-        active
-          ? 'border-gold text-gold'
-          : 'border-line text-muted hover:border-gold/50 hover:text-foreground'
-      }`}
+      className={`micro shrink-0 border px-3.5 py-2 tracking-[0.2em] transition-colors duration-300 ${active
+        ? 'border-gold text-gold'
+        : 'border-line text-muted hover:border-gold/50 hover:text-foreground'
+        }`}
     >
       {children}
     </button>
   );
 }
 
-/* A collapsible rail section: label left, −/+ right, a hairline underneath.
-   Open by default — a filter a shopper cannot see is a filter they will not
-   use; the toggle is there to get a long list out of the way, not to hide the
-   rail's contents on arrival. */
+/* A collapsible rail section: label left, −/+ right. Sections are set apart by
+   space, not hairlines — a rail ruled under every block read as a stack of
+   lines rather than a set of choices. Open by default — a filter a shopper
+   cannot see is a filter they will not use. */
 function FilterSection({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-line py-5">
+    <div>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -66,7 +65,7 @@ function FilterSection({ title, children, defaultOpen = true }) {
         <span className="micro text-foreground">{title}</span>
         <Icon name={open ? 'minus' : 'plus'} className="h-3.5 w-3.5 shrink-0 text-muted" />
       </button>
-      {open && <div className="mt-5">{children}</div>}
+      {open && <div className="mt-4">{children}</div>}
     </div>
   );
 }
@@ -75,34 +74,81 @@ function FilterSection({ title, children, defaultOpen = true }) {
    Category is NOT here: it runs along the top of the page as its own bar, the
    way the reference layout arranges it, so the rail is left to the refinements
    that narrow a category rather than choose one. */
-function FilterControls({ t, brand, gender, sale, facets, patch }) {
-  const row = (active) =>
-    `flex w-full items-center gap-3 py-1.5 text-left text-sm transition-colors duration-300 ${
-      active ? 'text-gold' : 'text-muted hover:text-foreground'
-    }`;
-  // A 1px rule rather than a dot — the same hairline signal used everywhere else.
-  const rule = (on) => (
-    <span
-      aria-hidden="true"
-      className={`h-px shrink-0 transition-all duration-300 ${on ? 'w-5 bg-gold' : 'w-2.5 bg-line'}`}
-    />
-  );
+function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, patch }) {
+  // The rail can be mounted twice at once (hidden desktop rail + open mobile
+  // drawer), so the input's id has to be unique per instance.
+  const searchId = useId();
+  const clearSearch = () => {
+    setQDraft('');
+    patch({ q: '' });
+  };
+  const anyActive = Boolean(brand || gender || sale || q);
 
   return (
-    <div>
-      <div className="flex items-center gap-2.5 border-b border-line pb-4">
-        <Icon name="filter" className="h-4 w-4 text-gold" />
-        <span className="micro tracking-[0.32em] text-foreground">{t('shop.filters')}</span>
+    <div className="space-y-8">
+      {/* Clear sits in the header, not at the foot of the rail — it stays in
+          reach however long the brand list grows. */}
+      <div className="flex items-center justify-between gap-4">
+        <span className="flex items-center gap-2.5">
+          <Icon name="filter" className="h-4 w-4 text-gold" />
+          <span className="micro tracking-[0.32em] text-foreground">{t('shop.filters')}</span>
+        </span>
+        {anyActive && (
+          <button
+            type="button"
+            onClick={() => {
+              setQDraft('');
+              patch({ brand: '', gender: '', sale: '', q: '' });
+            }}
+            className="link-lux micro text-gold"
+          >
+            {t('shop.clear')}
+          </button>
+        )}
+      </div>
+
+      {/* The one line left in the rail is the search field's own underline —
+          it marks where to type, so it earns its place. */}
+      <div className="relative">
+        <label htmlFor={searchId} className="micro mb-1 block text-foreground">
+          {t('shop.search')}
+        </label>
+        <input
+          id={searchId}
+          value={qDraft}
+          onChange={(e) => setQDraft(e.target.value)}
+          placeholder={t('shop.search')}
+          className="field pr-7"
+        />
+        {qDraft && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            aria-label={t('shop.clear')}
+            className="absolute bottom-3 right-0 text-muted transition-colors hover:text-gold"
+          >
+            <Icon name="x" className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <FilterSection title={t('shop.offers')}>
+        {/* A checkbox, not the old hairline dash — an on/off control should
+            read as one at a glance. */}
         <button
           type="button"
           onClick={() => patch({ sale: sale ? '' : '1' })}
           aria-pressed={sale}
-          className={row(sale)}
+          className={`flex w-full items-center gap-3 text-left text-sm transition-colors duration-300 ${sale ? 'text-gold' : 'text-muted hover:text-foreground'
+            }`}
         >
-          {rule(sale)}
+          <span
+            aria-hidden="true"
+            className={`flex h-4 w-4 shrink-0 items-center justify-center border transition-colors duration-300 ${sale ? 'border-gold bg-gold text-ink' : 'border-muted/60'
+              }`}
+          >
+            {sale && <Icon name="check" className="h-3 w-3" strokeWidth={2.5} />}
+          </span>
           {t('filter.onSale')}
         </button>
       </FilterSection>
@@ -140,17 +186,23 @@ function FilterControls({ t, brand, gender, sale, facets, patch }) {
           </div>
         </FilterSection>
       )}
-
-      {(brand || gender || sale) && (
-        <button
-          type="button"
-          onClick={() => patch({ brand: '', gender: '', sale: '' })}
-          className="link-lux micro mt-6 text-gold"
-        >
-          {t('shop.clear')}
-        </button>
-      )}
     </div>
+  );
+}
+
+function FixedFilterRail({ controlProps }) {
+  return createPortal(
+    /* Top-aligned with the listing's count/sort row (top-40 ≈ header +
+       category bar + the listing's top padding), not centred — a centred rail
+       left a band of empty space above it. Still fixed, so it stays put while
+       the grid scrolls; bottom-0 + overflow-y-auto let a long brand list scroll
+       inside the rail instead of running off the screen. */
+    <div className="fixed left-8 top-40 bottom-0 hidden w-60 lg:flex lg:items-start xl:left-12 xl:w-[17rem]">
+      <div className="max-h-full w-full overflow-y-auto pb-6 pr-8 xl:pr-10">
+        <FilterControls {...controlProps} />
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -159,8 +211,7 @@ function FilterControls({ t, brand, gender, sale, facets, patch }) {
    so a shop with many categories keeps its first row intact on a phone. */
 function CategoryBar({ t, locale, categories, category, onAll, patch }) {
   const item = (active) =>
-    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-[0.7rem] font-medium uppercase tracking-[0.22em] transition-colors duration-300 ${
-      active ? 'text-gold' : 'text-muted hover:text-foreground'
+    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-[0.7rem] font-medium uppercase tracking-[0.22em] transition-colors duration-300 ${active ? 'text-gold' : 'text-muted hover:text-foreground'
     }`;
 
   return (
@@ -371,11 +422,16 @@ function Listing({ categories }) {
           ...(category ? { category } : {}),
           ...(q ? { search: q } : {}),
           ...(sale ? { on_sale: 1 } : {}),
+          // Sent so each facet narrows by the *other* one (the server counts a
+          // facet under every filter but its own) — no chip leads to an empty
+          // page, and a selected option that has run dry still comes back.
+          ...(brand ? { brand } : {}),
+          ...(gender ? { gender } : {}),
         },
       })
       .then((res) => setFacets(res.data))
       .catch(() => setFacets({ brands: [], genders: [] }));
-  }, [category, q, sale]);
+  }, [category, q, sale, brand, gender]);
 
   useEffect(() => {
     const [field, order] = sort.split(':');
@@ -431,23 +487,22 @@ function Listing({ categories }) {
   const heading = activeCat
     ? categoryLabel(locale, activeCat)
     : q
-    ? `“${q}”`
-    : sale && !category
-    ? t('nav.sale')
-    : t('shop.collection');
+      ? `“${q}”`
+      : sale && !category
+        ? t('nav.sale')
+        : t('shop.collection');
   useDocumentTitle(heading);
-  const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0);
-  const controlProps = { t, locale, categories, category, brand, gender, sale, facets, patch };
-
-  const crumbs = [{ label: t('shop.collection'), to: '/shop' }];
-  if (activeCat || q || sale) crumbs.push({ label: heading });
+  const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0) + (q ? 1 : 0);
+  const controlProps = {
+    t, locale, categories, category, brand, gender, sale, q, qDraft, setQDraft, facets, patch,
+  };
 
   return (
     <>
       {/* The listing is arranged as a working browse page rather than an
-          editorial opener: category bar across the top, breadcrumb, then the
-          filter rail and the grid side by side — all on the full-bleed rail so
-          a wide screen is spent on products. The house vocabulary is unchanged
+          editorial opener: category bar across the top, then the filter rail
+          and the grid side by side — all on the full-bleed rail so a wide
+          screen is spent on products. The house vocabulary is unchanged
           throughout: micro type at 0.28em, gold for what is active, hairlines
           for every division, no pills, no radius, no shadows. */}
       <CategoryBar
@@ -459,70 +514,20 @@ function Listing({ categories }) {
         patch={patch}
       />
 
-      <div className="container-bar py-5">
-        <Breadcrumb items={crumbs} />
-      </div>
-
-      <div className="container-bar pb-16 md:pb-24">
+      <div className="container-bar pt-8 pb-16 md:pb-24">
         <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10 xl:grid-cols-[17rem_1fr] xl:gap-14">
-          <aside className="hidden lg:block">
-            {/* The rule between rail and grid is the same hairline the rest of
-                the page divides with. */}
-            <div className="sticky top-28 lg:border-r lg:border-line lg:pr-8 xl:pr-10">
-              <FilterControls {...controlProps} />
-            </div>
-          </aside>
+          <aside className="hidden lg:block" />
+
+          <FixedFilterRail controlProps={controlProps} />
 
           <div className="min-w-0">
             <div className="mb-8 border-b border-line pb-5">
-              {/* Stacked below lg and spread across one line above it. Left to
-                  wrap, the count, the search field and the two controls land in
-                  three ragged rows on a phone. */}
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
-                {/* The result count is the page's heading here — it is the one
-                    fact a shopper checks after every filter. */}
-                <h1 className="heading-serif shrink-0 text-xl text-foreground md:text-2xl">
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+                <h1 className="font-catalog shrink-0 text-lg font-medium text-foreground md:text-xl">
                   {t('shop.pieces', { n: total })}
                 </h1>
 
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6 lg:flex-1 lg:justify-end">
-                <div className="relative min-w-0 sm:flex-1 sm:max-w-sm">
-                  <label htmlFor="listing-search" className="micro mb-1 block text-muted">
-                    {t('shop.search')}
-                  </label>
-                  <input
-                    id="listing-search"
-                    value={qDraft}
-                    onChange={(e) => setQDraft(e.target.value)}
-                    placeholder={t('shop.search')}
-                    className="field pr-7"
-                  />
-                  {qDraft && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQDraft('');
-                        patch({ q: '' });
-                      }}
-                      aria-label={t('shop.clear')}
-                      className="absolute bottom-3 right-0 text-muted transition-colors hover:text-gold"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      >
-                        <path d="M18 6 6 18M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 items-end justify-between gap-5 sm:justify-start">
+                <div className="ml-auto flex shrink-0 items-end gap-5">
                   <button
                     type="button"
                     onClick={() => setDrawerOpen(true)}
@@ -551,17 +556,8 @@ function Listing({ categories }) {
                     </Select>
                   </div>
                 </div>
-                </div>
               </div>
             </div>
-
-            {/* The skeleton is for a page that has nothing yet — the first
-                load. Once a list is on screen a filter change refines it in
-                place: the same grid element stays mounted, cards keep their
-                DOM nodes (and therefore their decoded images) wherever the id
-                survives the filter, and the whole block simply dims while the
-                new set is on its way. Swapping the grid out for a skeleton is
-                what made it blink, and it took the scroll position with it. */}
             <div ref={gridRef} className="scroll-mt-32">
               {!loaded ? (
                 <ProductGridSkeleton />
@@ -583,20 +579,10 @@ function Listing({ categories }) {
               ) : (
                 <div
                   aria-busy={loading}
-                  /* A fifth column past 1700px: the page is full-bleed now, so
-                     on a wide monitor the extra width goes to products rather
-                     than to margins. In rem, not px — Tailwind sorts breakpoint
-                     media queries by raw number, so a px value lands before the
-                     rem-based xl and loses to it. 106.25rem = 1700px. */
-                  className={`grid grid-cols-2 gap-x-6 gap-y-12 transition-opacity duration-300 ease-[var(--ease-luxe)] md:grid-cols-3 md:gap-y-16 xl:grid-cols-4 min-[106.25rem]:grid-cols-5 ${
-                    loading ? 'opacity-45' : 'opacity-100'
-                  }`}
+                  className={`grid grid-cols-2 gap-x-6 gap-y-12 transition-opacity duration-300 ease-[var(--ease-luxe)] md:grid-cols-3 md:gap-y-16 xl:grid-cols-4 min-[106.25rem]:grid-cols-5 ${loading ? 'opacity-45' : 'opacity-100'
+                    }`}
                 >
                   {products.map((p, i) => (
-                    /* startShown once a list exists: a card arriving as part of
-                       a refine should be there, not rise from opacity 0 —
-                       that fade was the second half of the flicker. The very
-                       first paint keeps its staggered entrance. */
                     <Reveal key={p.id} delay={(i % 4) * 0.06} startShown={!firstPaint.current}>
                       <ProductCard product={p} />
                     </Reveal>
@@ -658,7 +644,7 @@ function Listing({ categories }) {
               <FilterControls {...controlProps} />
             </div>
             <div className="shrink-0 border-t border-line p-5">
-              <Button full onClick={() => setDrawerOpen(false)}>
+              <Button full className="font-catalog" onClick={() => setDrawerOpen(false)}>
                 {t('shop.pieces', { n: total })}
               </Button>
             </div>
@@ -681,7 +667,7 @@ export default function Shop() {
     client
       .get('/categories')
       .then((res) => setCategories(res.data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   if (!category && !q && !all && !sale) return <CategoryChooser categories={categories} />;

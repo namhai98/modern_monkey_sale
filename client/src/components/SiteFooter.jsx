@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import { site, telHref } from '../lib/site';
 import Icon from './Icon';
@@ -21,6 +22,8 @@ export default function SiteFooter({ flush = false }) {
   const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [subscribeError, setSubscribeError] = useState(false);
 
   return (
     <footer className={`bg-ink text-white ${flush ? '' : 'mt-20 md:mt-32'}`}>
@@ -58,9 +61,18 @@ export default function SiteFooter({ flush = false }) {
               <p className="mt-4 text-sm leading-relaxed text-white/55">{t('footer.letter.thanks')}</p>
             ) : (
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  setDone(true);
+                  setSubmitting(true);
+                  setSubscribeError(false);
+                  try {
+                    await client.post('/newsletter', { email });
+                    setDone(true);
+                  } catch {
+                    setSubscribeError(true);
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
                 className="mt-4 flex items-center gap-4 border-b border-white/20 pb-2 transition-colors focus-within:border-gold"
               >
@@ -76,10 +88,13 @@ export default function SiteFooter({ flush = false }) {
                   placeholder={t('footer.letter.placeholder')}
                   className="min-w-0 flex-1 bg-transparent py-1 text-sm text-white placeholder:text-white/35 focus:outline-none"
                 />
-                <button type="submit" className="link-lux micro shrink-0 text-gold">
+                <button type="submit" disabled={submitting} className="link-lux micro shrink-0 text-gold disabled:opacity-50">
                   {t('footer.letter.subscribe')}
                 </button>
               </form>
+            )}
+            {subscribeError && (
+              <p className="mt-3 text-xs text-danger">{t('footer.letter.fail')}</p>
             )}
           </div>
         </div>

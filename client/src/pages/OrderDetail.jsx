@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useLocale } from '../context/LocaleContext';
@@ -14,6 +14,8 @@ import Skeleton from '../components/Skeleton';
 
 export default function OrderDetail() {
   const { id } = useParams();
+  const location = useLocation();
+  const justPlaced = Boolean(location.state?.justPlaced);
   const { t } = useLocale();
   const { error: toastError } = useToast();
   const money = useMoney();
@@ -90,10 +92,15 @@ export default function OrderDetail() {
     <>
       <PageHero
         compact
-        eyebrow={t('account.eyebrow')}
+        eyebrow={justPlaced ? t('checkout.confirmedEyebrow') : t('account.eyebrow')}
         title={label}
         crumbs={[{ label: t('orders.title'), to: '/orders' }, { label }]}
       >
+        {justPlaced && (
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted">
+            {t('checkout.confirmedNote')}
+          </p>
+        )}
         <div className="mt-6">
           <OrderStatusBadge status={order.status} />
         </div>

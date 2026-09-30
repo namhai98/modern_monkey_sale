@@ -6,7 +6,10 @@
    This is the same design system as the Modern Monkey presentation site
    (../Modern-Monkey/app/globals.css + DESIGN.md); the token names, the values
    and the custom utilities are deliberately identical so a component can be
-   read across either codebase without translation.
+   read across either codebase without translation — with one deliberate
+   exception: this storefront is scoped to exactly two font families (see
+   --font-display / --font-sans below), where the presentation site still
+   runs its wider type system.
 
    Two themes, dark by default. `@theme inline` makes every colour utility
    (bg-background, text-foreground, border-line, …) resolve through the plain
@@ -20,26 +23,20 @@
    site is built on.
    ──────────────────────────────────────────────────────────────────────────── */
 @theme inline {
-  --font-display: "Playfair Display", ui-serif, Georgia, "Times New Roman", serif;
+  /* Exactly two faces, sitewide: Montserrat carries the merchandise — a
+     product's name, its category, counts, drawer buttons, the admin form
+     where these are entered — and doubles as the house display face for
+     headings, since there is no third font left to give them their own
+     voice. Inter is everything else: body copy, breadcrumb, filter labels,
+     search/sort labels — the UI chrome around the merchandise.
+
+     `--font-display` and `--font-catalog` intentionally share one value:
+     every call site already says `font-catalog` or `heading-serif` rather
+     than the name of whatever face is current, so either can move
+     independently later without touching components. */
+  --font-display: "Montserrat", ui-sans-serif, "Inter", system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  /* The catalogue's own face — currently Montserrat. Playfair still sets the
-     house voice (section openers, page titles, the wordmark); this carries the
-     merchandise: a product's name, its category, and the admin form where both
-     are entered, so a piece reads the same from the register to the shelf.
-
-     Named for its job, not its typeface, because that is what it is for: the
-     face behind it has already been swapped once, and every call site says
-     `font-catalog` rather than the name of whatever is current. */
   --font-catalog: "Montserrat", ui-sans-serif, "Inter", system-ui, sans-serif;
-
-  /* Home page only — an accent script for the hero's gold line. Marck Script,
-     not a Latin-only calligraphy face: the site's default language is
-     Mongolian Cyrillic, and almost every elegant Western script font (the
-     brief's original reference included) has no Cyrillic glyphs at all, so it
-     silently falls back to a plain face for MN visitors. This one carries
-     genuine Cyrillic glyphs, so the accent actually renders as a script in
-     both locales instead of just in English. */
-  --font-script: "Marck Script", cursive;
 
   /* Theme-reactive */
   --color-background: var(--background);
@@ -82,19 +79,15 @@
    dark band runs up behind the glass. All three used to write the literal 80px
    themselves, which is why the header could not change height without leaving a
    strip of page background above the inner-page hero — or eating into it.
-   Three values because the header is composed three times: row only on phones
-   and tablets, and a utility tier above the row on desktop. */
+   Two values: the row is 4rem on phones and 4.5rem from tablet up. Desktop has
+   no taller tier of its own — language, currency and theme sit in that same
+   row rather than in a strip above it. */
 :root {
   --header-h: 4rem;
 }
 @media (width >= 48rem) {
   :root {
     --header-h: 4.5rem;
-  }
-}
-@media (width >= 73.75rem) {
-  :root {
-    --header-h: 6.75rem;
   }
 }
 
@@ -203,28 +196,12 @@
   text-transform: uppercase;
 }
 
-/* Display type. Playfair at 500 with a touch of negative tracking — the
-   presentation site's single heading treatment. */
+/* Display type. Montserrat at 500 with a touch of negative tracking — the
+   site's single heading treatment. */
 @utility heading-serif {
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.01em;
-}
-
-/* Home page only — swaps the display face to Cormorant Garamond. Overriding
-   the custom property on this wrapper is enough: every descendant
-   `heading-serif` reads --font-display through inheritance, so nothing else
-   about the treatment (weight, tracking) has to be duplicated. */
-.font-home {
-  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
-}
-
-/* Accent script — the home hero's gold line only. Not a general heading
-   treatment: script faces stop being legible past a word or two. */
-@utility heading-script {
-  font-family: var(--font-script);
-  font-weight: 400;
-  letter-spacing: 0;
 }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */

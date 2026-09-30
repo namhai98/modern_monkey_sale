@@ -7,8 +7,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node --test \"src/**/*.test.js\"",
+    "test": "node --env-file-if-exists=.env.test --test --test-concurrency=1 \"src/**/*.test.js\"",
     "db:setup": "node src/scripts/setupDb.js",
+    "db:migrate": "node src/scripts/runMigrations.js",
     "create-admin": "node src/scripts/createAdmin.js",
     "seed:catalog": "node src/scripts/seedCatalog.js",
     "seed:test": "node src/scripts/seedTestProducts.js"
@@ -21,16 +22,17 @@
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.1",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^10.0.13",
     "pg": "^8.23.0",
     "sharp": "^0.35.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.0"
   }
 }

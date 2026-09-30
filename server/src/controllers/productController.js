@@ -168,49 +168,95 @@ export async function listProducts(req, res) {
 // optionally scoped to a category. Active products only.
 export async function listProductFacets(req, res) {
   try {
-    const params = [];
-    const where = ['p.is_active = TRUE'];
-    if (req.query.category) {
-      const cat = String(req.query.category);
-      params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
-      where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
-    }
-    if (req.query.search) {
-      params.push(`%${req.query.search}%`);
-      const s = `$${params.length}`;
-      where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
-    }
-    if (req.query.on_sale === '1') {
-      where.push(`EXISTS (
-        SELECT 1 FROM discount_products dps
-        JOIN discounts ds ON ds.id = dps.discount_id
-        WHERE dps.product_id = p.id
-          AND ds.is_active = TRUE
-          AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
-      )`);
-    }
-    const whereSql = `WHERE ${where.join(' AND ')}`;
-    const base = `FROM products p
-       LEFT JOIN categories c ON c.id = p.category_id
-       LEFT JOIN brands br ON br.id = p.brand_id ${whereSql}`;
+    // Each facet is counted under every active filter except its own: the
+    // brand list reflects the chosen gender and vice versa, so no chip leads to
+    // an empty page — while a facet never narrows itself to the one option
+    // already picked, which would leave nothing to switch to.
+    const scope = (exclude) => {
+      const params = [];
+      const where = ['p.is_active = TRUE'];
+      if (req.query.category) {
+        const cat = String(req.query.category);
+        params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
+        where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
+      }
+      if (req.query.search) {
+        params.push(`%${req.query.search}%`);
+        const s = `$${params.length}`;
+        where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
+      }
+      if (req.query.on_sale === '1') {
+        where.push(`EXISTS (
+          SELECT 1 FROM discount_products dps
+          JOIN discounts ds ON ds.id = dps.discount_id
+          WHERE dps.product_id = p.id
+            AND ds.is_active = TRUE
+            AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
+        )`);
+      }
+      if (exclude !== 'brand' && req.query.brand) {
+        const b = String(req.query.brand);
+        params.push(/^\d+$/.test(b) ? Number(b) : b);
+        where.push(/^\d+$/.test(b) ? `p.brand_id = $${params.length}` : `br.slug = $${params.length}`);
+      }
+      if (exclude !== 'gender' && req.query.gender) {
+        params.push(String(req.query.gender));
+        where.push(`p.gender = $${params.length}`);
+      }
+      return {
+        params,
+        from: `FROM products p
+         LEFT JOIN categories c ON c.id = p.category_id
+         LEFT JOIN brands br ON br.id = p.brand_id
+         WHERE ${where.join(' AND ')}`,
+      };
+    };
 
-    const brands = await query(
-      `SELECT br.id, br.name, br.slug, COUNT(*)::int AS count ${base}
-         AND br.id IS NOT NULL
-       GROUP BY br.id, br.name, br.slug ORDER BY br.name`,
-      params
-    );
-    const genders = await query(
-      `SELECT p.gender AS value, COUNT(*)::int AS count ${base}
-         AND p.gender IS NOT NULL
-       GROUP BY p.gender`,
-      params
-    );
+    const b = scope('brand');
+    const brands = (
+      await query(
+        `SELECT br.id, br.name, br.slug, COUNT(*)::int AS count ${b.from}
+           AND br.id IS NOT NULL
+         GROUP BY br.id, br.name, br.slug ORDER BY br.name`,
+        b.params
+      )
+    ).rows;
+    const g = scope('gender');
+    const genders = (
+      await query(
+        `SELECT p.gender AS value, COUNT(*)::int AS count ${g.from}
+           AND p.gender IS NOT NULL
+         GROUP BY p.gender`,
+        g.params
+      )
+    ).rows;
 
+    // A selected option the other filters have emptied must stay on screen —
+    // otherwise the shopper sees "0 products" with nothing visibly chosen and
+    // no chip to unpick (e.g. a brand with nothing on sale, then Sale ticked).
+    if (req.query.brand) {
+      const sel = String(req.query.brand);
+      const isId = /^\d+$/.test(sel);
+      if (!brands.some((r) => (isId ? r.id === Number(sel) : r.slug === sel))) {
+        const { rows } = await query(
+          `SELECT id, name, slug FROM brands WHERE ${isId ? 'id' : 'slug'} = $1`,
+          [isId ? Number(sel) : sel]
+        );
+        if (rows[0]) {
+          brands.push({ ...rows[0], count: 0 });
+          brands.sort((x, y) => x.name.localeCompare(y.name));
+        }
+      }
+    }
     const order = { women: 0, men: 1, unisex: 2 };
+    const selGender = req.query.gender;
+    if (typeof selGender === 'string' && Object.hasOwn(order, selGender) && !genders.some((r) => r.value === selGender)) {
+      genders.push({ value: selGender, count: 0 });
+    }
+
     res.json({
-      brands: brands.rows,
-      genders: genders.rows.sort((a, b) => (order[a.value] ?? 9) - (order[b.value] ?? 9)),
+      brands,
+      genders: genders.sort((a, b) => (order[a.value] ?? 9) - (order[b.value] ?? 9)),
     });
   } catch (err) {
     console.error(err);

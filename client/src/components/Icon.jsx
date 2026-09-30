@@ -96,7 +96,7 @@ export default function Icon({ name, className = 'h-4 w-4', strokeWidth = 1.5 })
       fill="none"
       stroke="currentColor"
       /* 1.5 is the house stroke weight — a 2px stroke reads heavy next to
-         Playfair at 500 and the hairline borders everything else uses. */
+         Montserrat at 500 and the hairline borders everything else uses. */
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

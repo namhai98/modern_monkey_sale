@@ -111,7 +111,7 @@ function Hero() {
           {lines.map((line, i) => (
             <span key={line} className="block overflow-hidden pb-2">
               <span
-                className={`line-in block ${i === 1 ? 'heading-script text-[1.3em] leading-[1.15] text-gold' : ''
+                className={`line-in block ${i === 1 ? 'text-[1.3em] leading-[1.15] text-gold' : ''
                   }`}
                 style={{ animationDelay: `${0.45 + i * 0.18}s` }}
               >
@@ -151,9 +151,9 @@ function Hero() {
   );
 }
 
-/* The marketing site's introduction: one centred serif statement with the
+/* The marketing site's introduction: one centred display statement with the
    operative phrase in gold. A pull-quote is one of the few places the design
-   sets running copy in Playfair. */
+   sets running copy in Montserrat instead of Inter. */
 function Statement() {
   const { t } = useLocale();
   return (
@@ -516,7 +516,7 @@ export default function Home() {
   };
 
   return (
-    <div className="font-home">
+    <>
       <Hero />
       <Statement />
       <CollectionCards labels={labels} />
@@ -527,6 +527,6 @@ export default function Home() {
       <DiscountBand />
       <Craftsmanship />
       <Visit />
-    </div>
+    </>
   );
 }
