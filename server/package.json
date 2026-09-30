@@ -12,7 +12,8 @@
     "db:migrate": "node src/scripts/runMigrations.js",
     "create-admin": "node src/scripts/createAdmin.js",
     "seed:catalog": "node src/scripts/seedCatalog.js",
-    "seed:test": "node src/scripts/seedTestProducts.js"
+    "seed:test": "node src/scripts/seedTestProducts.js",
+    "seed:collection": "node src/scripts/seedCollection.js"
   },
   "keywords": [],
   "author": "",
