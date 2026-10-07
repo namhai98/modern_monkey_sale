@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 
 /* The house lockup: the monkey mark beside the wordmark, "Monkey" in gold —
@@ -32,11 +32,23 @@ const SIZES = {
 export default function BrandLockup({ size = 'lg', onClick, className = '' }) {
   const s = SIZES[size] || SIZES.lg;
   const { t } = useLocale();
+  const { pathname } = useLocation();
+
+  // Already on the home page, a click on the logo would "navigate" to the same
+  // URL and do nothing visible — so it glides back to the top instead (an
+  // instant jump for anyone who prefers reduced motion).
+  function handleClick(e) {
+    onClick?.(e);
+    if (pathname !== '/') return;
+    e.preventDefault();
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  }
 
   return (
     <Link
       to="/"
-      onClick={onClick}
+      onClick={handleClick}
       aria-label={`Modern Monkey — ${t('nav.home')}`}
       /* No display utility of its own. The header mounts all three cuts and
          shows one per breakpoint; a base `inline-flex` here would sit in the
