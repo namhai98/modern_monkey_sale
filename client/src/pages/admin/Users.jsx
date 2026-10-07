@@ -4,6 +4,7 @@ import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
+import Pager from '../../components/Pager';
 import Select from '../../components/Select';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
@@ -207,15 +208,14 @@ export default function AdminUsers() {
           </tbody>
         </table>
 
-        {total > LIMIT && (
-          <div className="flex items-center justify-center gap-4 mt-8 text-sm">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-              className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.prev')}</button>
-            <span className="text-muted">{t('admin.orders.pageOf', { page, total: Math.max(1, Math.ceil(total / LIMIT)) })}</span>
-            <button onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / LIMIT)), p + 1))} disabled={page >= Math.ceil(total / LIMIT)}
-              className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.next')}</button>
-          </div>
-        )}
+        <Pager
+          page={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onChange={setPage}
+          prevLabel={t('admin.orders.prev')}
+          nextLabel={t('admin.orders.next')}
+          className="mt-8"
+        />
         </>
       )}
     </div>

@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { apiErrorMessage } from '../lib/apiError';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
 import Field, { FormMessage } from '../components/Field';
 import AuthShell from '../components/AuthShell';
 import SocialSignIn from '../components/SocialSignIn';
+import TextButton from '../components/TextButton';
 
 function safeRedirect(target) {
   return target && target.startsWith('/') && !target.startsWith('//') ? target : '/';
@@ -19,7 +21,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const { login, register } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   useDocumentTitle(t('login.signIn'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -36,7 +38,7 @@ export default function Login() {
       }
       navigate(redirectTo);
     } catch (err) {
-      setError(err.response?.data?.error || t('login.error'));
+      setError(apiErrorMessage(err, { t, locale, fallbackKey: 'login.error' }));
     }
   }
 
@@ -80,19 +82,16 @@ export default function Login() {
       <SocialSignIn redirectTo={redirectTo} />
 
       <div className="mt-10 flex flex-col gap-4 border-t border-line pt-8">
-        <button
+        <TextButton
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          className="link-lux micro w-fit text-left text-muted transition-colors hover:text-gold"
+          className="w-fit text-left"
         >
           {mode === 'login' ? t('login.toRegister') : t('login.toLogin')}
-        </button>
+        </TextButton>
         {mode === 'login' && (
-          <Link
-            to="/forgot-password"
-            className="link-lux micro w-fit text-muted transition-colors hover:text-gold"
-          >
+          <TextButton to="/forgot-password" className="w-fit">
             {t('login.forgot')}
-          </Link>
+          </TextButton>
         )}
       </div>
     </AuthShell>

@@ -9,22 +9,28 @@ import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import Layout from './components/Layout';
+// The pages a shopper lands on stay in the main bundle so they paint at once.
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Login from './pages/Login';
-import ForgotPassword from './pages/ForgotPassword';
-import AuthCallback from './pages/AuthCallback';
-import ResetPassword from './pages/ResetPassword';
-import Orders from './pages/Orders';
-import OrderDetail from './pages/OrderDetail';
-import Profile from './pages/Profile';
 import Forbidden from './pages/Forbidden';
 import NotFound from './pages/NotFound';
-import Privacy from './pages/Privacy';
-import ProductCare from './pages/ProductCare';
+
+// Everything reached after a click — bag, checkout, account, sign-in, the
+// legal and care pages — loads on demand. Layout holds the Suspense boundary.
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Login = lazy(() => import('./pages/Login'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const ProductCare = lazy(() => import('./pages/ProductCare'));
+const Story = lazy(() => import('./pages/Story'));
+const Faq = lazy(() => import('./pages/Faq'));
 
 // Admin bundles are behind auth and rarely hit by shoppers — load on demand.
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -60,6 +66,8 @@ export default function App() {
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/product-care" element={<ProductCare />} />
+                  <Route path="/story" element={<Story />} />
+                  <Route path="/faq" element={<Faq />} />
                   <Route path="/forbidden" element={<Forbidden />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />

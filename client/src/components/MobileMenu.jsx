@@ -19,7 +19,7 @@ const STAFF_ROLES = ['staff', 'manager', 'admin'];
    labels still lands on one of them. */
 
 const SETTING_ROW = 'flex min-h-[3rem] items-center justify-between gap-6';
-const SETTING_LABEL = 'micro text-white/40';
+const SETTING_LABEL = 'micro text-white/55';
 const ACCOUNT_LINK =
   'link-lux flex min-h-[2.75rem] w-fit items-center text-sm text-white/65 transition-colors duration-300 hover:text-white';
 
@@ -42,7 +42,7 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
       /* Below the header, above the floating contact column — which is z-40 and
          renders later in the document, so without this it would sit on top of
          the open menu. */
-      className={`fixed inset-x-0 bottom-0 top-16 z-[45] overflow-y-auto overscroll-contain bg-ink md:top-[4.5rem] hdr:hidden ${
+      className={`fixed inset-x-0 bottom-0 top-[var(--header-h)] z-[45] overflow-y-auto overscroll-contain bg-ink hdr:hidden ${
         closing ? 'panel-out' : 'panel-in'
       }`}
     >
@@ -117,7 +117,7 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
 
           <a
             href={telHref(phone)}
-            className="mt-6 flex min-h-[3rem] items-center gap-3 border-t border-white/10 pt-6 text-sm tracking-[0.2em] text-gold"
+            className="mt-6 flex min-h-[3rem] items-center gap-3 border-t border-white/10 pt-6 text-sm tracking-meta text-gold"
           >
             <Icon name="phone" className="h-4 w-4" />
             {phone}

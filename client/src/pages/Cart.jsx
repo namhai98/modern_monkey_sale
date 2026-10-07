@@ -13,6 +13,7 @@ import Price from '../components/Price';
 import QuantityStepper from '../components/QuantityStepper';
 import EmptyState from '../components/EmptyState';
 import Section from '../components/Section';
+import TextButton from '../components/TextButton';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
@@ -67,7 +68,7 @@ export default function Cart() {
                         <div className="min-w-0">
                           <p className="font-catalog text-base font-medium leading-snug">{item.name}</p>
                           {item.variant_label && (
-                            <p className="micro mt-1.5 tracking-[0.2em] text-muted">
+                            <p className="micro mt-1.5 tracking-meta text-muted">
                               {item.variant_label}
                             </p>
                           )}
@@ -89,12 +90,7 @@ export default function Cart() {
                           onChange={(n) => updateQuantity(key, n)}
                           labels={{ decrease: t('cart.decrease'), increase: t('cart.increase') }}
                         />
-                        <button
-                          onClick={() => removeItem(key)}
-                          className="link-lux micro text-muted transition-colors hover:text-gold"
-                        >
-                          {t('cart.remove')}
-                        </button>
+                        <TextButton onClick={() => removeItem(key)}>{t('cart.remove')}</TextButton>
                       </div>
                     </div>
                   </div>

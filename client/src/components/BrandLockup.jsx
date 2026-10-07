@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useLocale } from '../context/LocaleContext';
 
 /* The house lockup: the monkey mark beside the wordmark, "Monkey" in gold —
    the same two-tone wordmark the footer and the presentation site use, now with
@@ -30,12 +31,13 @@ const SIZES = {
 
 export default function BrandLockup({ size = 'lg', onClick, className = '' }) {
   const s = SIZES[size] || SIZES.lg;
+  const { t } = useLocale();
 
   return (
     <Link
       to="/"
       onClick={onClick}
-      aria-label="Modern Monkey — Home"
+      aria-label={`Modern Monkey — ${t('nav.home')}`}
       /* No display utility of its own. The header mounts all three cuts and
          shows one per breakpoint; a base `inline-flex` here would sit in the
          same cascade layer as the caller's `hidden` and win by source order,

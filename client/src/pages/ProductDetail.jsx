@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
+import Accordion from '../components/Accordion';
 import Breadcrumb from '../components/Breadcrumb';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
@@ -19,40 +20,6 @@ import { useUI } from '../context/UIContext';
 import { categoryLabel } from '../lib/i18n';
 import { isDiscounted, useMoney } from '../lib/price';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
-
-/* A hairline-divided accordion — the same shape as the presentation site's FAQ:
-   micro-type title, a +/– that rotates into an × as it opens, and the open row
-   in gold. The body stays in the DOM and is collapsed with grid-template-rows,
-   so it is always findable by in-page search and never JS-gated. */
-function Accordion({ title, body, open, onToggle }) {
-  return (
-    <div className="border-b border-line">
-      <button
-        onClick={onToggle}
-        aria-expanded={open}
-        className={`micro flex w-full items-center justify-between gap-4 py-5 text-left transition-colors duration-300 ${open ? 'text-gold' : 'text-foreground hover:text-gold'
-          }`}
-      >
-        {title}
-        <span
-          aria-hidden="true"
-          className={`shrink-0 text-base leading-none transition-transform duration-300 ${open ? 'rotate-45' : ''
-            }`}
-        >
-          +
-        </span>
-      </button>
-      <div
-        className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
-      >
-        <div className="overflow-hidden">
-          <p className="max-w-md pb-6 text-sm leading-relaxed text-muted">{body}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -190,7 +157,7 @@ export default function ProductDetail() {
               {product.category && (
                 <Link
                   to={`/shop?category=${product.category.slug}`}
-                  className="link-lux font-catalog text-[0.7rem] uppercase tracking-[0.2em] text-muted transition-colors hover:text-gold"
+                  className="link-lux font-catalog text-meta uppercase tracking-meta text-muted transition-colors hover:text-gold"
                 >
                   {categoryLabel(locale, product.category)}
                 </Link>
@@ -200,14 +167,14 @@ export default function ProductDetail() {
               )}
             </div>
 
-            <h1 className="font-catalog mt-5 text-[1.9rem] font-medium leading-[1.12] tracking-[-0.015em] md:text-[2.6rem]">
+            <h1 className="font-catalog mt-5 text-pdp font-medium">
               {product.name}
             </h1>
 
             <div className="mt-6">
               <Price product={product} size="lg" showPercent />
               {isDiscounted(product) && (
-                <p className="micro mt-3 tracking-[0.22em] text-gold">
+                <p className="micro mt-3 tracking-meta text-gold">
                   {t('price.save', { amount: money(product.discount_amount) })}
                 </p>
               )}
@@ -272,7 +239,7 @@ export default function ProductDetail() {
             </div>
 
             {!soldOut && product.low_stock && (
-              <p className="micro mt-5 tracking-[0.22em] text-gold">{t('pdp.fewRemain')}</p>
+              <p className="micro mt-5 tracking-meta text-gold">{t('pdp.fewRemain')}</p>
             )}
 
             <div className="mt-14 border-t border-line">
@@ -298,7 +265,7 @@ export default function ProductDetail() {
               product.category && (
                 <Link
                   to={`/shop?category=${product.category.slug}`}
-                  className="link-lux micro tracking-[0.3em] text-gold"
+                  className="link-lux micro tracking-button text-gold"
                 >
                   {t('shop.explore')}
                 </Link>

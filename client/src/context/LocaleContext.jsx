@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translate } from '../lib/i18n';
 import client from '../api/client';
 
@@ -89,14 +89,14 @@ export function LocaleProvider({ children }) {
   }, []);
 
   const t = useCallback((key, vars) => translate(locale, key, vars), [locale]);
-
-  return (
-    <LocaleContext.Provider
-      value={{ locale, setLocale, t, mntRate, rateStatus }}
-    >
-      {children}
-    </LocaleContext.Provider>
+  // Nearly every component reads this context; a fresh object per render
+  // re-rendered all of them whenever the provider did.
+  const value = useMemo(
+    () => ({ locale, setLocale, t, mntRate, rateStatus }),
+    [locale, setLocale, t, mntRate, rateStatus]
   );
+
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 
 export function useLocale() {

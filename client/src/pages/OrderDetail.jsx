@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import Section from '../components/Section';
 import Skeleton from '../components/Skeleton';
+import TextButton from '../components/TextButton';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -125,7 +126,7 @@ export default function OrderDetail() {
                 <td className="py-4 pr-4">
                   <span className="heading-serif text-base">{it.name || `#${it.product_id}`}</span>
                   {(it.variant_label || it.sku) && (
-                    <span className="micro mt-1 block tracking-[0.2em] text-muted">
+                    <span className="micro mt-1 block tracking-meta text-muted">
                       {[it.variant_label, it.sku].filter(Boolean).join(' · ')}
                     </span>
                   )}
@@ -163,7 +164,7 @@ export default function OrderDetail() {
             <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
               {order.shipping_address || '—'}
             </p>
-            <p className="micro mt-5 tracking-[0.2em] text-muted">
+            <p className="micro mt-5 tracking-meta text-muted">
               {t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() })}
             </p>
           </div>
@@ -174,7 +175,7 @@ export default function OrderDetail() {
               <ol className="space-y-3 text-sm">
                 {order.status_history.map((h) => (
                   <li key={h.id} className="border-b border-line pb-3">
-                    <span className="micro block tracking-[0.2em] text-muted">
+                    <span className="micro block tracking-meta text-muted">
                       {new Date(h.created_at).toLocaleString()}
                     </span>
                     <span className="mt-1 block">
@@ -191,13 +192,9 @@ export default function OrderDetail() {
 
         {order.status === 'pending' && (
           <div className="mt-14 border-t border-line pt-8">
-            <button
-              onClick={cancel}
-              disabled={cancelling}
-              className="link-lux micro text-muted transition-colors hover:text-gold disabled:opacity-50"
-            >
+            <TextButton onClick={cancel} disabled={cancelling}>
               {cancelling ? t('orderDetail.cancelling') : t('orderDetail.cancel')}
-            </button>
+            </TextButton>
           </div>
         )}
       </Section>

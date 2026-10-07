@@ -9,9 +9,14 @@ import { Link } from 'react-router-dom';
    `outline-dark` on a theme surface. Never restyle a button at the call site;
    add a variant here instead. */
 
+// Phones may wrap a label onto a second, balanced line rather than clip it —
+// Mongolian CTAs run about twice the length of their English originals, and
+// at 0.32em tracking several overflowed a 375px screen. From `sm` up there is
+// room, so the single-line treatment returns.
 const base =
-  'group relative inline-flex items-center justify-center gap-3 overflow-hidden whitespace-nowrap ' +
-  'micro font-medium tracking-[0.32em] select-none ' +
+  'group relative inline-flex items-center justify-center gap-3 overflow-hidden ' +
+  'whitespace-normal text-balance text-center sm:whitespace-nowrap ' +
+  'micro font-medium tracking-button select-none ' +
   'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ' +
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold ' +
   'disabled:opacity-50 disabled:pointer-events-none';
@@ -32,8 +37,8 @@ const ALIASES = { primary: 'gold', secondary: 'outline-dark', onDark: 'outline' 
 
 const sizes = {
   sm: 'px-6 py-2.5',
-  md: 'px-9 py-4',
-  lg: 'px-10 py-[1.15rem]',
+  md: 'px-6 py-4 sm:px-9',
+  lg: 'px-7 py-[1.15rem] sm:px-10',
 };
 
 export default function Button({

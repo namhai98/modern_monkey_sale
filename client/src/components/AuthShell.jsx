@@ -9,7 +9,7 @@
    page body was a duplicate, not an anchor. */
 export default function AuthShell({ eyebrow, title, lead, children }) {
   return (
-    <section className="flex min-h-[calc(100svh-5rem)] items-center py-16 md:py-24">
+    <section className="flex min-h-[calc(100svh-var(--header-h))] items-center py-16 md:py-24">
       <div className="container-lux">
         <div className="mx-auto max-w-sm">
           {eyebrow && <p className="eyebrow">{eyebrow}</p>}

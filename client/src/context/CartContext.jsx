@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import client from '../api/client';
 
 const CartContext = createContext(null);
@@ -25,7 +25,7 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  function addItem(product, quantity = 1, variant = null) {
+  const addItem = useCallback((product, quantity = 1, variant = null) => {
     const variantId = variant?.id ?? null;
     const key = lineKey(product.id, variantId);
     setItems((prev) => {
@@ -51,21 +51,19 @@ export function CartProvider({ children }) {
         },
       ];
     });
-  }
+  }, []);
 
-  function updateQuantity(key, quantity) {
+  const updateQuantity = useCallback((key, quantity) => {
     setItems((prev) =>
       prev.map((i) => (lineKey(i.id, i.variant_id) === key ? { ...i, quantity } : i))
     );
-  }
+  }, []);
 
-  function removeItem(key) {
+  const removeItem = useCallback((key) => {
     setItems((prev) => prev.filter((i) => lineKey(i.id, i.variant_id) !== key));
-  }
+  }, []);
 
-  function clearCart() {
-    setItems([]);
-  }
+  const clearCart = useCallback(() => setItems([]), []);
 
   // Re-read live prices for the items in the cart (discounts can change / expire
   // after something was added). Returns how many lines changed. The backend
@@ -94,15 +92,13 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-  return (
-    <CartContext.Provider
-      value={{ items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total, lineKey }}
-    >
-      {children}
-    </CartContext.Provider>
+  const total = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
+  const value = useMemo(
+    () => ({ items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total, lineKey }),
+    [items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total]
   );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import Icon from './Icon';
 import ImageFallback from './ImageFallback';
 import { useLocale } from '../context/LocaleContext';
+import { unsplashSrcSet } from '../lib/media';
 
 /* The presentation site's image-overlay card, used for every collection entry
    point — the home page grid and the shop's landing page both render this one
@@ -17,6 +19,8 @@ export default function CollectionCard({ to, label, index, image, meta, classNam
       <div className="relative overflow-hidden">
         <ImageFallback
           src={image}
+          srcSet={unsplashSrcSet(image, [500, 800, 1200])}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           alt={label}
           className="aspect-[3/4] w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
         />
@@ -26,26 +30,18 @@ export default function CollectionCard({ to, label, index, image, meta, classNam
         />
         <div className="absolute inset-x-0 bottom-0 p-6">
           {index != null && (
-            <p className="micro tracking-[0.32em] text-gold">
+            <p className="micro tracking-button text-gold">
               {String(index + 1).padStart(2, '0')}
             </p>
           )}
           <h3 className="heading-serif mt-2 text-2xl text-white md:text-3xl">{label}</h3>
-          {meta && <p className="micro mt-2 tracking-[0.2em] text-white/55">{meta}</p>}
-          <span className="micro mt-4 inline-flex items-center gap-2 tracking-[0.28em] text-transparent transition-colors duration-500 group-hover:text-white">
+          {meta && <p className="micro mt-2 tracking-meta text-white/55">{meta}</p>}
+          <span className="micro mt-4 inline-flex items-center gap-2 tracking-label text-transparent transition-colors duration-500 group-hover:text-white">
             {t('shop.explore')}
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <Icon
+              name="arrowRight"
               className="h-3.5 w-3.5 -translate-x-2 transition-transform duration-500 group-hover:translate-x-0"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            />
           </span>
         </div>
       </div>

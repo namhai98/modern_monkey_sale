@@ -192,7 +192,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
               alt={alt}
               className="max-h-[82svh] max-w-full object-contain"
             />
-            <figcaption className="micro mt-5 text-center tracking-[0.24em] text-gold">
+            <figcaption className="micro mt-5 text-center tracking-meta text-gold">
               {index + 1} / {pics.length}
             </figcaption>
           </figure>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { apiErrorMessage } from '../lib/apiError';
 import client from '../api/client';
 import { resizeUnsplash } from '../lib/media';
 import { useMoney } from '../lib/price';
@@ -18,7 +19,7 @@ import Section from '../components/Section';
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   useDocumentTitle(t('checkout.title'));
   const money = useMoney();
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ export default function Checkout() {
       clearCart();
       navigate(`/orders/${data.id}`, { state: { justPlaced: true } });
     } catch (err) {
-      setError(err.response?.data?.error || t('checkout.fail'));
+      setError(apiErrorMessage(err, { t, locale, fallbackKey: 'checkout.fail' }));
     } finally {
       setPlacing(false);
     }
@@ -158,7 +159,7 @@ export default function Checkout() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="heading-serif text-base leading-snug">{i.name}</p>
-                  <p className="micro mt-1.5 tracking-[0.2em] text-muted">
+                  <p className="micro mt-1.5 tracking-meta text-muted">
                     {i.variant_label ? `${i.variant_label} · ` : ''}
                     {t('checkout.qty', { n: i.quantity })}
                   </p>

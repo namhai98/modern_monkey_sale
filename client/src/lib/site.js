@@ -12,9 +12,10 @@ export const site = {
   hours: { open: '10:00', close: '20:00' },
   phones: ['99819141', '88039140'],
   social: {
-    facebook: 'https://www.facebook.com/modernmonkey.mn',
-    instagram: 'https://www.instagram.com/modernmonkey.mn',
-    messenger: 'https://m.me/modernmonkey.mn',
+    facebook: 'https://www.facebook.com/modern.monkey.time',
+    // m.me/<page username> opens a chat with that page, so this has to track
+    // the Facebook page's username above.
+    messenger: 'https://m.me/modern.monkey.time',
   },
   mapQuery: 'Gem Castle Center, Ulaanbaatar, Mongolia',
 };

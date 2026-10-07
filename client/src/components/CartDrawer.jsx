@@ -6,11 +6,13 @@ import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { resizeUnsplash } from '../lib/media';
 import { useMoney } from '../lib/price';
+import { useFocusTrap } from '../lib/useFocusTrap';
 import Button from './Button';
 import EmptyState from './EmptyState';
 import ImageFallback from './ImageFallback';
 import Price from './Price';
 import QuantityStepper from './QuantityStepper';
+import TextButton from './TextButton';
 
 /* CSS-transition drawer — always mounted, toggled by class. Cannot get stuck
    mid-animation the way a JS-animation-library drawer can.
@@ -25,6 +27,7 @@ export default function CartDrawer() {
   const { info } = useToast();
   const money = useMoney();
   const navigate = useNavigate();
+  const panelRef = useFocusTrap(cartOpen);
 
   // Refresh prices whenever the drawer opens — discounts may have changed.
   useEffect(() => {
@@ -51,7 +54,9 @@ export default function CartDrawer() {
   const count = items.reduce((n, i) => n + i.quantity, 0);
 
   return (
-    <div className={`fixed inset-0 z-[60] ${cartOpen ? '' : 'pointer-events-none'}`} aria-hidden={!cartOpen}>
+    /* inert, not aria-hidden: the drawer stays mounted while closed, and
+       aria-hidden alone left every control in it reachable with Tab. */
+    <div className={`fixed inset-0 z-[60] ${cartOpen ? '' : 'pointer-events-none'}`} inert={!cartOpen}>
       <div
         onClick={closeCart}
         className={`absolute inset-0 bg-ink/80 backdrop-blur-sm transition-opacity duration-500 ${
@@ -60,24 +65,20 @@ export default function CartDrawer() {
       />
 
       <aside
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={t('cart.title')}
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-line bg-background transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-line bg-background outline-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           cartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Matches the 80px header, so opening the drawer doesn't shift the
-            eye line. */}
-        <div className="flex h-20 shrink-0 items-center justify-between border-b border-line px-6">
+        {/* Same height as the site header, so opening the drawer doesn't shift
+            the eye line. */}
+        <div className="flex h-[var(--header-h)] shrink-0 items-center justify-between border-b border-line px-6">
           <span className="eyebrow">{t('cart.count', { n: count })}</span>
-          <button
-            onClick={closeCart}
-            aria-label={t('nav.close')}
-            className="link-lux micro text-muted transition-colors hover:text-gold"
-          >
-            {t('nav.close')}
-          </button>
+          <TextButton onClick={closeCart}>{t('nav.close')}</TextButton>
         </div>
 
         {items.length === 0 ? (
@@ -87,12 +88,9 @@ export default function CartDrawer() {
               eyebrow={t('cart.count', { n: 0 })}
               title={t('cart.empty')}
               actions={
-                <button
-                  onClick={() => go('/shop?all=1')}
-                  className="link-lux micro tracking-[0.3em] text-gold"
-                >
+                <TextButton tone="gold" onClick={() => go('/shop?all=1')}>
                   {t('cart.continue')}
-                </button>
+                </TextButton>
               }
             />
           </div>
@@ -111,9 +109,9 @@ export default function CartDrawer() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-catalog text-[0.95rem] font-medium leading-snug">{item.name}</p>
+                      <p className="font-catalog text-product font-medium leading-snug">{item.name}</p>
                       {item.variant_label && (
-                        <p className="micro mt-1.5 tracking-[0.2em] text-muted">{item.variant_label}</p>
+                        <p className="micro mt-1.5 tracking-meta text-muted">{item.variant_label}</p>
                       )}
                       <Price
                         price={item.price}
@@ -126,12 +124,7 @@ export default function CartDrawer() {
                           size="sm"
                           onChange={(n) => updateQuantity(key, n)}
                         />
-                        <button
-                          onClick={() => removeItem(key)}
-                          className="link-lux micro text-muted transition-colors hover:text-gold"
-                        >
-                          {t('cart.remove')}
-                        </button>
+                        <TextButton onClick={() => removeItem(key)}>{t('cart.remove')}</TextButton>
                       </div>
                     </div>
                   </div>
@@ -148,12 +141,9 @@ export default function CartDrawer() {
               <Button full onClick={() => go('/checkout')}>
                 {t('cart.checkout')}
               </Button>
-              <button
-                onClick={() => go('/cart')}
-                className="link-lux micro mx-auto block text-muted transition-colors hover:text-gold"
-              >
+              <TextButton onClick={() => go('/cart')} className="mx-auto block">
                 {t('cart.title')}
-              </button>
+              </TextButton>
             </div>
           </>
         )}

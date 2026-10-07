@@ -4,8 +4,10 @@ import client from '../api/client';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { resizeUnsplash } from '../lib/media';
+import { useFocusTrap } from '../lib/useFocusTrap';
 import ImageFallback from './ImageFallback';
 import Price from './Price';
+import TextButton from './TextButton';
 
 /* Full-screen search, in the presentation site's overlay language: an ink
    ground at 97% with a blur behind it, the query set in Montserrat at display
@@ -32,8 +34,11 @@ export default function SearchOverlay() {
       .then((res) => setResults(res.data.items))
       .catch(() => setResults([]))
       .finally(() => setLoading(false));
-    setTimeout(() => inputRef.current?.focus(), 120);
   }, [searchOpen]);
+
+  // Focus lands in the field on open, stays inside the overlay while it's
+  // up, and goes back to the search button that opened it on close.
+  const dialogRef = useFocusTrap(searchOpen, { initialFocus: inputRef });
 
   useEffect(() => {
     // Empty query: leave the suggested products from above in place.
@@ -77,21 +82,19 @@ export default function SearchOverlay() {
 
   return (
     <div
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={t('nav.search')}
-      className="fixed inset-0 z-[70] animate-[fadeIn_0.25s_ease-out] overflow-y-auto bg-ink/97 text-white backdrop-blur-sm"
+      className="fixed inset-0 z-[70] animate-[fadeIn_0.25s_ease-out] overflow-y-auto bg-ink/97 text-white outline-none backdrop-blur-sm"
     >
       <div className="container-lux max-w-3xl pb-20 pt-24 md:pt-32">
         <div className="mb-8 flex items-center justify-between">
           <span className="eyebrow">{t('nav.search')}</span>
-          <button
-            onClick={closeSearch}
-            className="link-lux micro text-white/55 transition-colors hover:text-gold"
-            aria-label={t('nav.close')}
-          >
+          <TextButton tone="ink" onClick={closeSearch}>
             {t('nav.close')}
-          </button>
+          </TextButton>
         </div>
 
         <form onSubmit={seeAll}>
@@ -104,7 +107,7 @@ export default function SearchOverlay() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('search.placeholder')}
-            className="heading-serif w-full border-b border-white/20 bg-transparent pb-4 text-2xl text-white transition-colors duration-300 placeholder:text-white/30 focus:border-gold focus:outline-none md:text-4xl"
+            className="heading-serif w-full border-b border-white/20 bg-transparent pb-4 text-2xl text-white transition-colors duration-300 placeholder:text-white/45 focus:border-gold focus:outline-none md:text-4xl"
           />
         </form>
 
@@ -140,9 +143,9 @@ export default function SearchOverlay() {
           ))}
 
           {!loading && q.trim() && results.length > 0 && (
-            <button onClick={seeAll} className="link-lux micro mt-8 inline-block tracking-[0.3em] text-gold">
+            <TextButton tone="gold" onClick={seeAll} className="mt-8 inline-block">
               {t('shop.viewAll')}
-            </button>
+            </TextButton>
           )}
         </div>
       </div>

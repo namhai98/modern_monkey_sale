@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import Button from '../components/Button';
 import Field from '../components/Field';
 import AuthShell from '../components/AuthShell';
+import TextButton from '../components/TextButton';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,12 +42,9 @@ export default function ForgotPassword() {
   }
 
   const back = (
-    <Link
-      to="/login"
-      className="link-lux micro w-fit text-muted transition-colors hover:text-gold"
-    >
+    <TextButton to="/login" className="w-fit">
       {t('forgot.back')}
-    </Link>
+    </TextButton>
   );
 
   return (

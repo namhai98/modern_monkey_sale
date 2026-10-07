@@ -31,7 +31,7 @@ export default function Privacy() {
         lead={doc.intro}
         crumbs={[{ label: t('privacy.title') }]}
       >
-        <p className="micro mt-6 tracking-[0.2em] text-muted">
+        <p className="micro mt-6 tracking-meta text-muted">
           {t('privacy.updated', { date: updated })}
         </p>
       </PageHero>

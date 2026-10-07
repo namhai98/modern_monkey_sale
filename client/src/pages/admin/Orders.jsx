@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import client from '../../api/client';
 import EmptyState from '../../components/EmptyState';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
+import Pager from '../../components/Pager';
 import Select from '../../components/Select';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
@@ -109,15 +110,14 @@ export default function AdminOrders() {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-8 text-sm">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.prev')}</button>
-              <span className="text-muted">{t('admin.orders.pageOf', { page, total: totalPages })}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-3 py-1 border border-line text-foreground transition-colors hover:border-gold disabled:opacity-40 disabled:hover:border-line">{t('admin.orders.next')}</button>
-            </div>
-          )}
+          <Pager
+            page={page}
+            totalPages={totalPages}
+            onChange={setPage}
+            prevLabel={t('admin.orders.prev')}
+            nextLabel={t('admin.orders.next')}
+            className="mt-8"
+          />
         </>
       )}
     </div>

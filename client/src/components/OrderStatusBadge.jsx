@@ -25,7 +25,7 @@ export default function OrderStatusBadge({ status }) {
   const { t } = useLocale();
   return (
     <span
-      className={`micro inline-block border px-2.5 py-1 tracking-[0.22em] ${
+      className={`micro inline-block border px-2.5 py-1 tracking-meta ${
         STYLES[status] || 'border-line text-muted'
       }`}
     >

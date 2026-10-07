@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
+import { apiErrorMessage } from '../lib/apiError';
 import Button from '../components/Button';
 import Field, { FormMessage } from '../components/Field';
 import AuthShell from '../components/AuthShell';
 
 export default function ResetPassword() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function ResetPassword() {
       setDone(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.error || t('reset.fail'));
+      setError(apiErrorMessage(err, { t, locale, fallbackKey: 'reset.fail', overrides: { INVALID_TOKEN: 'reset.invalidLink' } }));
     } finally {
       setSubmitting(false);
     }

@@ -9,8 +9,10 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import PageHero from '../components/PageHero';
 import Section from '../components/Section';
 import Skeleton from '../components/Skeleton';
+import TextButton from '../components/TextButton';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { apiErrorMessage } from '../lib/apiError';
 import { useMoney } from '../lib/price';
 
 // The profile's own order-history widget shows only the most recent handful;
@@ -19,7 +21,7 @@ const RECENT_ORDERS = 5;
 
 export default function Profile() {
   const { user, updateUser, logoutEverywhere } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const navigate = useNavigate();
   const money = useMoney();
   const avatarInputRef = useRef(null);
@@ -60,7 +62,7 @@ export default function Profile() {
       updateUser({ ...user, ...data.user });
       setNameMsg({ ok: true, text: t('profile.saved') });
     } catch (err) {
-      setNameMsg({ ok: false, text: err.response?.data?.error || t('profile.saveFail') });
+      setNameMsg({ ok: false, text: apiErrorMessage(err, { t, locale, fallbackKey: 'profile.saveFail' }) });
     } finally {
       setSavingName(false);
     }
@@ -78,7 +80,7 @@ export default function Profile() {
       const { data } = await client.put('/users/me/avatar', form);
       updateUser({ ...user, ...data.user });
     } catch (err) {
-      setAvatarMsg({ ok: false, text: err.response?.data?.error || t('profile.avatarFail') });
+      setAvatarMsg({ ok: false, text: apiErrorMessage(err, { t, locale, fallbackKey: 'profile.avatarFail' }) });
     } finally {
       setAvatarBusy(false);
     }
@@ -91,7 +93,7 @@ export default function Profile() {
       const { data } = await client.delete('/users/me/avatar');
       updateUser({ ...user, ...data.user });
     } catch (err) {
-      setAvatarMsg({ ok: false, text: err.response?.data?.error || t('profile.avatarFail') });
+      setAvatarMsg({ ok: false, text: apiErrorMessage(err, { t, locale, fallbackKey: 'profile.avatarFail' }) });
     } finally {
       setAvatarBusy(false);
     }
@@ -111,7 +113,7 @@ export default function Profile() {
       setPwMsg({ ok: true, text: t('profile.pwChanged') });
       if (!hasPassword) updateUser({ ...user, has_password: true });
     } catch (err) {
-      setPwMsg({ ok: false, text: err.response?.data?.error || t('profile.pwFail') });
+      setPwMsg({ ok: false, text: apiErrorMessage(err, { t, locale, fallbackKey: 'profile.pwFail', overrides: { INVALID_CREDENTIALS: 'profile.wrongCurrentPw' } }) });
     } finally {
       setSavingPw(false);
     }
@@ -125,7 +127,7 @@ export default function Profile() {
         title={t('profile.title')}
         crumbs={[{ label: t('profile.title') }]}
       >
-        <p className="micro mt-6 tracking-[0.2em] text-muted">
+        <p className="micro mt-6 tracking-meta text-muted">
           {user.email} · {user.role}
         </p>
       </PageHero>
@@ -162,17 +164,13 @@ export default function Profile() {
                 />
               </div>
               <div className="min-w-0">
-                <p className="micro tracking-[0.2em] text-muted">
+                <p className="micro tracking-meta text-muted">
                   {avatarBusy ? t('profile.avatarUploading') : t('profile.avatarHint')}
                 </p>
                 {user.avatar_url && !avatarBusy && (
-                  <button
-                    type="button"
-                    onClick={removeAvatar}
-                    className="link-lux micro mt-2 tracking-[0.2em] text-muted transition-colors hover:text-gold"
-                  >
+                  <TextButton onClick={removeAvatar} className="mt-2">
                     {t('profile.avatarRemove')}
-                  </button>
+                  </TextButton>
                 )}
                 {avatarMsg && (
                   <div className="mt-2">
@@ -218,15 +216,14 @@ export default function Profile() {
 
             <section className="border-t border-line pt-14">
               <p className="eyebrow mb-6">{t('profile.sessions')}</p>
-              <button
+              <TextButton
                 onClick={async () => {
                   await logoutEverywhere();
                   navigate('/login');
                 }}
-                className="link-lux micro text-muted transition-colors hover:text-gold"
               >
                 {t('profile.logoutAll')}
-              </button>
+              </TextButton>
             </section>
           </div>
 
@@ -234,7 +231,7 @@ export default function Profile() {
             <section>
               <div className="mb-6 flex items-end justify-between gap-4">
                 <p className="eyebrow">{t('profile.orders')}</p>
-                <Link to="/orders" className="link-lux micro tracking-[0.2em] text-gold">
+                <Link to="/orders" className="link-lux micro tracking-meta text-gold">
                   {t('profile.ordersViewAll')}
                 </Link>
               </div>
@@ -258,7 +255,7 @@ export default function Profile() {
                   <p className="text-sm text-muted">{t('orders.none')}</p>
                   <Link
                     to="/shop?all=1"
-                    className="link-lux micro mt-4 inline-block tracking-[0.2em] text-gold"
+                    className="link-lux micro mt-4 inline-block tracking-meta text-gold"
                   >
                     {t('orders.start')}
                   </Link>
@@ -277,7 +274,7 @@ export default function Profile() {
                         <p className="text-base transition-colors duration-300 group-hover:text-gold">
                           {t('orders.order', { id: order.id })}
                         </p>
-                        <p className="micro mt-2 tracking-[0.2em] text-muted">
+                        <p className="micro mt-2 tracking-meta text-muted">
                           {new Date(order.created_at).toLocaleDateString()}
                           {order.item_count != null &&
                             ` · ${t('orders.items', { n: order.item_count })}`}

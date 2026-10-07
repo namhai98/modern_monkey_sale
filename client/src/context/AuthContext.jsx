@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import client, { clearSession, getToken } from '../api/client';
 
 const AuthContext = createContext(null);
@@ -90,23 +90,26 @@ export function AuthProvider({ children }) {
     setUser(next);
   }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role: user?.role ?? null,
-        loading,
-        login,
-        register,
-        completeOAuth,
-        logout,
-        logoutEverywhere,
-        updateUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // Memoised on the two pieces of state. The functions above only call
+  // setUser and module-level helpers, so the copies captured here can never
+  // go stale — and consumers no longer re-render on every provider render.
+  const value = useMemo(
+    () => ({
+      user,
+      role: user?.role ?? null,
+      loading,
+      login,
+      register,
+      completeOAuth,
+      logout,
+      logoutEverywhere,
+      updateUser,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

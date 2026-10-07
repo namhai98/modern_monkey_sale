@@ -69,7 +69,7 @@ export default function Orders() {
                   <p className="heading-serif text-xl transition-colors duration-300 group-hover:text-gold">
                     {t('orders.order', { id: order.id })}
                   </p>
-                  <p className="micro mt-2 tracking-[0.2em] text-muted">
+                  <p className="micro mt-2 tracking-meta text-muted">
                     {new Date(order.created_at).toLocaleDateString()}
                     {order.item_count != null && ` · ${t('orders.items', { n: order.item_count })}`}
                   </p>

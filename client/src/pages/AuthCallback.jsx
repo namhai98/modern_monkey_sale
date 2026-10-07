@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import AuthShell from '../components/AuthShell';
 import Button from '../components/Button';
 import { FormMessage } from '../components/Field';
+import TextButton from '../components/TextButton';
 
 /* Landing strip for a social sign-in. The server has already set the refresh
    cookie; this exchanges it for an access token and moves on. On the happy path
@@ -60,12 +61,9 @@ export default function AuthCallback() {
         <Button to="/login" variant="outline-dark" size="lg" full>
           {t('oauth.backToSignIn')}
         </Button>
-        <Link
-          to="/"
-          className="link-lux micro w-fit text-muted transition-colors hover:text-gold"
-        >
+        <TextButton to="/" className="w-fit">
           {t('notFound.home')}
-        </Link>
+        </TextButton>
       </div>
     </AuthShell>
   );

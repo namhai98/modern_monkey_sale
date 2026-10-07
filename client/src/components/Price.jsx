@@ -36,7 +36,7 @@ export default function Price({
   const money = useMoney();
   const s = SIZES[size] || SIZES.sm;
   const nowColor = tone === 'dark' ? 'text-white' : 'text-foreground';
-  const wasColor = tone === 'dark' ? 'text-white/40' : 'text-muted/60';
+  const wasColor = tone === 'dark' ? 'text-white/55' : 'text-muted';
 
   // Either hand in a product (the API owns final_price/discount_amount) or an
   // explicit pair — cart lines carry their own captured price/original_price.
@@ -57,7 +57,7 @@ export default function Price({
       <span className={`${s.now} ${nowColor} tabular-nums`}>{money(now)}</span>
       <s className={`${s.was} ${wasColor} tabular-nums`}>{money(was)}</s>
       {showPercent && (
-        <span className="micro tracking-[0.2em] text-gold">
+        <span className="micro tracking-meta text-gold">
           −{product ? discountPercent(product) : Math.round(((was - now) / was) * 100)}%
         </span>
       )}

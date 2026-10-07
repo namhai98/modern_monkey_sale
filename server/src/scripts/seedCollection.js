@@ -13,7 +13,8 @@
 // Images are hosted Unsplash photos rather than uploads: Render's free-plan
 // disk is ephemeral, so an uploaded file would vanish on the next restart,
 // and the existing catalogue already points at Unsplash the same way. Each
-// photo was chosen to show that product alone, with no third-party logos.
+// photo was chosen to show that product alone, with no legible third-party
+// logos, in the same dark, warm-lit art direction as the homepage.
 import 'dotenv/config';
 import { pool } from '../config/db.js';
 
@@ -24,49 +25,49 @@ const SIZES = ['S', 'M', 'L', 'XL'];
 // [sku, category, brand, gender, name, priceUSD, stock, unsplashId, description]
 // Apparel stock is per size (split across SIZES); everything else is a count.
 const PIECES = [
-  ['MM-001', 'bags', 'verne', 'women', 'Botanical Print Top-Handle Bag', 1480, 8, '1591561954557-26941169b49e',
-    'A structured top-handle bag in printed calfskin, with a turn-lock closure and a detachable shoulder strap.'],
-  ['MM-002', 'bags', 'otero', 'women', 'Teal Leather Satchel', 1190, 6, '1594223274512-ad4803739b7c',
-    'Smooth teal leather on a rigid frame, lined in suede, with a single top handle and brushed-gold hardware.'],
-  ['MM-003', 'bags', 'halden', 'unisex', 'Nylon City Backpack', 540, 18, '1553062407-98eeb64c6a62',
-    'Water-resistant nylon with leather trims, a padded laptop sleeve and a zipped front pocket for everyday carry.'],
-  ['MM-004', 'bags', 'aurele', 'women', 'Blush Chevron Crossbody', 760, 10, '1566150905458-1bf1fc113f0d',
-    'A compact crossbody in blush leather with a chevron flap panel and an adjustable chain-and-leather strap.'],
-  ['MM-005', 'bags', 'verne', 'women', 'Woven Leather Basket Bag', 890, 5, '1590874103328-eac38a683ce7',
-    'Hand-woven rattan wrapped in tan leather, with a rolled top handle — a summer bag built to last seasons.'],
+  ['MM-001', 'bags', 'verne', 'women', 'Croc-Embossed Top-Handle Bag', 1480, 8, '1546241183-0ed3f8a4a824',
+    'Black calfskin embossed with a croc grain on a structured frame, with twin rolled handles and a zipped top.'],
+  ['MM-002', 'bags', 'otero', 'women', 'Cognac Leather Satchel', 1190, 6, '1602082430164-0c1927ddecb2',
+    'Polished cognac leather on a rigid frame, with a single top handle, a turn-lock flap and brushed-gold hardware.'],
+  ['MM-003', 'bags', 'halden', 'unisex', 'Black Leather Box Bag', 540, 18, '1626875959581-bab0aca594d2',
+    'A squared box bag in glossed black leather, with a wraparound zip, a rolled top handle and a detachable strap.'],
+  ['MM-004', 'bags', 'aurele', 'women', 'Black Leather Bucket Bag', 760, 10, '1702326626601-74d2e86922b4',
+    'Smooth black leather with contrast saddle stitching, a brass ring fitting and an adjustable shoulder strap.'],
+  ['MM-005', 'bags', 'verne', 'women', 'Black Leather Mini Bowling Bag', 890, 5, '1664187284276-2f3254cdc7dc',
+    'A compact dome-shaped bag in black leather, with twin top handles, a gold-tone zip and a long crossbody strap.'],
 
-  ['MM-006', 'watches', 'halden', 'men', 'Steel Field Automatic 40', 2350, 4, '1547996160-81dfa63595aa',
-    'A 40 mm brushed-steel case, sapphire crystal and a self-winding movement with a 42-hour power reserve.'],
-  ['MM-007', 'watches', 'lindqvist', 'men', 'Sunset Dial Chronograph', 1960, 6, '1533139502658-0198f920d8e8',
-    'A two-register chronograph on a tan calfskin strap, with a deep graphite dial and luminous hands.'],
-  ['MM-008', 'watches', 'lindqvist', 'unisex', 'Explorer Leather-Strap 38', 1420, 7, '1495856458515-0637185db551',
-    'A 38 mm everyday watch with a matte black dial, arabic numerals and a quick-release leather strap.'],
-  ['MM-009', 'watches', 'otero', 'men', 'Olive NATO Field Watch', 690, 14, '1508057198894-247b23fe5ade',
-    'A military-inspired field watch on an olive NATO strap, with a gilt-accented dial and 100 m water resistance.'],
-  ['MM-010', 'watches', 'halden', 'men', 'Bronze Diver 42', 2780, 3, '1622434641406-a158123450f9',
-    'A 42 mm bronze case that develops its own patina, a unidirectional bezel and 300 m water resistance.'],
+  ['MM-006', 'watches', 'halden', 'men', 'Steel Diver Automatic 40', 2350, 4, '1610889706547-54773e7cd71f',
+    'A 40 mm brushed-steel case on a steel bracelet, a black dial under a unidirectional bezel and a self-winding movement.'],
+  ['MM-007', 'watches', 'lindqvist', 'men', 'Black Dial Pilot Watch', 1960, 6, '1618960507963-9d2d4562c1b4',
+    'Oversized luminous numerals on a matte black dial, a polished steel case and a stitched brown calfskin strap.'],
+  ['MM-008', 'watches', 'lindqvist', 'unisex', 'Midnight Minimalist 38', 1420, 7, '1585679212498-ef63dfb0f58d',
+    'A 38 mm all-black case and dial, rose-gold hands and a small-seconds sub-dial — nothing more than it needs.'],
+  ['MM-009', 'watches', 'otero', 'men', 'Olive NATO Field Chronograph', 690, 14, '1617265860128-e23ad88cf98d',
+    'A black field chronograph on an olive woven NATO strap, with a 60-minute scale and 100 m water resistance.'],
+  ['MM-010', 'watches', 'halden', 'men', 'Rose Gold Bracelet Watch 41', 2780, 3, '1772949399823-dcd1678fcce7',
+    'A 41 mm octagonal case in rose-gold-tone steel, a textured bezel and an integrated link bracelet.'],
 
-  ['MM-011', 'apparel', 'aurele', 'men', 'Suede Bomber Jacket', 1380, 12, '1591047139829-d91aecb6caea',
-    'Soft rust suede with rib-knit cuffs and hem, a two-way zip and a quilted satin lining.'],
-  ['MM-012', 'apparel', 'halden', 'unisex', 'Leather Biker Jacket', 1650, 10, '1551028719-00167b16eac5',
+  ['MM-011', 'apparel', 'aurele', 'men', 'Rust Suede Trucker Jacket', 1380, 12, '1610904497162-f9faef9a8e20',
+    'Soft rust suede with a spread collar, a snap front and chest pockets, lined in cotton twill.'],
+  ['MM-012', 'apparel', 'halden', 'unisex', 'Leather Biker Jacket', 1650, 10, '1521223890158-f9f7c3d5d504',
     'Black lambskin cut in a classic asymmetric biker silhouette, with silver-tone zips and a belted hem.'],
-  ['MM-013', 'apparel', 'verne', 'men', 'Chambray Button-Down Shirt', 210, 24, '1596755094514-f87e34085b2c',
-    'A soft washed chambray with a button-down collar, mother-of-pearl buttons and a relaxed, easy fit.'],
-  ['MM-014', 'apparel', 'aurele', 'women', 'Chambray Shirt-Dress', 340, 16, '1591369822096-ffd140ec948f',
-    'A light chambray shirt-dress with a full button front, short sleeves and a gently flared skirt.'],
-  ['MM-015', 'apparel', 'lindqvist', 'men', 'Navy Two-Piece Suit', 1890, 8, '1617137968427-85924c800a22',
+  ['MM-013', 'apparel', 'verne', 'men', 'Midnight Cotton Shirt', 210, 24, '1651390216692-c9096058583e',
+    'A navy cotton shirt with a concealed placket and contrast piping — sharp for evening, easy for every day.'],
+  ['MM-014', 'apparel', 'aurele', 'women', 'Black Sleeveless Midi Dress', 340, 16, '1582851992827-c717833a234d',
+    'A sleeveless black midi in fluid crepe, with a round neck, a gathered waist and a softly flared skirt.'],
+  ['MM-015', 'apparel', 'lindqvist', 'men', 'Navy Two-Piece Suit', 1890, 8, '1519085360753-af0119f7cbe7',
     'A two-button suit in Italian wool, half-canvassed, with slim flat-front trousers.'],
 
-  ['MM-016', 'accessories', 'otero', 'unisex', 'Round Gold-Frame Sunglasses', 380, 15, '1511499767150-a48a237f0083',
+  ['MM-016', 'accessories', 'otero', 'unisex', 'Round Gold-Frame Sunglasses', 380, 15, '1585592695399-b1bab1d46a38',
     'Lightweight gold-tone metal frames with round tinted lenses offering full UV400 protection.'],
-  ['MM-017', 'accessories', 'halden', 'men', 'Tan Leather Belt 3.5 cm', 260, 20, '1624222247344-550fb60583dc',
-    'Vegetable-tanned full-grain leather, 3.5 cm wide, with a solid brass roller buckle.'],
-  ['MM-018', 'accessories', 'lindqvist', 'men', 'Bifold Leather Wallet', 220, 22, '1606503825008-909a67e63c3d',
-    'A slim bifold in grained calfskin with six card slots and a full-length note compartment.'],
-  ['MM-019', 'accessories', 'aurele', 'women', 'Gold Tennis Bracelet', 1240, 5, '1611591437281-460bfbe1220a',
-    'A line of hand-set crystals in a gold-plated setting, finished with a secure box clasp.'],
-  ['MM-020', 'accessories', 'verne', 'women', 'Wool Felt Fedora', 290, 9, '1514327605112-b887c0e61c0a',
-    'A wide-brim fedora in pure wool felt with a grosgrain band — shapes to its wearer over time.'],
+  ['MM-017', 'accessories', 'halden', 'men', 'Black Leather Belt 3.5 cm', 260, 20, '1590771976428-7af51cb3c575',
+    'Full-grain black leather, 3.5 cm wide, with contrast edge stitching and a polished steel buckle.'],
+  ['MM-018', 'accessories', 'lindqvist', 'men', 'Bifold Leather Wallet', 220, 22, '1637169797848-12431f1d355c',
+    'A slim bifold in grained tan calfskin with six card slots and a full-length note compartment.'],
+  ['MM-019', 'accessories', 'aurele', 'women', 'Gold Chain Bracelet', 1240, 5, '1633810542706-90e5ff7557be',
+    'Hand-finished oval links in gold-plated sterling silver, closed with a secure lobster clasp.'],
+  ['MM-020', 'accessories', 'verne', 'women', 'Wide-Brim Wool Fedora', 290, 9, '1657165746478-48ed8d9cffbd',
+    'A wide-brim fedora in black wool felt with a grosgrain band — shapes to its wearer over time.'],
 ];
 
 // Split an apparel piece's stock across sizes, heaviest in M/L.

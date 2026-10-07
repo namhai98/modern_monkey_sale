@@ -5,12 +5,14 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
+import { useFocusTrap } from '../lib/useFocusTrap';
 import Icon from './Icon';
 import LangSwitch from './LangSwitch';
 import ThemeToggle from './ThemeToggle';
 import BrandLockup from './BrandLockup';
 import NavMegaPanel from './NavMegaPanel';
 import MobileMenu from './MobileMenu';
+import Tooltip from './Tooltip';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    The header, composed three times rather than scaled once — but one constant
@@ -33,9 +35,9 @@ import MobileMenu from './MobileMenu';
    the whole catalogue — and leaves narrowing to the filter rail on the listing
    itself, which is where a shopper can see what they are narrowing.
 
-   The 1180px line is content-driven — see --breakpoint-hdr in index.css. It is
-   where the Mongolian nav set at 0.28em stops fighting the action cluster for
-   room inside container-lux, not a device width.
+   The desktop line is content-driven — see --breakpoint-hdr in index.css. The
+   action cluster (flags, theme, search, account, bag) only clears the centred
+   lockup from ~1100px, so the row switches at 1180, not at a device width.
 
    Colour is white in both themes: the header sits on an ink glass that fades in
    once you scroll off the hero, exactly as the presentation site's does.
@@ -101,9 +103,11 @@ function AccountMenu() {
 
   if (!user) {
     return (
-      <Link to="/login" className={`${ICON_BTN} text-white/80`} aria-label={t('nav.login')} title={t('nav.login')}>
-        <Icon name="user" className="h-[1.15rem] w-[1.15rem]" />
-      </Link>
+      <Tooltip label={t('nav.login')}>
+        <Link to="/login" className={`${ICON_BTN} text-white/80`} aria-label={t('nav.login')}>
+          <Icon name="user" className="h-[1.15rem] w-[1.15rem]" />
+        </Link>
+      </Tooltip>
     );
   }
 
@@ -111,16 +115,18 @@ function AccountMenu() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className={`${ICON_BTN} ${open ? 'text-gold' : 'text-white/80'}`}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-label={t('nav.account')}
-        title={t('nav.account')}
-      >
-        <Icon name="user" className="h-[1.15rem] w-[1.15rem]" />
-      </button>
+      {/* No tooltip while the menu is open — it would sit on the menu. */}
+      <Tooltip label={t('nav.account')} disabled={open}>
+        <button
+          type="button"
+          className={`${ICON_BTN} ${open ? 'text-gold' : 'text-white/80'}`}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={t('nav.account')}
+        >
+          <Icon name="user" className="h-[1.15rem] w-[1.15rem]" />
+        </button>
+      </Tooltip>
       {open && (
         /* Elevation by border + blur, not by shadow — the house rule for any
            layer floating over the page. */
@@ -169,6 +175,10 @@ export default function Navbar() {
   const menuButtonRef = useRef(null);
   const closeTimer = useRef(null);
   const megaTimer = useRef(null);
+  // While the menu is open, Tab cycles through the header + menu only. The
+  // trap sits on the whole header rather than the menu panel because the
+  // close (×) toggle lives in the header row, outside the panel.
+  const headerRef = useFocusTrap(menuOpen, { initialFocus: menuButtonRef });
 
   // Close the menu with its exit animation, then unmount on a timer rather than
   // on animationend — a background tab can swallow the event, and a menu that
@@ -298,6 +308,7 @@ export default function Navbar() {
 
   return (
     <header
+      ref={headerRef}
       className={`fixed inset-x-0 top-0 z-50 text-white transition-colors duration-500 ${
         solid ? 'border-b border-white/10' : 'border-b border-transparent'
       }`}
@@ -323,7 +334,7 @@ export default function Navbar() {
            into a longer word.
            The row is the positioning context, not <header> — the menu below is
            fixed and has to keep anchoring to the viewport. */
-        className="container-bar relative flex h-16 items-center justify-between gap-2 md:h-[4.5rem] md:gap-6"
+        className="container-bar relative flex h-[var(--header-h)] items-center justify-between gap-2 md:gap-6"
       >
         <span className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center">
           {/* One lockup, three cuts — never the desktop one shrunk. Each cut
@@ -341,17 +352,19 @@ export default function Navbar() {
 
         {/* ── Left: menu toggle, and on tablet the priority categories ────── */}
         <div className="flex min-w-0 items-center gap-1 md:gap-2">
-          <button
-            ref={menuButtonRef}
-            type="button"
-            className={`${ICON_BTN} -ml-2.5 hdr:hidden`}
-            onClick={() => (menuOpen ? closeMenu() : openMenu())}
-            aria-expanded={menuOpen}
-            aria-controls="site-menu"
-            aria-label={menuOpen ? t('nav.close') : t('nav.menu')}
-          >
-            <Icon name={menuOpen ? 'x' : 'menu'} className="h-5 w-5" />
-          </button>
+          <Tooltip label={menuOpen ? t('nav.close') : t('nav.menu')} className="-ml-2.5 hdr:hidden">
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className={ICON_BTN}
+              onClick={() => (menuOpen ? closeMenu() : openMenu())}
+              aria-expanded={menuOpen}
+              aria-controls="site-menu"
+              aria-label={menuOpen ? t('nav.close') : t('nav.menu')}
+            >
+              <Icon name={menuOpen ? 'x' : 'menu'} className="h-5 w-5" />
+            </button>
+          </Tooltip>
 
           {/* Tablet: Products and Sale as direct links. No hover surfaces on a
               touch screen. 44px in both directions — a target a finger misses
@@ -428,19 +441,20 @@ export default function Navbar() {
           <div className="hidden items-center gap-5 hdr:mr-4 hdr:flex" onMouseEnter={scheduleMegaClose}>
             <LangSwitch />
             <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <ThemeToggle className="h-7 w-7" />
+            <ThemeToggle />
           </div>
 
-          <button
-            type="button"
-            onClick={openSearch}
-            onMouseEnter={scheduleMegaClose}
-            className={`${ICON_BTN} text-white/80`}
-            aria-label={t('nav.search')}
-            title={t('nav.search')}
-          >
-            <Icon name="search" className="h-[1.15rem] w-[1.15rem]" />
-          </button>
+          <Tooltip label={t('nav.search')}>
+            <button
+              type="button"
+              onClick={openSearch}
+              onMouseEnter={scheduleMegaClose}
+              className={`${ICON_BTN} text-white/80`}
+              aria-label={t('nav.search')}
+            >
+              <Icon name="search" className="h-[1.15rem] w-[1.15rem]" />
+            </button>
+          </Tooltip>
 
           {/* Account is a menu of its own; on tablet its rows live in the
               hamburger panel instead, so the header keeps one popover only. */}
@@ -448,23 +462,26 @@ export default function Navbar() {
             <AccountMenu />
           </div>
 
-          <button
-            type="button"
-            onClick={openCart}
-            onMouseEnter={scheduleMegaClose}
-            className={`${ICON_BTN} relative text-white/80`}
-            aria-label={bagLabel}
-            title={bagLabel}
-          >
-            <Icon name="bag" className="h-[1.15rem] w-[1.15rem]" />
-            {count > 0 && (
-              /* A gold numeral on the ink ground, not a filled chip — the house
-                 has no coloured status pills. */
-              <span className="pop-in absolute right-1 top-1.5 min-w-[1rem] text-center text-[0.6rem] font-medium tabular-nums text-gold">
-                {count > 9 ? '9+' : count}
-              </span>
-            )}
-          </button>
+          {/* align="end": the bag is the row's last control, so its label
+              hangs left instead of past the screen edge. */}
+          <Tooltip label={bagLabel} align="end">
+            <button
+              type="button"
+              onClick={openCart}
+              onMouseEnter={scheduleMegaClose}
+              className={`${ICON_BTN} relative text-white/80`}
+              aria-label={bagLabel}
+            >
+              <Icon name="bag" className="h-[1.15rem] w-[1.15rem]" />
+              {count > 0 && (
+                /* A gold numeral on the ink ground, not a filled chip — the house
+                   has no coloured status pills. */
+                <span className="pop-in absolute right-1 top-1.5 min-w-[1rem] text-center text-badge font-medium tabular-nums text-gold">
+                  {count > 9 ? '9+' : count}
+                </span>
+              )}
+            </button>
+          </Tooltip>
 
         </div>
       </div>

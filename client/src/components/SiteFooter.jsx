@@ -1,171 +1,114 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import client from '../api/client';
 import { useLocale } from '../context/LocaleContext';
 import { site, telHref } from '../lib/site';
 import Icon from './Icon';
+import IconButton from './IconButton';
+import { INK_COL_HEAD, INK_COL_LINK } from './inkColumn';
 import LangSwitch from './LangSwitch';
 
-/* The presentation site's footer, column for column: a fixed-dark band in both
-   themes, gold 0.32em column headers, link-lux links at text-white/65, round
-   social buttons under the brand blurb, a boutique address block with gold
-   icons, then the giant ghosted wordmark and the legal bar, each separated by a
-   white/10 hairline. The newsletter sign-up is the storefront's own addition,
-   set in the same underline-field vocabulary as every other form here. */
+/* The presentation site's footer: a fixed-dark band in both themes, gold
+   column headers, link-lux links at text-white/65, then the giant ghosted
+   wordmark and the legal bar, each separated by a white/10 hairline.
 
-const COL_HEAD = 'micro tracking-[0.32em] text-gold';
-const COL_LINK = 'link-lux text-sm text-white/65 transition-colors hover:text-white';
-const SOCIAL =
-  'inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 transition-colors duration-300 hover:border-gold hover:text-gold';
+   Four columns: the brand (blurb, social buttons) ·
+   Help (about, FAQ, care, contact, legal) · Products · Contact (the boutique's
+   phones, address and hours). */
+
+const COL_HEAD = INK_COL_HEAD;
+const COL_LINK = INK_COL_LINK;
+
+function FooterLinks({ label, links }) {
+  return (
+    <nav aria-label={label}>
+      <p className={COL_HEAD}>{label}</p>
+      <ul className="mt-6 space-y-3.5">
+        {links.map((l) => (
+          <li key={l.to}>
+            {l.to.startsWith('#') ? (
+              <a href={l.to} className={`${COL_LINK} ${l.className || ''}`}>
+                {l.label}
+              </a>
+            ) : (
+              <Link to={l.to} className={`${COL_LINK} ${l.className || ''}`}>
+                {l.label}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
 
 export default function SiteFooter({ flush = false }) {
   const { t } = useLocale();
-  const [email, setEmail] = useState('');
-  const [done, setDone] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [subscribeError, setSubscribeError] = useState(false);
+
+  const help = [
+    { to: '/story', label: t('footer.help.about') },
+    { to: '/faq', label: t('footer.help.faq') },
+    { to: '/product-care', label: t('footer.care.product') },
+    { to: '#footer-contact', label: t('footer.care.contact') },
+    { to: '/orders', label: t('nav.orders') },
+    { to: '/privacy', label: t('footer.legal.privacy') },
+  ];
+  const products = [
+    { to: '/shop?all=1', label: t('footer.products.all') },
+    { to: '/shop?all=1&sort=created_at:desc', label: t('footer.products.new') },
+    { to: '/shop?category=bags', label: t('nav.bags') },
+    { to: '/shop?category=watches', label: t('nav.watches') },
+    { to: '/shop?category=apparel', label: t('nav.apparel') },
+    { to: '/shop?sale=1', label: t('nav.sale'), className: 'text-gold/80 hover:text-gold' },
+  ];
 
   return (
     <footer className={`bg-ink text-white ${flush ? '' : 'mt-20 md:mt-32'}`}>
-      <div className="container-lux grid gap-10 py-14 md:grid-cols-2 md:gap-14 md:py-20 lg:grid-cols-4">
-        <div>
-          <p className="heading-serif text-xl uppercase tracking-[0.28em]">
+      <div className="container-lux grid grid-cols-2 gap-x-6 gap-y-12 py-14 md:gap-14 md:py-20 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+        {/* Phones: brand and contact span the width, the two short link
+            lists sit side by side between them. */}
+        <div className="col-span-2 md:col-span-1">
+          <p className="heading-serif text-xl uppercase tracking-label">
             Modern<span className="text-gold"> Monkey</span>
           </p>
           <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/55">{t('footer.blurb')}</p>
 
           <div className="mt-8 flex gap-4">
-            <a
+            <IconButton
+              as="a"
+              tone="dark"
               href={site.social.facebook}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('float.facebook')}
-              className={SOCIAL}
             >
               <Icon name="facebook" className="h-4 w-4" />
-            </a>
-            <a
-              href={site.social.instagram}
+            </IconButton>
+            <IconButton
+              as="a"
+              tone="dark"
+              href={site.social.messenger}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={t('float.instagram')}
-              className={SOCIAL}
+              aria-label={t('float.messenger')}
             >
-              <Icon name="instagram" className="h-4 w-4" />
-            </a>
-          </div>
-
-          <div className="mt-10 max-w-xs">
-            <p className={COL_HEAD}>{t('footer.letter.eyebrow')}</p>
-            {done ? (
-              <p className="mt-4 text-sm leading-relaxed text-white/55">{t('footer.letter.thanks')}</p>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  setSubmitting(true);
-                  setSubscribeError(false);
-                  try {
-                    await client.post('/newsletter', { email });
-                    setDone(true);
-                  } catch {
-                    setSubscribeError(true);
-                  } finally {
-                    setSubmitting(false);
-                  }
-                }}
-                className="mt-4 flex items-center gap-4 border-b border-white/20 pb-2 transition-colors focus-within:border-gold"
-              >
-                <label htmlFor="footer-letter" className="sr-only">
-                  {t('footer.letter.title')}
-                </label>
-                <input
-                  id="footer-letter"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('footer.letter.placeholder')}
-                  className="min-w-0 flex-1 bg-transparent py-1 text-sm text-white placeholder:text-white/35 focus:outline-none"
-                />
-                <button type="submit" disabled={submitting} className="link-lux micro shrink-0 text-gold disabled:opacity-50">
-                  {t('footer.letter.subscribe')}
-                </button>
-              </form>
-            )}
-            {subscribeError && (
-              <p className="mt-3 text-xs text-danger">{t('footer.letter.fail')}</p>
-            )}
+              <Icon name="messageCircle" className="h-4 w-4" />
+            </IconButton>
           </div>
         </div>
 
-        <nav aria-label={t('footer.col.shop')}>
-          <p className={COL_HEAD}>{t('footer.col.shop')}</p>
-          <ul className="mt-6 space-y-3.5">
-            <li>
-              <Link to="/shop?category=bags" className={COL_LINK}>
-                {t('nav.bags')}
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop?category=watches" className={COL_LINK}>
-                {t('nav.watches')}
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop?category=apparel" className={COL_LINK}>
-                {t('nav.apparel')}
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop?all=1" className={COL_LINK}>
-                {t('nav.all')}
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop?sale=1" className={`${COL_LINK} text-gold/80 hover:text-gold`}>
-                {t('nav.sale')}
-              </Link>
-            </li>
-          </ul>
-        </nav>
+        <FooterLinks label={t('footer.col.help')} links={help} />
+        <FooterLinks label={t('footer.col.products')} links={products} />
 
-        <div>
-          <p className={COL_HEAD}>{t('footer.col.care')}</p>
-          <ul className="mt-6 space-y-3.5 text-sm text-white/65">
-            <li>
-              <Link to="/product-care" className={COL_LINK}>
-                {t('footer.care.product')}
-              </Link>
-            </li>
-            <li>{t('footer.care.contact')}</li>
-          </ul>
-
-          <nav aria-label={t('footer.col.account')} className="mt-10">
-            <p className={COL_HEAD}>{t('footer.col.account')}</p>
-            <ul className="mt-6 space-y-3.5">
-              <li>
-                <Link to="/orders" className={COL_LINK}>
-                  {t('nav.orders')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/profile" className={COL_LINK}>
-                  {t('nav.profile')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/cart" className={COL_LINK}>
-                  {t('cart.title')}
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <div>
-          <p className={COL_HEAD}>{t('footer.col.boutique')}</p>
+        <div id="footer-contact" className="col-span-2 scroll-mt-[calc(var(--header-h)+1.5rem)] md:col-span-1">
+          <p className={COL_HEAD}>{t('footer.col.contact')}</p>
           <address className="mt-6 space-y-4 text-sm not-italic text-white/65">
+            {site.phones.map((p) => (
+              <p key={p} className="flex items-center gap-3">
+                <Icon name="phone" className="h-4 w-4 shrink-0 text-gold" />
+                <a href={telHref(p)} className="transition-colors hover:text-gold">
+                  {p}
+                </a>
+              </p>
+            ))}
             <p className="flex gap-3">
               <Icon name="mapPin" className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
               <span>
@@ -180,14 +123,6 @@ export default function SiteFooter({ flush = false }) {
               <Icon name="clock" className="h-4 w-4 shrink-0 text-gold" />
               {t('footer.hours')}
             </p>
-            {site.phones.map((p) => (
-              <p key={p} className="flex items-center gap-3">
-                <Icon name="phone" className="h-4 w-4 shrink-0 text-gold" />
-                <a href={telHref(p)} className="transition-colors hover:text-gold">
-                  {p}
-                </a>
-              </p>
-            ))}
           </address>
         </div>
       </div>
@@ -195,20 +130,19 @@ export default function SiteFooter({ flush = false }) {
       {/* Decorative wordmark band — the same device closes the presentation
           site's footer. Purely ornamental, so it is hidden from assistive tech. */}
       <div className="overflow-hidden border-t border-white/10" aria-hidden="true">
-        <p className="heading-serif container-lux select-none whitespace-nowrap py-6 text-center text-[clamp(2.5rem,9vw,7rem)] uppercase leading-none tracking-[0.18em] text-white/[0.06]">
+        <p className="heading-serif container-lux select-none whitespace-nowrap py-6 text-center text-[clamp(2.5rem,9vw,7rem)] uppercase leading-none tracking-meta text-white/[0.06]">
           Modern Monkey
         </p>
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-lux micro flex flex-col items-center justify-between gap-4 py-6 tracking-[0.22em] text-white/40 md:flex-row">
+        <div className="container-lux micro flex flex-col items-center justify-between gap-4 py-6 tracking-meta text-white/55 md:flex-row">
           <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-8">
-            <p>{t('footer.tagline')}</p>
             <Link to="/privacy" className="link-lux transition-colors hover:text-white">
               {t('footer.legal.privacy')}
             </Link>
-            <LangSwitch />
+            <LangSwitch tipSide="top" />
           </div>
         </div>
       </div>

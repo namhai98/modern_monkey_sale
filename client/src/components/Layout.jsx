@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import SiteFooter from './SiteFooter';
@@ -19,6 +19,12 @@ export default function Layout({ children }) {
   const isHome = pathname === '/';
   const hideFooter = HIDE_FOOTER.some((p) => pathname.startsWith(p));
   const hideFloating = HIDE_FLOATING.some((p) => pathname.startsWith(p));
+  // The admin is one screen with tabs, not a set of pages: every /admin/* path
+  // shares one key, so switching tabs leaves AdminLayout (eyebrow + tab bar)
+  // mounted and only swaps the content under it. Keyed per path, each tab
+  // switch rebuilt the whole admin and replayed the page fade from opacity 0 —
+  // the blink. AdminLayout keeps its own per-tab error boundary.
+  const transitionKey = pathname.startsWith('/admin') ? '/admin' : pathname;
 
   // Start every navigation at the top (React Router 7 keeps scroll position by
   // default). Keyed on the PATH, not location.key: a filter or sort control
@@ -44,11 +50,12 @@ export default function Layout({ children }) {
       </a>
       <Navbar />
       {/* pt clears the fixed header — --header-h in index.css, which is the one
-          place its height is written. On desktop that includes the utility tier
-          above the row; the tier collapses on scroll, leaving the padding 36px
-          richer than the header then needs, but the only moment it is
-          load-bearing is when the page is at the top. The home hero runs under
-          the header and takes no padding at all.
+          place its height is written. The home hero runs under the header and
+          takes no padding at all.
+
+          The Suspense boundary covers the pages App.jsx loads on demand. Its
+          fallback is an empty block that holds the page's minimum height, so
+          the footer doesn't jump up and back while a chunk arrives.
 
           The page-in key gives every route the same 700ms fade-up the
           presentation site applies in its template.tsx.
@@ -65,9 +72,9 @@ export default function Layout({ children }) {
         id="content"
         className={isHome ? '' : 'min-h-[60vh] pt-[var(--header-h)]'}
       >
-        <ErrorBoundary key={pathname}>
-          <div key={pathname} className="page-in">
-            {children}
+        <ErrorBoundary key={transitionKey}>
+          <div key={transitionKey} className="page-in">
+            <Suspense fallback={<div className="min-h-[60vh]" aria-busy="true" />}>{children}</Suspense>
           </div>
         </ErrorBoundary>
       </main>

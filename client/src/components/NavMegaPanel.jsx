@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLocale } from '../context/LocaleContext';
 import Icon from './Icon';
+import { INK_COL_HEAD, INK_COL_LINK } from './inkColumn';
 
 /* The desktop panel behind Products, unfurling full-bleed under the header on
    hover or focus.
@@ -17,8 +18,8 @@ import Icon from './Icon';
    elevation by border and blur, never by shadow. */
 
 const GENDERS = ['women', 'men', 'unisex'];
-const COL_HEAD = 'micro tracking-[0.32em] text-gold';
-const COL_LINK = 'link-lux w-fit text-sm text-white/65 transition-colors duration-300 hover:text-white';
+const COL_HEAD = INK_COL_HEAD;
+const COL_LINK = INK_COL_LINK;
 
 export default function NavMegaPanel({ brands, onNavigate }) {
   const { t } = useLocale();
@@ -70,7 +71,7 @@ export default function NavMegaPanel({ brands, onNavigate }) {
             {t('nav.products')}
           </Link>
           <Link
-            to={`${base}&sort=created_at&order=desc`}
+            to={`${base}&sort=created_at:desc`}
             onClick={onNavigate}
             className={COL_LINK}
           >

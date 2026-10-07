@@ -1,4 +1,5 @@
 import { Children, isValidElement, useEffect, useRef, useState } from 'react';
+import Icon from './Icon';
 
 /* Custom dropdown — a native <select>'s open popup can't be styled and always
    renders with the OS's own colours, which breaks badly against a dark page.
@@ -66,19 +67,12 @@ export default function Select({
         className="flex w-full items-center justify-between gap-3 border-b border-line bg-transparent py-3 text-left text-sm text-foreground transition-colors duration-300 hover:border-gold disabled:cursor-not-allowed disabled:opacity-50 aria-expanded:border-gold"
       >
         <span className="truncate">{current?.label}</span>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <Icon
+          name="chevronDown"
           className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${
             open ? 'rotate-180 text-gold' : 'text-muted'
           }`}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        />
       </button>
 
       {open && (

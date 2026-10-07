@@ -1,12 +1,15 @@
+import { useLocale } from '../context/LocaleContext';
+
 /* One quantity control for the bag, the drawer and the product page — all three
    had their own hand-rolled version with different padding and hit areas.
 
    Square-cornered and hairline-bordered like every other control, with the
    border turning gold on hover so it answers to the same signal as the rest of
-   the system. */
+   the system. Even the compact size keeps 44px buttons: it is used in the bag
+   drawer, which is mostly opened on phones. */
 
 const SIZES = {
-  sm: { btn: 'h-8 w-8 text-sm', val: 'w-8 text-sm' },
+  sm: { btn: 'h-11 w-11 text-sm', val: 'w-8 text-sm' },
   md: { btn: 'h-12 w-12 text-base', val: 'w-10 text-sm' },
 };
 
@@ -16,10 +19,13 @@ export default function QuantityStepper({
   min = 1,
   max = Infinity,
   size = 'md',
-  labels = { decrease: 'Decrease quantity', increase: 'Increase quantity' },
+  labels,
   className = '',
 }) {
+  const { t } = useLocale();
   const s = SIZES[size] || SIZES.md;
+  const decrease = labels?.decrease || t('cart.decrease');
+  const increase = labels?.increase || t('cart.increase');
   const btn =
     `inline-flex items-center justify-center text-muted transition-colors duration-300 ` +
     `hover:text-gold disabled:opacity-30 disabled:hover:text-muted ${s.btn}`;
@@ -33,7 +39,7 @@ export default function QuantityStepper({
         className={btn}
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
-        aria-label={labels.decrease}
+        aria-label={decrease}
       >
         −
       </button>
@@ -45,7 +51,7 @@ export default function QuantityStepper({
         className={btn}
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={value >= max}
-        aria-label={labels.increase}
+        aria-label={increase}
       >
         +
       </button>

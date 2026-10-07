@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 const UIContext = createContext(null);
 
@@ -27,20 +27,24 @@ export function UIProvider({ children }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const value = {
-    cartOpen,
-    searchOpen,
-    openCart: () => {
-      setSearchOpen(false);
-      setCartOpen(true);
-    },
-    closeCart: () => setCartOpen(false),
-    openSearch: () => {
-      setCartOpen(false);
-      setSearchOpen(true);
-    },
-    closeSearch: () => setSearchOpen(false),
-  };
+  // Stable callbacks + a memoised value: this context sits above the whole
+  // app, so a new object every render re-rendered every consumer (and
+  // re-subscribed the effects that list these callbacks as dependencies).
+  const openCart = useCallback(() => {
+    setSearchOpen(false);
+    setCartOpen(true);
+  }, []);
+  const closeCart = useCallback(() => setCartOpen(false), []);
+  const openSearch = useCallback(() => {
+    setCartOpen(false);
+    setSearchOpen(true);
+  }, []);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  const value = useMemo(
+    () => ({ cartOpen, searchOpen, openCart, closeCart, openSearch, closeSearch }),
+    [cartOpen, searchOpen, openCart, closeCart, openSearch, closeSearch]
+  );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }

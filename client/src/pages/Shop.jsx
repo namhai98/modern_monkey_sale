@@ -7,12 +7,14 @@ import CollectionCard from '../components/CollectionCard';
 import EmptyState from '../components/EmptyState';
 import Icon from '../components/Icon';
 import PageHero from '../components/PageHero';
+import Pager from '../components/Pager';
 import ProductCard from '../components/ProductCard';
 import Reveal from '../components/Reveal';
 import Section from '../components/Section';
 import SectionHeading from '../components/SectionHeading';
 import Select from '../components/Select';
 import { ProductGridSkeleton } from '../components/Skeleton';
+import TextButton from '../components/TextButton';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
 import { media, resizeUnsplash } from '../lib/media';
@@ -38,7 +40,7 @@ function Chip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`micro shrink-0 border px-3.5 py-2 tracking-[0.2em] transition-colors duration-300 ${active
+      className={`micro shrink-0 border px-3.5 py-2 tracking-meta transition-colors duration-300 ${active
         ? 'border-gold text-gold'
         : 'border-line text-muted hover:border-gold/50 hover:text-foreground'
         }`}
@@ -91,7 +93,7 @@ function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, 
       <div className="flex items-center justify-between gap-4">
         <span className="flex items-center gap-2.5">
           <Icon name="filter" className="h-4 w-4 text-gold" />
-          <span className="micro tracking-[0.32em] text-foreground">{t('shop.filters')}</span>
+          <span className="micro tracking-button text-foreground">{t('shop.filters')}</span>
         </span>
         {anyActive && (
           <button
@@ -211,7 +213,7 @@ function FixedFilterRail({ controlProps }) {
    so a shop with many categories keeps its first row intact on a phone. */
 function CategoryBar({ t, locale, categories, category, onAll, patch }) {
   const item = (active) =>
-    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-[0.7rem] font-medium uppercase tracking-[0.22em] transition-colors duration-300 ${active ? 'text-gold' : 'text-muted hover:text-foreground'
+    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-meta font-medium uppercase tracking-meta transition-colors duration-300 ${active ? 'text-gold' : 'text-muted hover:text-foreground'
     }`;
 
   return (
@@ -591,28 +593,14 @@ function Listing({ categories }) {
               )}
             </div>
 
-            {totalPages > 1 && (
-              <div className="mt-16 flex items-center justify-center gap-8 border-t border-line pt-10 md:mt-24">
-                <button
-                  onClick={() => patch({ page: page > 2 ? page - 1 : '' })}
-                  disabled={page <= 1}
-                  className="link-lux micro text-muted transition-colors hover:text-gold disabled:pointer-events-none disabled:opacity-30"
-                >
-                  {t('shop.prev')}
-                </button>
-                <span className="micro tabular-nums">
-                  <span className="text-gold">{page}</span>
-                  <span className="text-muted"> / {totalPages}</span>
-                </span>
-                <button
-                  onClick={() => patch({ page: page + 1 })}
-                  disabled={page >= totalPages}
-                  className="link-lux micro text-muted transition-colors hover:text-gold disabled:pointer-events-none disabled:opacity-30"
-                >
-                  {t('shop.next')}
-                </button>
-              </div>
-            )}
+            <Pager
+              page={page}
+              totalPages={totalPages}
+              onChange={(p) => patch({ page: p > 1 ? p : '' })}
+              prevLabel={t('shop.prev')}
+              nextLabel={t('shop.next')}
+              className="mt-16 border-t border-line pt-10 md:mt-24"
+            />
           </div>
         </div>
       </div>
@@ -630,15 +618,9 @@ function Listing({ categories }) {
             aria-label={t('shop.filters')}
             className="absolute left-0 top-0 flex h-full w-80 max-w-[85vw] flex-col border-r border-line bg-background"
           >
-            <div className="flex h-20 shrink-0 items-center justify-between border-b border-line px-6">
+            <div className="flex h-[var(--header-h)] shrink-0 items-center justify-between border-b border-line px-6">
               <span className="eyebrow">{t('shop.filters')}</span>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="link-lux micro text-muted transition-colors hover:text-gold"
-                aria-label={t('nav.close')}
-              >
-                {t('nav.close')}
-              </button>
+              <TextButton onClick={() => setDrawerOpen(false)}>{t('nav.close')}</TextButton>
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-8">
               <FilterControls {...controlProps} />

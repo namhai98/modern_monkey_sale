@@ -23,12 +23,15 @@
    site is built on.
    ──────────────────────────────────────────────────────────────────────────── */
 @theme inline {
-  /* Exactly two faces, sitewide: Montserrat carries the merchandise — a
+  /* Two working faces, sitewide: Montserrat carries the merchandise — a
      product's name, its category, counts, drawer buttons, the admin form
      where these are entered — and doubles as the house display face for
-     headings, since there is no third font left to give them their own
-     voice. Inter is everything else: body copy, breadcrumb, filter labels,
+     headings. Inter is everything else: body copy, breadcrumb, filter labels,
      search/sort labels — the UI chrome around the merchandise.
+
+     Lobster (`font-script`) is an accent, not a third working face: it is
+     reserved for the gold part of large display headings, applied through
+     the `gold-script` utility below.
 
      `--font-display` and `--font-catalog` intentionally share one value:
      every call site already says `font-catalog` or `heading-serif` rather
@@ -37,6 +40,26 @@
   --font-display: "Montserrat", ui-sans-serif, "Inter", system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-catalog: "Montserrat", ui-sans-serif, "Inter", system-ui, sans-serif;
+  --font-script: "Lobster", "Montserrat", cursive;
+
+  /* The tracking ladder from DESIGN.md, named so call sites pick a step
+     instead of inventing a value: eyebrow › button › label › meta. Every
+     uppercase string in the storefront sits on one of these four. */
+  --tracking-eyebrow: 0.42em;
+  --tracking-button: 0.32em;
+  --tracking-label: 0.28em;
+  --tracking-meta: 0.2em;
+
+  /* The few sizes the type scale doesn't already cover — each one a role,
+     not a number: 11px uppercase meta, the product name on cards and bag
+     lines, the PDP title, and the bag-count badge. */
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.5;
+  --text-product: 0.9375rem;
+  --text-product--line-height: 1.35;
+  --text-pdp: clamp(1.9rem, 1.2rem + 1.6vw, 2.6rem);
+  --text-pdp--line-height: 1.12;
+  --text-badge: 0.625rem;
 
   /* Theme-reactive */
   --color-background: var(--background);
@@ -54,23 +77,25 @@
      to destroy. The admin does: deleting a product, cancelling an order,
      failing a save. A muted oxblood rather than a bright red — it has to read
      as "irreversible" without competing with gold or breaking the palette.
-     Storefront-facing status stays gold; this is for destructive actions and
-     error messages in the admin only. */
+     Status (selected, on offer, order state) stays gold; this is for
+     destructive actions and for error messages — in the admin and on the
+     storefront's forms (field errors, form-level alerts). */
   --color-danger: var(--danger);
 
   --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* One content-driven breakpoint beyond Tailwind's defaults, for the header.
-     It is the width at which the full desktop row — brand lockup, five nav
-     items set in Mongolian at 0.28em tracking, and the action cluster — stops
-     competing for space inside container-lux. Below it the header switches to
-     its tablet composition; that is a different layout, not a smaller one.
+  /* The header's own breakpoint: where the full desktop row (two nav items,
+     the centred 280px lockup, then flags + theme + search/account/bag, a
+     ~350px cluster) takes over from the tablet composition — a different
+     layout, not a smaller one. Measured, the right cluster stops touching the
+     centred lockup only from ~1100px; 1180 leaves it a comfortable gap. Below
+     it sits 1024px iPad-landscape, a touch screen that is better served by
+     the tablet row (direct links, no hover panel) anyway.
 
-     Declared in rem, not px: Tailwind orders its breakpoint media queries by
-     raw numeric value, so a px-valued custom breakpoint sorts against the
-     defaults' rem numbers and lands BEFORE md/lg in the cascade — where every
-     tablet rule then overrides it at desktop width. 73.75rem = 1180px sorts
-     where it belongs, between lg (64rem) and xl (80rem). */
+     Declared in rem, not px: Tailwind orders breakpoint media queries by raw
+     numeric value, so a px value would sort against the defaults' rem numbers
+     and land in the wrong place in the cascade. 73.75rem = 1180px sorts
+     between lg (64rem) and xl (80rem). */
   --breakpoint-hdr: 73.75rem;
 }
 
@@ -180,19 +205,20 @@
 @layer base {
   .eyebrow {
     font-family: var(--font-sans);
-    font-size: 0.6875rem;
+    font-size: var(--text-meta);
     font-weight: 500;
-    letter-spacing: 0.42em;
+    letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
     color: var(--color-gold);
   }
 }
 
 /* Everything else uppercase-small: nav items, field labels, meta rows, chips.
-   Inherits its colour from the call site. */
+   Inherits its colour from the call site. A tracking-* utility on the same
+   element steps it along the ladder (e.g. `micro tracking-meta`). */
 @utility micro {
-  font-size: 0.6875rem;
-  letter-spacing: 0.28em;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 
@@ -202,6 +228,18 @@
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.01em;
+}
+
+/* The gold flourish inside a display heading — the hero's second line, the
+   gold phrase of the maison statement, the gold half of a split headline. Only
+   large type gets it: eyebrows, labels and links stay in their working faces.
+   Lobster has one weight, so 400 here prevents a faux bold inherited from the
+   heading; normal tracking undoes heading-serif's negative tracking. */
+@utility gold-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: normal;
+  color: var(--color-gold);
 }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */

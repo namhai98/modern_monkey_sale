@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { resizeUnsplash } from '../lib/media';
+import { resizeUnsplash, unsplashSrcSet } from '../lib/media';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
 import { isDiscounted, discountPercent } from '../lib/price';
@@ -24,12 +24,18 @@ export default function ProductCard({ product }) {
   const secondary = product.images?.[1];
   const cardSrc = primary?.card || resizeUnsplash(product.image_url, 800);
   const hoverSrc = secondary?.card;
+  // The grids this card sits in run 2 columns on phones up to 4–5 on desktop;
+  // with a srcSet the browser fetches the smallest file that is sharp for that
+  // slot. (Uploaded images have no width variants here, so they keep `src`.)
+  const sizes = '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw';
 
   return (
     <Link to={`/products/${product.id}`} className="group block">
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface">
         <ImageFallback
           src={cardSrc}
+          srcSet={unsplashSrcSet(cardSrc, [400, 600, 800])}
+          sizes={sizes}
           alt={product.name}
           className={`h-full w-full object-cover transition-all duration-[1.2s] ease-[cubic-bezier(0.22,1,0.36,1)] ${
             hoverSrc ? 'group-hover:opacity-0' : 'group-hover:scale-[1.05]'
@@ -38,6 +44,8 @@ export default function ProductCard({ product }) {
         {hoverSrc && (
           <img
             src={hoverSrc}
+            srcSet={unsplashSrcSet(hoverSrc, [400, 600, 800])}
+            sizes={sizes}
             alt=""
             loading="lazy"
             decoding="async"
@@ -60,7 +68,7 @@ export default function ProductCard({ product }) {
         )}
 
         {onSale && !soldOut && (
-          <span className="micro absolute left-0 top-0 border-b border-r border-gold/40 bg-ink/80 px-3 py-1.5 tracking-[0.24em] text-gold backdrop-blur">
+          <span className="micro absolute left-0 top-0 border-b border-r border-gold/40 bg-ink/80 px-3 py-1.5 tracking-meta text-gold backdrop-blur">
             −{discountPercent(product)}%
           </span>
         )}
@@ -68,7 +76,7 @@ export default function ProductCard({ product }) {
         {/* Caption panel — slides up from the bottom edge on hover. */}
         {!soldOut && (
           <div className="absolute inset-x-0 bottom-0 translate-y-full bg-ink/85 p-4 text-center backdrop-blur transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0">
-            <span className="micro tracking-[0.3em] text-gold">{t('product.view')}</span>
+            <span className="micro tracking-button text-gold">{t('product.view')}</span>
           </div>
         )}
       </div>
@@ -78,16 +86,16 @@ export default function ProductCard({ product }) {
           {/* Montserrat carries a large x-height, so it reads a size bigger
               than it is set — the name sits a notch below the serif it
               replaced rather than matching its nominal size. */}
-          <h3 className="font-catalog text-[0.95rem] font-medium leading-snug transition-colors duration-300 group-hover:text-gold md:text-base">
+          <h3 className="font-catalog text-product font-medium leading-snug transition-colors duration-300 group-hover:text-gold md:text-base">
             {product.name}
           </h3>
           {(product.brand || product.category) && (
-            <p className="font-catalog mt-1.5 truncate text-[0.7rem] uppercase tracking-[0.18em] text-muted">
+            <p className="font-catalog mt-1.5 truncate text-meta uppercase tracking-meta text-muted">
               {product.brand?.name || categoryLabel(locale, product.category)}
             </p>
           )}
           {!soldOut && product.low_stock && (
-            <p className="micro mt-2 tracking-[0.24em] text-gold">{t('product.lowStock')}</p>
+            <p className="micro mt-2 tracking-meta text-gold">{t('product.lowStock')}</p>
           )}
         </div>
         {/* Stacked so a sale pair stays one price wide. The name owns the rest

@@ -33,13 +33,17 @@ export default function Field({
         id={fieldId}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-        className={`field ${error ? 'border-gold' : ''}`}
+        className={`field ${error ? 'border-danger' : ''}`}
         {...props}
       >
         {children}
       </Tag>
+      {/* Errors use `danger` (a muted oxblood, theme-reactive), not gold: gold
+          already means "active/selected" everywhere, and gold text on the
+          light theme falls to ~2.4:1 contrast — too faint for a message the
+          shopper has to read to finish the form. */}
       {error && (
-        <p id={`${fieldId}-error`} className="mt-2 text-xs text-gold">
+        <p id={`${fieldId}-error`} className="mt-2 text-xs text-danger">
           {error}
         </p>
       )}
@@ -52,16 +56,16 @@ export default function Field({
   );
 }
 
-/* A form-level message. There is no semantic success/warning/danger palette in
-   this design — status is gold text against a hairline, so an error is a gold
-   rule and a tone of voice, not a red box. */
+/* A form-level message: a hairline rule and a tone of voice, never a filled
+   box. The text stays on `foreground` for legibility; only the rule carries
+   the state — oxblood for an error, the plain line colour for information. */
 export function FormMessage({ children, tone = 'error' }) {
   if (!children) return null;
   return (
     <p
       role={tone === 'error' ? 'alert' : 'status'}
       className={`border-l-2 py-1 pl-4 text-sm ${
-        tone === 'error' ? 'border-gold text-foreground' : 'border-line text-muted'
+        tone === 'error' ? 'border-danger text-foreground' : 'border-line text-muted'
       }`}
     >
       {children}

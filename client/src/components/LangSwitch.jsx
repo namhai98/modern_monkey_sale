@@ -1,5 +1,6 @@
 import { LOCALES } from '../lib/i18n';
 import { useLocale } from '../context/LocaleContext';
+import Tooltip from './Tooltip';
 
 /* Flags drawn inline rather than as emoji: Windows has no flag emoji and
    renders 🇲🇳 as the bare letters "MN", which is exactly the text this replaced.
@@ -52,35 +53,39 @@ function FlagEN() {
 
 const FLAGS = { mn: FlagMN, en: FlagEN };
 
-export default function LangSwitch({ className = '' }) {
+// tipSide: where the hover label opens — below in the header, above where the
+// switch sits at the very bottom of the page (the footer's legal bar).
+export default function LangSwitch({ className = '', tipSide = 'bottom' }) {
   const { locale, setLocale } = useLocale();
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div className={`flex items-center ${className}`}>
       {LOCALES.map((l) => {
         const Flag = FLAGS[l.code];
         const active = locale === l.code;
         return (
-          <button
-            key={l.code}
-            type="button"
-            onClick={() => setLocale(l.code)}
-            aria-pressed={active}
-            aria-label={l.name}
-            title={l.name}
-            className={`inline-flex items-center justify-center transition-opacity duration-300 ${
-              active ? '' : 'opacity-45 hover:opacity-100'
-            }`}
-          >
-            {/* The active flag gets the house gold hairline, offset so it frames
-                the flag rather than sitting on its edge. */}
-            <span
-              className={`block h-[13px] w-[26px] overflow-hidden rounded-[2px] ${
-                active ? 'outline outline-1 outline-offset-2 outline-gold' : ''
+          /* The flag is 26×13; the button around it is a full 44px square so
+             it's a real tap target on a phone (the footer copy shows there). */
+          <Tooltip key={l.code} label={l.name} side={tipSide}>
+            <button
+              type="button"
+              onClick={() => setLocale(l.code)}
+              aria-pressed={active}
+              aria-label={l.name}
+              className={`inline-flex min-h-11 min-w-11 items-center justify-center transition-opacity duration-300 ${
+                active ? '' : 'opacity-45 hover:opacity-100'
               }`}
             >
-              {Flag ? <Flag /> : l.label}
-            </span>
-          </button>
+              {/* The active flag gets the house gold hairline, offset so it frames
+                  the flag rather than sitting on its edge. */}
+              <span
+                className={`block h-[13px] w-[26px] overflow-hidden ${
+                  active ? 'outline outline-1 outline-offset-2 outline-gold' : ''
+                }`}
+              >
+                {Flag ? <Flag /> : l.label}
+              </span>
+            </button>
+          </Tooltip>
         );
       })}
     </div>
