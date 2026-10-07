@@ -790,7 +790,9 @@ export default function Shop() {
   useEffect(() => {
     client
       .get('/categories')
-      .then((res) => setCategories(res.data))
+      // A category with nothing in it is a dead end in the bar and the chooser,
+      // so it stays hidden until it has products.
+      .then((res) => setCategories(res.data.filter((c) => (c.product_count ?? 1) > 0)))
       .catch(() => { });
   }, []);
 

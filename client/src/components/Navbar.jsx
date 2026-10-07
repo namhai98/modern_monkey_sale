@@ -68,7 +68,11 @@ function loadCatalog() {
     catalogRequest ||
     Promise.all([client.get('/categories'), client.get('/brands')])
       .then(([cats, brands]) => {
-        catalogCache = { categories: cats.data || [], brands: brands.data || [] };
+        // Empty categories are left out of the menus, as in the shop's bar.
+        catalogCache = {
+          categories: (cats.data || []).filter((c) => (c.product_count ?? 1) > 0),
+          brands: brands.data || [],
+        };
         return catalogCache;
       })
       .catch(() => {
