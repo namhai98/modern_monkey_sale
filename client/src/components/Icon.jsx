@@ -78,6 +78,80 @@ const PATHS = {
       <path d="M20.5 12H13" />
     </>
   ),
+
+  // Category marks for the shop's category bar (lucide geometry).
+  grid: (
+    <>
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+    </>
+  ),
+  watch: (
+    <>
+      <circle cx="12" cy="12" r="6" />
+      <path d="M12 10v2l1 1" />
+      <path d="m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05" />
+      <path d="m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05" />
+    </>
+  ),
+  // A handbag, distinct from `bag` (the shopping bag in the header).
+  handbag: (
+    <>
+      <path d="M2.05 18.57A2 2 0 0 0 4 21h16a2 2 0 0 0 1.95-2.43l-2-9A2 2 0 0 0 18 8H6a2 2 0 0 0-1.95 1.57Z" />
+      <path d="M8 11V6a4 4 0 0 1 8 0v5" />
+    </>
+  ),
+  shirt: (
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23Z" />
+  ),
+  gem: (
+    <>
+      <path d="M6 3h12l4 6-10 13L2 9Z" />
+      <path d="M11 3 8 9l4 13 4-13-3-6" />
+      <path d="M2 9h20" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42Z" />
+      <circle cx="7.5" cy="7.5" r=".5" />
+    </>
+  ),
+
+  // Gender marks for the shop's filter rail (lucide geometry).
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  venus: (
+    <>
+      <circle cx="12" cy="9" r="6" />
+      <path d="M12 15v7" />
+      <path d="M9 19h6" />
+    </>
+  ),
+  mars: (
+    <>
+      <circle cx="10" cy="14" r="6" />
+      <path d="M16 3h5v5" />
+      <path d="m21 3-6.75 6.75" />
+    </>
+  ),
+  venusMars: (
+    <>
+      <circle cx="12" cy="11" r="5" />
+      <path d="M12 16v6" />
+      <path d="M10 20h4" />
+      <path d="M17 2h4v4" />
+      <path d="m21 2-5.46 5.46" />
+    </>
+  ),
 };
 
 export default function Icon({ name, className = 'h-4 w-4', strokeWidth = 1.5 }) {

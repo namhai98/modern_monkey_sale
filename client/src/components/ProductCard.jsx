@@ -73,6 +73,16 @@ export default function ProductCard({ product }) {
           </span>
         )}
 
+        {/* Low stock mirrors the sale tag in the opposite corner — the same
+            ink chip and gold hairline, so a piece on sale and nearly gone
+            carries one tag on each side. The label is kept to one short word
+            so both fit side by side even on a phone's two-up grid. */}
+        {!soldOut && product.low_stock && (
+          <span className="micro absolute right-0 top-0 border-b border-l border-gold/40 bg-ink/80 px-3 py-1.5 tracking-meta text-gold backdrop-blur">
+            {t('product.lowStock')}
+          </span>
+        )}
+
         {/* Caption panel — slides up from the bottom edge on hover. */}
         {!soldOut && (
           <div className="absolute inset-x-0 bottom-0 translate-y-full bg-ink/85 p-4 text-center backdrop-blur transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0">
@@ -93,9 +103,6 @@ export default function ProductCard({ product }) {
             <p className="font-catalog mt-1.5 truncate text-meta uppercase tracking-meta text-muted">
               {product.brand?.name || categoryLabel(locale, product.category)}
             </p>
-          )}
-          {!soldOut && product.low_stock && (
-            <p className="micro mt-2 tracking-meta text-gold">{t('product.lowStock')}</p>
           )}
         </div>
         {/* Stacked so a sale pair stays one price wide. The name owns the rest

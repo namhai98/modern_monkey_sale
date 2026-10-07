@@ -17,11 +17,9 @@ export const site = {
     // the Facebook page's username above.
     messenger: 'https://m.me/modern.monkey.time',
   },
-  mapQuery: 'Gem Castle Center, Ulaanbaatar, Mongolia',
+  // The boutique's own Google Maps pin (Gem Castle shopping mall). Every
+  // address on the site links here.
+  mapsUrl: 'https://maps.app.goo.gl/nFwzkh7mXHujgmYR7',
 };
-
-export const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-  site.mapQuery
-)}`;
 
 export const telHref = (phone) => `tel:+976${phone}`;

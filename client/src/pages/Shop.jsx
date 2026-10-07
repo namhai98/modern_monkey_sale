@@ -15,6 +15,7 @@ import SectionHeading from '../components/SectionHeading';
 import Select from '../components/Select';
 import { ProductGridSkeleton } from '../components/Skeleton';
 import TextButton from '../components/TextButton';
+import Tooltip from '../components/Tooltip';
 import { useLocale } from '../context/LocaleContext';
 import { categoryLabel } from '../lib/i18n';
 import { media, resizeUnsplash } from '../lib/media';
@@ -33,20 +34,47 @@ function categoryImage(slug) {
    the gold eyebrow, micro-type at 0.28em, and the hairline that turns gold when
    something is active. No filled pills, no radius, no shadows. */
 
+/* A chip's three states: gold when on, hairline when available, and greyed
+   out (not clickable) when no piece in the current selection has it. */
+const chipState = (active, disabled) =>
+  active
+    ? 'border-gold text-gold'
+    : disabled
+      ? 'cursor-not-allowed border-line text-muted/35'
+      : 'border-line text-muted hover:border-gold/50 hover:text-foreground';
+
 /* A selectable chip: hairline by default, gold rule and gold text when on. */
-function Chip({ active, children, onClick }) {
+function Chip({ active, disabled = false, children, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-pressed={active}
-      className={`micro shrink-0 border px-3.5 py-2 tracking-meta transition-colors duration-300 ${active
-        ? 'border-gold text-gold'
-        : 'border-line text-muted hover:border-gold/50 hover:text-foreground'
-        }`}
+      className={`micro shrink-0 border px-3.5 py-2 tracking-meta transition-colors duration-300 ${chipState(active, disabled)}`}
     >
       {children}
     </button>
+  );
+}
+
+const GENDER_ICONS = { women: 'venus', men: 'mars', unisex: 'venusMars' };
+
+// A square, icon-only Chip: same hairline and gold active state.
+function GenderChip({ icon, label, active, disabled = false, onClick }) {
+  return (
+    <Tooltip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-pressed={active}
+        aria-label={label}
+        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border transition-colors duration-300 ${chipState(active, disabled)}`}
+      >
+        <Icon name={icon} className="h-[1.1rem] w-[1.1rem]" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -76,10 +104,18 @@ function FilterSection({ title, children, defaultOpen = true }) {
    Category is NOT here: it runs along the top of the page as its own bar, the
    way the reference layout arranges it, so the rail is left to the refinements
    that narrow a category rather than choose one. */
-function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, patch }) {
+function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, allFacets, patch }) {
   // The rail can be mounted twice at once (hidden desktop rail + open mobile
   // drawer), so the input's id has to be unique per instance.
   const searchId = useId();
+  // Every option the category has stays listed (`allFacets`), so ticking Sale
+  // or picking a brand never makes the other sections vanish. What the current
+  // selection actually contains (`facets`) decides which are live; the rest
+  // are greyed out rather than removed.
+  const genderOptions = allFacets.genders.length ? allFacets.genders : facets.genders;
+  const brandOptions = allFacets.brands.length ? allFacets.brands : facets.brands;
+  const liveGenders = new Set(facets.genders.map((g) => g.value));
+  const liveBrands = new Set(facets.brands.map((b) => b.slug));
   const clearSearch = () => {
     setQDraft('');
     patch({ q: '' });
@@ -155,33 +191,44 @@ function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, 
         </button>
       </FilterSection>
 
-      {facets.genders.length > 0 && (
+      {genderOptions.length > 0 && (
         <FilterSection title={t('filter.gender')}>
+          {/* Icon chips — ♀ / ♂ / both — with the word in the hover label and
+              the accessible name, so the row stays one short line. */}
           <div className="flex flex-wrap gap-2">
-            <Chip active={gender === ''} onClick={() => patch({ gender: '' })}>
-              {t('filter.all')}
-            </Chip>
-            {facets.genders.map((g) => (
-              <Chip
+            <GenderChip
+              icon="users"
+              label={t('filter.all')}
+              active={gender === ''}
+              onClick={() => patch({ gender: '' })}
+            />
+            {genderOptions.map((g) => (
+              <GenderChip
                 key={g.value}
+                icon={GENDER_ICONS[g.value] || 'users'}
+                label={t(`gender.${g.value}`)}
                 active={gender === g.value}
+                disabled={gender !== g.value && !liveGenders.has(g.value)}
                 onClick={() => patch({ gender: g.value })}
-              >
-                {t(`gender.${g.value}`)}
-              </Chip>
+              />
             ))}
           </div>
         </FilterSection>
       )}
 
-      {facets.brands.length > 0 && (
+      {brandOptions.length > 0 && (
         <FilterSection title={t('filter.brand')}>
           <div className="flex flex-wrap gap-2">
             <Chip active={brand === ''} onClick={() => patch({ brand: '' })}>
               {t('filter.all')}
             </Chip>
-            {facets.brands.map((b) => (
-              <Chip key={b.slug} active={brand === b.slug} onClick={() => patch({ brand: b.slug })}>
+            {brandOptions.map((b) => (
+              <Chip
+                key={b.slug}
+                active={brand === b.slug}
+                disabled={brand !== b.slug && !liveBrands.has(b.slug)}
+                onClick={() => patch({ brand: b.slug })}
+              >
                 {b.name}
               </Chip>
             ))}
@@ -192,15 +239,67 @@ function FilterControls({ t, brand, gender, sale, q, qDraft, setQDraft, facets, 
   );
 }
 
+// Space kept between the rail's last control and the top of the footer.
+const RAIL_FOOTER_GAP = 32;
+
 function FixedFilterRail({ controlProps }) {
+  const railRef = useRef(null);
+
+  /* A fixed rail knows nothing about the page under it, so at the end of the
+     listing it would slide over the footer. Once the footer's top edge climbs
+     past the rail's bottom, push the rail up by the overlap — it then scrolls
+     away with the page like the end of a sticky element. */
+  useEffect(() => {
+    const rail = railRef.current;
+    const panel = rail?.firstElementChild;
+    const footer = document.querySelector('footer');
+    if (!rail || !panel || !footer) return undefined;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const railBottom = parseFloat(getComputedStyle(rail).top) + panel.offsetHeight;
+      const overlap = railBottom + RAIL_FOOTER_GAP - footer.getBoundingClientRect().top;
+      rail.style.transform = overlap > 0 ? `translateY(${-overlap}px)` : '';
+      // Publish the rail's height so the listing can be at least that tall:
+      // on a short listing (a few results, an empty state) the footer would
+      // otherwise sit so high that the rail has to climb into the header.
+      document.documentElement.style.setProperty('--shop-rail-h', `${panel.offsetHeight}px`);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    // Facets loading, sections folding and the grid growing all move things.
+    const resize = new ResizeObserver(schedule);
+    resize.observe(panel);
+    resize.observe(document.body);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      resize.disconnect();
+      document.documentElement.style.removeProperty('--shop-rail-h');
+    };
+  }, []);
+
   return createPortal(
     /* Top-aligned with the listing's count/sort row (top-40 ≈ header +
        category bar + the listing's top padding), not centred — a centred rail
        left a band of empty space above it. Still fixed, so it stays put while
        the grid scrolls; bottom-0 + overflow-y-auto let a long brand list scroll
-       inside the rail instead of running off the screen. */
-    <div className="fixed left-8 top-40 bottom-0 hidden w-60 lg:flex lg:items-start xl:left-12 xl:w-[17rem]">
-      <div className="max-h-full w-full overflow-y-auto pb-6 pr-8 xl:pr-10">
+       inside the rail instead of running off the screen. The frame itself is
+       click-through (pointer-events-none) so the empty strip below the panel
+       never blocks the footer links it passes over; only the panel takes
+       clicks. */
+    <div
+      ref={railRef}
+      className="pointer-events-none fixed left-8 top-40 bottom-0 hidden w-60 lg:flex lg:items-start xl:left-12 xl:w-[17rem]"
+    >
+      <div className="pointer-events-auto max-h-full w-full overflow-y-auto pb-6 pr-8 xl:pr-10">
         <FilterControls {...controlProps} />
       </div>
     </div>,
@@ -208,23 +307,37 @@ function FixedFilterRail({ controlProps }) {
   );
 }
 
+// A line icon for each top-level category — the three the house is built on,
+// plus accessories where that category exists. Anything else gets a plain tag.
+const CATEGORY_ICONS = {
+  watches: 'watch',
+  bags: 'handbag',
+  apparel: 'shirt',
+  accessories: 'gem',
+};
+
 /* The category bar: the listing's top-level choice, running the full width of
-   the page above everything else. It scrolls horizontally rather than wrapping,
+   the page above everything else. Each choice leads with its line icon, gold
+   with the label when active. It scrolls horizontally rather than wrapping,
    so a shop with many categories keeps its first row intact on a phone. */
 function CategoryBar({ t, locale, categories, category, onAll, patch }) {
   const item = (active) =>
-    `link-lux font-catalog shrink-0 whitespace-nowrap py-1 text-meta font-medium uppercase tracking-meta transition-colors duration-300 ${active ? 'text-gold' : 'text-muted hover:text-foreground'
+    `group/cat font-catalog inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap py-1 text-meta font-medium uppercase tracking-meta transition-colors duration-300 ${active ? 'text-gold' : 'text-muted hover:text-foreground'
     }`;
+  const icon = (name) => (
+    <Icon name={name} className="h-[1.05rem] w-[1.05rem] shrink-0 transition-transform duration-300 group-hover/cat:-translate-y-px" />
+  );
 
   return (
     <nav aria-label={t('shop.category')} className="border-b border-line">
-      <div className="container-bar flex items-center gap-7 overflow-x-auto py-4 lg:gap-9">
+      <div className="container-bar flex items-center gap-7 overflow-x-auto py-4 lg:gap-10">
         <button
           type="button"
           onClick={() => patch({ category: '', brand: '', gender: '', all: '1' })}
           className={item(category === '' && onAll)}
         >
-          {t('nav.all')}
+          {icon('grid')}
+          <span className="link-lux">{t('nav.all')}</span>
         </button>
         {categories.map((c) => (
           <button
@@ -233,7 +346,8 @@ function CategoryBar({ t, locale, categories, category, onAll, patch }) {
             onClick={() => patch({ category: c.slug, brand: '', gender: '', all: '' })}
             className={item(c.slug === category)}
           >
-            {categoryLabel(locale, c)}
+            {icon(CATEGORY_ICONS[c.slug] || 'tag')}
+            <span className="link-lux">{categoryLabel(locale, c)}</span>
           </button>
         ))}
       </div>
@@ -327,6 +441,7 @@ function Listing({ categories }) {
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState({ brands: [], genders: [] });
+  const [allFacets, setAllFacets] = useState({ brands: [], genders: [] });
   const [loading, setLoading] = useState(true);
   // Whether a result has ever landed. It separates "the page is still empty"
   // from "this filter refines a list already on screen" — the first deserves a
@@ -417,6 +532,15 @@ function Listing({ categories }) {
     [t]
   );
 
+  // The category's full option list, independent of every other filter — the
+  // rail lists these always and greys out the ones the selection lacks.
+  useEffect(() => {
+    client
+      .get('/products/facets', { params: category ? { category } : {} })
+      .then((res) => setAllFacets(res.data))
+      .catch(() => setAllFacets({ brands: [], genders: [] }));
+  }, [category]);
+
   useEffect(() => {
     client
       .get('/products/facets', {
@@ -496,7 +620,7 @@ function Listing({ categories }) {
   useDocumentTitle(heading);
   const activeCount = (brand ? 1 : 0) + (gender ? 1 : 0) + (sale ? 1 : 0) + (q ? 1 : 0);
   const controlProps = {
-    t, locale, categories, category, brand, gender, sale, q, qDraft, setQDraft, facets, patch,
+    t, locale, categories, category, brand, gender, sale, q, qDraft, setQDraft, facets, allFacets, patch,
   };
 
   return (
@@ -516,7 +640,10 @@ function Listing({ categories }) {
         patch={patch}
       />
 
-      <div className="container-bar pt-8 pb-16 md:pb-24">
+      {/* lg:min-h — at least as tall as the fixed rail (its height + the
+          rail's offset below this block's top + the footer gap), so the
+          footer always starts below the rail, never under it. */}
+      <div className="container-bar pt-8 pb-10 md:pb-12 lg:min-h-[calc(var(--shop-rail-h,0px)+4.5rem)]">
         <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10 xl:grid-cols-[17rem_1fr] xl:gap-14">
           <aside className="hidden lg:block" />
 
@@ -563,6 +690,21 @@ function Listing({ categories }) {
             <div ref={gridRef} className="scroll-mt-32">
               {!loaded ? (
                 <ProductGridSkeleton />
+              ) : products.length === 0 && sale && !q && !brand && !gender ? (
+                /* Sale on its own came back empty: there is simply no active
+                   discount right now. Say that, and offer the same listing
+                   without the sale filter rather than a reset of everything. */
+                <EmptyState
+                  inline
+                  eyebrow={t('nav.sale')}
+                  title={t('shop.saleEmpty')}
+                  body={t('shop.saleEmptyHint')}
+                  actions={
+                    <Button variant="outline-dark" onClick={() => patch({ sale: '' })}>
+                      {t('shop.everything')}
+                    </Button>
+                  }
+                />
               ) : products.length === 0 ? (
                 <EmptyState
                   inline
@@ -599,7 +741,7 @@ function Listing({ categories }) {
               onChange={(p) => patch({ page: p > 1 ? p : '' })}
               prevLabel={t('shop.prev')}
               nextLabel={t('shop.next')}
-              className="mt-16 border-t border-line pt-10 md:mt-24"
+              className="mt-12 border-t border-line pt-8 md:mt-16"
             />
           </div>
         </div>

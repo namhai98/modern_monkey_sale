@@ -61,15 +61,15 @@ export default function SiteFooter({ flush = false }) {
   ];
 
   return (
-    <footer className={`bg-ink text-white ${flush ? '' : 'mt-20 md:mt-32'}`}>
-      <div className="container-lux grid grid-cols-2 gap-x-6 gap-y-12 py-14 md:gap-14 md:py-20 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+    <footer className={`border-t border-white/10 bg-ink text-white ${flush ? '' : 'mt-12 md:mt-16'}`}>
+      <div className="container-lux grid grid-cols-2 gap-x-6 gap-y-12 pb-14 pt-12 md:gap-14 md:pb-20 md:pt-16 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         {/* Phones: brand and contact span the width, the two short link
             lists sit side by side between them. */}
         <div className="col-span-2 md:col-span-1">
           <p className="heading-serif text-xl uppercase tracking-label">
             Modern<span className="text-gold"> Monkey</span>
           </p>
-          <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/55">{t('footer.blurb')}</p>
+          <p className="mt-6 max-w-xs whitespace-pre-line text-sm leading-relaxed text-white/55">{t('footer.blurb')}</p>
 
           <div className="mt-8 flex gap-4">
             <IconButton
@@ -109,7 +109,12 @@ export default function SiteFooter({ flush = false }) {
                 </a>
               </p>
             ))}
-            <p className="flex gap-3">
+            <a
+              href={site.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex gap-3 transition-colors hover:text-gold"
+            >
               <Icon name="mapPin" className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
               <span>
                 {site.address.lines.map((l) => (
@@ -118,7 +123,7 @@ export default function SiteFooter({ flush = false }) {
                   </span>
                 ))}
               </span>
-            </p>
+            </a>
             <p className="flex items-center gap-3">
               <Icon name="clock" className="h-4 w-4 shrink-0 text-gold" />
               {t('footer.hours')}

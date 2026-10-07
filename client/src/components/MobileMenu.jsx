@@ -23,13 +23,13 @@ const SETTING_LABEL = 'micro text-white/55';
 const ACCOUNT_LINK =
   'link-lux flex min-h-[2.75rem] w-fit items-center text-sm text-white/65 transition-colors duration-300 hover:text-white';
 
-/* LangSwitch and ThemeToggle are sized for a desktop header — 17px of text and
-   a 36px disc. In a menu meant for thumbs they need 44px, and these child
-   selectors are how to say so from the outside: `.wrapper button` outranks the
-   component's own `.h-9` on specificity, so it wins without depending on which
-   utility Tailwind happens to emit last. */
-const TAP_44 = '[&_button]:min-h-[2.75rem] [&_button]:px-1';
-const TAP_DISC = '[&>button]:h-11 [&>button]:w-11';
+/* ThemeToggle is sized for a desktop header — a 36px disc. In a menu meant for
+   thumbs it needs 44px, and this descendant selector is how to say so from the
+   outside: `.wrapper button` outranks the component's own `.h-9` on
+   specificity, so it wins without depending on which utility Tailwind happens
+   to emit last. (Descendant, not child: the disc sits inside its Tooltip.)
+   LangSwitch has a size of its own for this. */
+const TAP_DISC = '[&_button]:h-11 [&_button]:w-11';
 
 export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
   const { user } = useAuth();
@@ -107,7 +107,7 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
           <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-6">
             <div className={SETTING_ROW}>
               <span className={SETTING_LABEL}>{t('nav.language')}</span>
-              <LangSwitch className={TAP_44} />
+              <LangSwitch size="lg" />
             </div>
             <div className={`${SETTING_ROW} ${TAP_DISC}`}>
               <span className={SETTING_LABEL}>{t('nav.theme')}</span>

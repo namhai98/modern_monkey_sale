@@ -6,7 +6,8 @@
 // has not confirmed (delivery times, returns, payment methods) are deliberately
 // left out; add a group here once they are decided.
 //
-// An item may carry `link: { to, label }`, rendered after the answer.
+// An item may carry `link: { to, label }` (a page here) or `link: { href,
+// label }` (another site, opened in a new tab), rendered after the answer.
 import { site } from './site';
 
 const address = site.address.lines.join(', ');
@@ -87,6 +88,7 @@ const en = {
         {
           q: 'Where is the boutique?',
           a: `${address}. Open every day, ${hours}.`,
+          link: { href: site.mapsUrl, label: 'Open in Google Maps' },
         },
         {
           q: 'How can I contact you?',
@@ -171,6 +173,7 @@ const mn = {
         {
           q: 'Бутик хаана байрладаг вэ?',
           a: `${address}. Өдөр бүр ${hours} цагт ажиллана.`,
+          link: { href: site.mapsUrl, label: 'Газрын зураг дээр харах' },
         },
         {
           q: 'Тантай хэрхэн холбогдох вэ?',

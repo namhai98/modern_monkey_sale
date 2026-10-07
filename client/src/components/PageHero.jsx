@@ -34,7 +34,7 @@ export default function PageHero({
             {title}
           </h1>
           {lead && (
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
+            <p className="mt-6 max-w-xl whitespace-pre-line text-base leading-relaxed text-muted md:text-lg">
               {lead}
             </p>
           )}

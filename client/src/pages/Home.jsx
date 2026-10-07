@@ -187,6 +187,13 @@ function CollectionCards({ labels }) {
    a two-line headline (second line in the gold script) and one button into the
    category. The photo's subject sits right of centre and the scrim darkens the
    left, so the copy always reads on ink. */
+// Where each banner's crop sits — the clothing shot's face is near the top
+// edge of the frame, so centring it would cut the face off.
+const BANNER_FOCUS = {
+  watches: 'object-center',
+  apparel: 'object-[center_15%]',
+};
+
 function CategoryBanner({ slug }) {
   const { t } = useLocale();
   const image = homeMedia.banners[slug];
@@ -198,18 +205,19 @@ function CategoryBanner({ slug }) {
         srcSet={unsplashSrcSet(image, [800, 1200, 1600, 2000])}
         sizes="100vw"
         alt=""
-        className="absolute inset-0 h-full w-full object-cover opacity-80"
+        className={`absolute inset-0 h-full w-full object-cover ${BANNER_FOCUS[slug] || 'object-center'}`}
       />
       <div
-        className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 to-ink/10 md:via-ink/60"
+        className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent md:via-ink/40"
         aria-hidden="true"
       />
       <div className="container-lux relative z-10 flex min-h-[26rem] items-center py-16 md:min-h-[32rem] lg:min-h-[36rem]">
         <Reveal className="max-w-xl">
+          {/* The gold line is its own balanced block, so a long one splits
+              into even halves instead of leaving one word on a line. */}
           <h2 id={`banner-${slug}`} className="heading-serif text-4xl leading-[1.1] md:text-5xl">
             {t(`${key}.title1`)}
-            <br />
-            <span className="gold-script">{t(`${key}.title2`)}</span>
+            <span className="gold-script block text-balance">{t(`${key}.title2`)}</span>
           </h2>
           <p className="mt-6 max-w-md text-base leading-relaxed text-white/65">{t(`${key}.lead`)}</p>
           <div className="mt-10">
@@ -244,22 +252,22 @@ function CategoryStrips({ labels }) {
     if (!items?.length) return null;
     return (
       <Fragment key={slug}>
-      {i > 0 && homeMedia.banners[slug] && <CategoryBanner slug={slug} />}
-      <Section pad="content" tone={i % 2 === 0 ? 'surface' : 'theme'}>
-        {/* One heading, not eyebrow + title: both said the category name. The
-            gold label carries it alone, scaled up to heading size. */}
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="eyebrow text-2xl tracking-label md:text-3xl">{labels[slug]}</h2>
-          <TextLink to={`/shop?category=${slug}`}>{t('shop.explore')}</TextLink>
-        </div>
-        <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 md:mt-16 md:grid-cols-3">
-          {items.map((p, j) => (
-            <Reveal key={p.id} delay={j * 0.08}>
-              <ProductCard product={p} />
-            </Reveal>
-          ))}
-        </div>
-      </Section>
+        {i > 0 && homeMedia.banners[slug] && <CategoryBanner slug={slug} />}
+        <Section pad="content" tone={i % 2 === 0 ? 'surface' : 'theme'}>
+          {/* One heading, not eyebrow + title: both said the category name. The
+              gold label carries it alone, scaled up to heading size. */}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className="eyebrow text-2xl tracking-label md:text-3xl">{labels[slug]}</h2>
+            <TextLink to={`/shop?category=${slug}`}>{t('shop.explore')}</TextLink>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 md:mt-16 md:grid-cols-3">
+            {items.map((p, j) => (
+              <Reveal key={p.id} delay={j * 0.08}>
+                <ProductCard product={p} />
+              </Reveal>
+            ))}
+          </div>
+        </Section>
       </Fragment>
     );
   });

@@ -45,7 +45,14 @@ export default function Faq() {
                           <>
                             <p>{item.a}</p>
                             {item.link && (
-                              <TextButton to={item.link.to} tone="gold" className="mt-4 inline-block">
+                              <TextButton
+                                to={item.link.to}
+                                href={item.link.href}
+                                target={item.link.href ? '_blank' : undefined}
+                                rel={item.link.href ? 'noopener noreferrer' : undefined}
+                                tone="gold"
+                                className="mt-4 inline-block"
+                              >
                                 {item.link.label}
                               </TextButton>
                             )}

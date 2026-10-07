@@ -10,7 +10,7 @@ import ProductCard from '../components/ProductCard';
 import ProductGallery from '../components/ProductGallery';
 import QuantityStepper from '../components/QuantityStepper';
 import Reveal from '../components/Reveal';
-import Section, { Container } from '../components/Section';
+import Section from '../components/Section';
 import { RowHeading } from '../components/SectionHeading';
 import { ProductDetailSkeleton } from '../components/Skeleton';
 import { useCart } from '../context/CartContext';
@@ -123,9 +123,12 @@ export default function ProductDetail() {
 
   return (
     <>
-      <Container className="py-5">
-        <Breadcrumb items={crumbs} />
-      </Container>
+      {/* Full-bleed like the header and the gallery/info split below it, so
+          the trail starts on the header's left edge instead of floating in a
+          centred column on wide screens. */}
+      <div className="container-bar py-5">
+        <Breadcrumb items={crumbs} className="hdr:ml-2" />
+      </div>
 
       <div className="lg:grid lg:grid-cols-[58%_42%] lg:items-start">
         <div className="bg-surface pb-4 lg:sticky lg:top-20 lg:pb-6">

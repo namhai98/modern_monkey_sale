@@ -434,14 +434,14 @@ export default function Navbar() {
         {/* -mr-2.5 mirrors the menu button on the left: the 44px hit areas bleed
             into the gutter so they stay full size at 320px without pushing the
             brand lockup into a horizontal scroll. */}
-        <div className="-mr-2.5 flex items-center justify-end gap-0.5 md:gap-1 hdr:mr-0 hdr:gap-2">
+        <div className="-mr-2.5 flex items-center justify-end gap-0.5 md:gap-1 hdr:mr-0 hdr:gap-0.5">
           {/* Desktop only — below hdr these ride in the hamburger panel (see
-              MobileMenu). Placed before the icon trio so search/account/bag
-              stay grouped at the row's edge. */}
-          <div className="hidden items-center gap-5 hdr:mr-4 hdr:flex" onMouseEnter={scheduleMegaClose}>
-            <LangSwitch />
-            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <ThemeToggle />
+              MobileMenu). The compact language pill, then the theme icon as
+              one more plain icon in the row: no divider, no ringed disc, so
+              the whole right side reads as a single even group. */}
+          <div className="hidden items-center gap-0.5 hdr:flex" onMouseEnter={scheduleMegaClose}>
+            <LangSwitch size="sm" />
+            <ThemeToggle variant="plain" />
           </div>
 
           <Tooltip label={t('nav.search')}>

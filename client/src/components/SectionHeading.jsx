@@ -34,7 +34,7 @@ export default function SectionHeading({
       </Heading>
       {lead && (
         <p
-          className={`mt-6 text-base leading-relaxed md:text-lg ${
+          className={`mt-6 whitespace-pre-line text-base leading-relaxed md:text-lg ${
             dark ? 'text-white/60' : 'text-muted'
           }`}
         >

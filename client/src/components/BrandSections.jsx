@@ -27,6 +27,19 @@ export function TextLink({ to, children, className = '' }) {
   );
 }
 
+/* Running copy with the house name picked out in gold wherever it appears —
+   the name stays inside the translated sentence, so word order and case
+   endings ("Modern Monkey-оос") are the translator's, not the markup's. */
+function GoldBrand({ text }) {
+  const parts = text.split(site.name);
+  return parts.map((part, i) => (
+    <span key={i}>
+      {part}
+      {i < parts.length - 1 && <span className="text-gold">{site.name}</span>}
+    </span>
+  ));
+}
+
 /* The marketing site's introduction: one centred display statement with the
    operative phrase in gold. A pull-quote is one of the few places the design
    sets running copy in Montserrat instead of Inter. */
@@ -64,7 +77,7 @@ export function House() {
           <SectionHeading
             eyebrow={t('home.house.eyebrow')}
             title={t('home.house.title')}
-            lead={`${t('home.house.body')} ${t('home.house.body2')}`}
+            lead={`${t('home.house.body')}\n${t('home.house.body2')}`}
             action={<TextLink to="/shop?all=1">{t('home.house.cta')}</TextLink>}
           />
         </div>
@@ -135,11 +148,11 @@ export function Craftsmanship() {
 }
 
 /* The close of every marketing page: a dark band over a faded image, a
-   centred split headline with its second half in gold, the address and hours
-   on one line with gold icons, and a gold + outline button pair. */
+   centred two-line headline with its second line in the gold script, the
+   address, hours and phone numbers on one line with gold icons, and a single
+   shop button. */
 export function Visit() {
   const { t } = useLocale();
-  const phone = site.phones[0];
 
   return (
     <section
@@ -160,31 +173,45 @@ export function Visit() {
             className="heading-serif mx-auto mt-6 max-w-2xl text-4xl leading-[1.1] md:text-6xl"
           >
             {t('home.visit.title1')}
-            <span className="gold-script">{t('home.visit.title2')}</span>
+            <span className="gold-script block">{t('home.visit.title2').trim()}</span>
           </h2>
           <p className="mx-auto mt-8 max-w-lg text-base leading-relaxed text-white/60">
-            {t('home.visit.text')}
+            <GoldBrand text={t('home.visit.text')} />
           </p>
         </Reveal>
         <Reveal delay={0.15}>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 text-sm text-white/70 md:mt-10 md:flex-row md:gap-6">
-            <span className="inline-flex items-center gap-2">
+            <a
+              href={site.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 transition-colors hover:text-gold"
+            >
               <Icon name="mapPin" className="h-4 w-4 text-gold" />
               {t('home.visit.address')}
-            </span>
+            </a>
             <span className="hidden h-4 w-px bg-white/20 md:block" aria-hidden="true" />
             <span className="inline-flex items-center gap-2">
               <Icon name="clock" className="h-4 w-4 text-gold" />
               {t('home.visit.hours')}
             </span>
+            <span className="hidden h-4 w-px bg-white/20 md:block" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2">
+              <Icon name="phone" className="h-4 w-4 text-gold" />
+              {site.phones.map((p, i) => (
+                <span key={p}>
+                  {i > 0 && <span className="mr-2 text-white/30">·</span>}
+                  <a href={telHref(p)} className="transition-colors hover:text-gold">
+                    {p}
+                  </a>
+                </span>
+              ))}
+            </span>
           </div>
         </Reveal>
         <Reveal delay={0.3}>
-          <div className="mt-10 flex flex-wrap justify-center gap-4 md:mt-12 md:gap-5">
+          <div className="mt-10 flex justify-center md:mt-12">
             <Button to="/shop?all=1">{t('home.visit.cta')}</Button>
-            <Button href={telHref(phone)} variant="outline">
-              {t('home.visit.call')} {phone}
-            </Button>
           </div>
         </Reveal>
       </div>

@@ -1,21 +1,20 @@
+import { useEffect, useState } from 'react';
 import { LOCALES } from '../lib/i18n';
 import { useLocale } from '../context/LocaleContext';
 import Tooltip from './Tooltip';
 
 /* Flags drawn inline rather than as emoji: Windows has no flag emoji and
    renders 🇲🇳 as the bare letters "MN", which is exactly the text this replaced.
-   Both are drawn on a 2:1 canvas (Mongolia's own proportion; the US flag's
-   19:10 is close enough that `slice` crops nothing visible), so the two sit in
-   identical boxes. */
+   Both are drawn on a 2:1 canvas and shown whole in a 2:1 tile. */
 
-// Red–blue–red with a simplified Soyombo on the hoist stripe — at 13px tall the
-// full emblem's detail is sub-pixel, so this keeps its silhouette: flame, sun,
-// moon, the two triangles and bars, the yin-yang, and the side pillars.
+// Red–blue–red with a simplified Soyombo on the hoist stripe — at this size
+// the full emblem's detail is sub-pixel, so this keeps its silhouette: flame,
+// sun, moon, the two triangles and bars, the yin-yang, and the side pillars.
 function FlagMN() {
   const red = '#C4272F';
   const gold = '#F9CF02';
   return (
-    <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true" className="block h-full w-full">
+    <svg viewBox="0 0 1200 600" preserveAspectRatio="xMinYMid slice" aria-hidden="true" className="block h-full w-full">
       <rect width="400" height="600" fill={red} />
       <rect x="400" width="400" height="600" fill="#015197" />
       <rect x="800" width="400" height="600" fill={red} />
@@ -41,7 +40,7 @@ function FlagMN() {
 // fifty of them are a blur that reads as noise on the blue canton.
 function FlagEN() {
   return (
-    <svg viewBox="0 0 1300 650" preserveAspectRatio="xMidYMid slice" aria-hidden="true" className="block h-full w-full">
+    <svg viewBox="0 0 1300 650" preserveAspectRatio="xMinYMid slice" aria-hidden="true" className="block h-full w-full">
       <rect width="1300" height="650" fill="#fff" />
       {[0, 2, 4, 6, 8, 10, 12].map((i) => (
         <rect key={i} y={i * 50} width="1300" height="50" fill="#B22234" />
@@ -53,41 +52,84 @@ function FlagEN() {
 
 const FLAGS = { mn: FlagMN, en: FlagEN };
 
-// tipSide: where the hover label opens — below in the header, above where the
-// switch sits at the very bottom of the page (the footer's legal bar).
-export default function LangSwitch({ className = '', tipSide = 'bottom' }) {
-  const { locale, setLocale } = useLocale();
+// Outer tile sizes. The frame (1px gold border + 1px ink gap) takes 2px a side,
+// leaving a 2:1 window — Mongolia's own proportion, so its flag shows whole
+// (the US flag is 19:10, close enough that `slice` trims only a sliver).
+const SIZES = {
+  sm: 'h-5 w-9', // the header — a 16×32 flag among the 18px icons
+  md: 'h-[22px] w-10', // the footer's legal bar — 18×36
+  lg: 'h-7 w-[52px]', // the phone menu, sized for a thumb — 24×48
+};
+
+/* One flag face, finished like an enamel pin so it belongs to the black-and-
+   gold house rather than sitting on it as a bright sticker: a gold hairline,
+   a hairline of ink inside it, the flag a little muted (full colour on hover),
+   and a soft diagonal sheen across the top. */
+function Face({ Flag, label, back = false }) {
   return (
-    <div className={`flex items-center ${className}`}>
-      {LOCALES.map((l) => {
-        const Flag = FLAGS[l.code];
-        const active = locale === l.code;
-        return (
-          /* The flag is 26×13; the button around it is a full 44px square so
-             it's a real tap target on a phone (the footer copy shows there). */
-          <Tooltip key={l.code} label={l.name} side={tipSide}>
-            <button
-              type="button"
-              onClick={() => setLocale(l.code)}
-              aria-pressed={active}
-              aria-label={l.name}
-              className={`inline-flex min-h-11 min-w-11 items-center justify-center transition-opacity duration-300 ${
-                active ? '' : 'opacity-45 hover:opacity-100'
-              }`}
-            >
-              {/* The active flag gets the house gold hairline, offset so it frames
-                  the flag rather than sitting on its edge. */}
-              <span
-                className={`block h-[13px] w-[26px] overflow-hidden ${
-                  active ? 'outline outline-1 outline-offset-2 outline-gold' : ''
-                }`}
-              >
-                {Flag ? <Flag /> : l.label}
-              </span>
-            </button>
-          </Tooltip>
-        );
-      })}
-    </div>
+    <span
+      className="absolute inset-0 border border-gold/70 bg-ink p-px [backface-visibility:hidden]"
+      style={back ? { transform: 'rotateY(180deg)' } : undefined}
+    >
+      <span className="relative block h-full w-full overflow-hidden">
+        <span className="block h-full w-full brightness-90 saturate-[.7] transition-[filter] duration-500 group-hover/flag:brightness-100 group-hover/flag:saturate-100">
+          {Flag ? <Flag /> : label}
+        </span>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-white/0 to-black/25"
+        />
+      </span>
+    </span>
+  );
+}
+
+/* The language switch as one flag tile that flips like a coin — the same idea
+   as the watch theme switch: a single icon that shows the current state and
+   animates when it changes. The tile shows the current language's flag; a
+   click turns it over to the other flag as the site switches language. The
+   hover label says where it will go ("English хэл рүү шилжих").
+
+   The tile has two faces (front Mongolian, back English) on a card that only
+   ever turns forward by 180°, so it always flips the same way. The angle
+   follows the locale, so a switch made elsewhere — the footer's copy of this
+   control — turns this tile too.
+
+   tipSide: where the hover label opens — below in the header, above where the
+   switch sits at the very bottom of the page (the footer's legal bar). */
+export default function LangSwitch({ className = '', tipSide = 'bottom', size = 'md' }) {
+  const { locale, setLocale, t } = useLocale();
+  const [front, back] = LOCALES;
+  const next = locale === front.code ? back : front;
+  const [angle, setAngle] = useState(locale === back.code ? 180 : 0);
+
+  // Turn the card whenever the face showing is not the current language.
+  useEffect(() => {
+    const showing = (angle / 180) % 2 === 0 ? front.code : back.code;
+    if (showing !== locale) setAngle((a) => a + 180);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
+
+  const label = t('lang.switchTo', { name: next.name });
+
+  return (
+    <Tooltip label={label} side={tipSide} className={className}>
+      <button
+        type="button"
+        onClick={() => setLocale(next.code)}
+        aria-label={label}
+        className="group/flag inline-flex h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center focus-visible:outline-none"
+      >
+        <span className={`relative block [perspective:300px] ${SIZES[size]}`}>
+          <span
+            className="relative block h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] group-focus-visible/flag:outline group-focus-visible/flag:outline-1 group-focus-visible/flag:outline-offset-2 group-focus-visible/flag:outline-gold motion-reduce:transition-none"
+            style={{ transform: `rotateY(${angle}deg)` }}
+          >
+            <Face Flag={FLAGS[front.code]} label={front.label} />
+            <Face Flag={FLAGS[back.code]} label={back.label} back />
+          </span>
+        </span>
+      </button>
+    </Tooltip>
   );
 }
