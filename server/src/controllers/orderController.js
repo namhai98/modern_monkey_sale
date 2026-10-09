@@ -1,7 +1,7 @@
 import { query, pool } from '../config/db.js';
 import { ORDER_STATUSES, TRANSITIONS, RESTOCKING, canTransition } from '../utils/orderStatus.js';
 import { computeDiscountedPrice, pickBestActiveDiscount } from '../utils/discount.js';
-import { sendOrderConfirmation } from '../utils/orderEmail.js';
+import { sendNewOrderNotice, sendOrderConfirmation } from '../utils/orderEmail.js';
 import {
   serializeOrderRow,
   serializeOrderItem,
@@ -65,7 +65,8 @@ async function loadOrderDetail(orderId, req, res) {
   }
 
   const items = await query(
-    `SELECT i.*, COALESCE(i.product_name, p.name) AS product_name, p.sku AS product_sku
+    `SELECT i.*, COALESCE(i.product_name, p.name) AS product_name, p.sku AS product_sku,
+            p.image_url AS product_image
      FROM order_items i LEFT JOIN products p ON p.id = i.product_id
      WHERE i.order_id = $1 ORDER BY i.id`,
     [orderId]
@@ -77,11 +78,17 @@ async function loadOrderDetail(orderId, req, res) {
     [orderId]
   );
 
+  // Customers see when their order moved, not who moved it or the staff note.
+  const staff = isStaff(req);
+  const statusHistory = history.rows.map(serializeStatusHistory).map((h) =>
+    staff ? h : { id: h.id, from_status: h.from_status, to_status: h.to_status, created_at: h.created_at }
+  );
+
   res.json({
     ...serializeOrderRow(order),
     items: items.rows.map(serializeOrderItem),
-    status_history: history.rows.map(serializeStatusHistory),
-    allowed_transitions: isStaff(req) ? TRANSITIONS[order.status] || [] : [],
+    status_history: statusHistory,
+    allowed_transitions: staff ? TRANSITIONS[order.status] || [] : [],
   });
 }
 
@@ -232,6 +239,20 @@ export async function createOrder(req, res) {
       total,
       shippingAddress: shipping_address,
     }).catch((e) => console.warn('[order email]', e.message));
+
+    // And tell the boutique. The token carries no name, so look it up here,
+    // off the response path.
+    query('SELECT name FROM users WHERE id = $1', [userId])
+      .then(({ rows }) =>
+        sendNewOrderNotice({
+          orderId: order.id,
+          customer: { name: rows[0]?.name, email: req.user.email },
+          items: priced,
+          total,
+          shippingAddress: shipping_address,
+        })
+      )
+      .catch((e) => console.warn('[new order notice]', e.message));
   } catch (err) {
     await client.query('ROLLBACK');
     if (err.status) {
@@ -261,36 +282,42 @@ export async function listMyOrders(req, res) {
   }
 }
 
+// The staff order filters (status, customer, date range, name/email search),
+// shared by the paged list and the CSV export so both always agree. Expects
+// `orders o LEFT JOIN users u`.
+function buildOrderFilters(q) {
+  const where = [];
+  const params = [];
+
+  if (q.status) {
+    if (!ORDER_STATUSES.includes(q.status)) return { error: 'Unknown status' };
+    params.push(q.status);
+    where.push(`o.status = $${params.length}`);
+  }
+  if (q.user_id) {
+    params.push(Number(q.user_id));
+    where.push(`o.user_id = $${params.length}`);
+  }
+  if (q.from) {
+    params.push(q.from);
+    where.push(`o.created_at >= $${params.length}`);
+  }
+  if (q.to) {
+    params.push(q.to);
+    where.push(`o.created_at < ($${params.length}::date + 1)`);
+  }
+  if (q.search) {
+    params.push(`%${q.search}%`);
+    where.push(`(u.name ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+  }
+  return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
+}
+
 export async function listAllOrders(req, res) {
   try {
-    const where = [];
-    const params = [];
-
-    if (req.query.status) {
-      if (!ORDER_STATUSES.includes(req.query.status)) {
-        return res.status(400).json({ error: 'Unknown status', code: 'VALIDATION_ERROR' });
-      }
-      params.push(req.query.status);
-      where.push(`o.status = $${params.length}`);
-    }
-    if (req.query.user_id) {
-      params.push(Number(req.query.user_id));
-      where.push(`o.user_id = $${params.length}`);
-    }
-    if (req.query.from) {
-      params.push(req.query.from);
-      where.push(`o.created_at >= $${params.length}`);
-    }
-    if (req.query.to) {
-      params.push(req.query.to);
-      where.push(`o.created_at < ($${params.length}::date + 1)`);
-    }
-    if (req.query.search) {
-      params.push(`%${req.query.search}%`);
-      where.push(`(u.name ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
-    }
-
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const filters = buildOrderFilters(req.query);
+    if (filters.error) return res.status(400).json({ error: filters.error, code: 'VALIDATION_ERROR' });
+    const { whereSql, params } = filters;
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_LIMIT));
     const offset = (page - 1) * limit;
@@ -319,6 +346,60 @@ export async function listAllOrders(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+}
+
+// Up to this many rows in one export — years of orders for a boutique, and a
+// ceiling so a careless request can't build an enormous response.
+const EXPORT_MAX = 5000;
+
+// A field for CSV: quoted when it has to be, and a leading = + - @ neutralised
+// so a spreadsheet never runs a customer-typed address as a formula.
+function csvField(v) {
+  let s = v == null ? '' : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// The filtered order list as a CSV download, for bookkeeping. Times are in
+// Ulaanbaatar time (created_at is stored in the database's own time zone);
+// the BOM makes Excel read the Cyrillic as UTF-8.
+export async function exportOrdersCsv(req, res) {
+  try {
+    const filters = buildOrderFilters(req.query);
+    if (filters.error) return res.status(400).json({ error: filters.error, code: 'VALIDATION_ERROR' });
+    const { whereSql, params } = filters;
+
+    const { rows } = await query(
+      `SELECT o.id, o.status, o.total, o.shipping_address,
+              to_char(o.created_at AT TIME ZONE current_setting('TimeZone') AT TIME ZONE 'Asia/Ulaanbaatar',
+                      'YYYY-MM-DD HH24:MI') AS placed_at,
+              u.name AS user_name, u.email AS user_email,
+              (SELECT COALESCE(SUM(i.quantity), 0)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       ${whereSql}
+       ORDER BY o.created_at DESC
+       LIMIT ${EXPORT_MAX}`,
+      params
+    );
+
+    const header = ['Order', 'Placed (Ulaanbaatar)', 'Customer', 'Email', 'Status', 'Items', 'Total (USD)', 'Shipping address'];
+    const lines = [
+      header,
+      ...rows.map((r) => [
+        r.id, r.placed_at, r.user_name, r.user_email, r.status, r.item_count,
+        Number(r.total).toFixed(2), r.shipping_address,
+      ]),
+    ].map((cols) => cols.map(csvField).join(','));
+
+    const day = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="orders-${day}.csv"`);
+    res.send(`﻿${lines.join('\r\n')}\r\n`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to export orders' });
   }
 }
 

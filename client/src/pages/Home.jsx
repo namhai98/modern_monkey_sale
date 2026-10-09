@@ -4,7 +4,8 @@ import { Craftsmanship, House, Statement, TextLink, Visit } from '../components/
 import Button from '../components/Button';
 import CollectionCard from '../components/CollectionCard';
 import ImageFallback from '../components/ImageFallback';
-import ProductCard from '../components/ProductCard';
+import ProductRow from '../components/ProductRow';
+import RecentlyViewed from '../components/RecentlyViewed';
 import Reveal, { RevealScale } from '../components/Reveal';
 import Section from '../components/Section';
 import SectionHeading from '../components/SectionHeading';
@@ -116,7 +117,12 @@ function Hero() {
           {t('home.hero.support')}
         </p>
 
-        <div className="fade-up mt-12 flex flex-wrap gap-5" style={{ animationDelay: '1.2s' }}>
+        {/* Full-width and stacked on a phone, so the two read as a pair
+            rather than two buttons of different widths. */}
+        <div
+          className="fade-up mt-12 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-5 [&>*]:w-full sm:[&>*]:w-auto"
+          style={{ animationDelay: '1.2s' }}
+        >
           <Button to="/shop?all=1">{t('home.hero.cta')}</Button>
           <Button to="/shop?sale=1" variant="outline">
             {t('nav.sale')}
@@ -164,7 +170,9 @@ function CollectionCards({ labels }) {
           <TextLink to="/shop">{t('common.viewAll')}</TextLink>
         </Reveal>
       </div>
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3">
+      {/* A landscape card each on a phone (three portrait cards were most of
+          a screen apiece), three across from a small tablet up. */}
+      <div className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-6 md:mt-16">
         {BAND_SLUGS.map((slug, i) => (
           <Reveal key={slug} delay={i * 0.1} className={i % 2 === 1 ? 'lg:mt-12' : ''}>
             <RevealScale>
@@ -260,13 +268,7 @@ function CategoryStrips({ labels }) {
             <h2 className="eyebrow text-2xl tracking-label md:text-3xl">{labels[slug]}</h2>
             <TextLink to={`/shop?category=${slug}`}>{t('shop.explore')}</TextLink>
           </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 md:mt-16 md:grid-cols-3">
-            {items.map((p, j) => (
-              <Reveal key={p.id} delay={j * 0.08}>
-                <ProductCard product={p} />
-              </Reveal>
-            ))}
-          </div>
+          <ProductRow products={items} cols="md:grid-cols-3" className="mt-10 md:mt-16" />
         </Section>
       </Fragment>
     );
@@ -293,13 +295,7 @@ function Featured() {
         lead={t('home.featured.body')}
         align="center"
       />
-      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
-        {items.map((p, i) => (
-          <Reveal key={p.id} delay={i * 0.08}>
-            <ProductCard product={p} />
-          </Reveal>
-        ))}
-      </div>
+      <ProductRow products={items} cols="md:grid-cols-2 lg:grid-cols-4" className="mt-12 md:mt-16" />
       <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
         <Button to="/shop?all=1" variant="outline-dark">
           {t('shop.everything')}
@@ -330,13 +326,7 @@ function NewArrivals() {
         lead={t('home.newArrivals.body')}
         align="center"
       />
-      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
-        {items.map((p, i) => (
-          <Reveal key={p.id} delay={i * 0.08}>
-            <ProductCard product={p} />
-          </Reveal>
-        ))}
-      </div>
+      <ProductRow products={items} cols="md:grid-cols-2 lg:grid-cols-4" className="mt-12 md:mt-16" />
       <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
         <Button to="/shop?sort=created_at:desc" variant="outline-dark">
           {t('home.newArrivals.cta')}
@@ -367,13 +357,7 @@ function DiscountBand() {
         lead={t('home.discount.body')}
         align="center"
       />
-      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-14 md:mt-16 lg:grid-cols-4">
-        {items.map((p, i) => (
-          <Reveal key={p.id} delay={i * 0.08}>
-            <ProductCard product={p} />
-          </Reveal>
-        ))}
-      </div>
+      <ProductRow products={items} cols="md:grid-cols-2 lg:grid-cols-4" className="mt-12 md:mt-16" />
       <Reveal className="mt-14 border-t border-line pt-10 text-center md:mt-20 md:pt-16">
         <Button to="/shop?sale=1" variant="outline-dark">
           {t('home.discount.cta')}
@@ -402,6 +386,8 @@ export default function Home() {
       <NewArrivals />
       <DiscountBand />
       <Craftsmanship />
+      {/* Only once there is something to come back to. */}
+      <RecentlyViewed min={2} />
       <Visit />
     </>
   );

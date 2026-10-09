@@ -63,6 +63,10 @@ stays first-party.
    npm run seed:catalog
    ```
 
+> **New-order emails.** Set `ADMIN_NOTIFY_EMAIL` (comma-separated) to have the
+> boutique emailed for every order, with a link to it in the admin. It sends
+> only once the `SMTP_*` variables are set too; until then it is logged.
+
 > Render's free tier sleeps after ~15 min idle; the next request cold-starts in
 > ~50s. The local disk is ephemeral, so **admin image uploads won't survive a
 > restart** — for persistent uploads set `STORAGE_PROVIDER=s3` and the
@@ -129,6 +133,15 @@ schema, but the new code will fail against the old one.
 ```bash
 cd server
 psql "$DATABASE_URL" -f src/config/migrations/012_oauth_identities.sql
+```
+
+`015_wishlist.sql` adds `wishlist_items`, the saved pieces behind the heart
+button. The `/api/wishlist` routes need it; nothing else reads it. Running every
+pending file at once also works:
+
+```bash
+cd server
+DATABASE_URL="<production url>" npm run db:migrate
 ```
 
 `012_oauth_identities.sql` is required by social sign-in. It also relaxes

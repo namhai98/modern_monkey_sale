@@ -333,6 +333,11 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* The admin's side panel sliding in from the right edge. */
+@keyframes drawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(1.25rem); }
   to { opacity: 1; transform: translateY(0); }
@@ -440,4 +445,17 @@
 }
 .pop-in {
   animation: popIn 0.3s var(--ease-luxe) both;
+}
+
+/* A bigger hit area for a small text link or control, without moving it: an
+   invisible box reaching 12px above and below (8px to the sides), so a ~17px
+   line of micro-type becomes a ~41px tap target on a phone. Uses ::before —
+   link-lux draws its underline with ::after, so the two combine. */
+@utility tap-area {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -0.75rem -0.5rem;
+  }
 }

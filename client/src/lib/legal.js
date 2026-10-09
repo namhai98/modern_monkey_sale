@@ -58,6 +58,7 @@ const en = {
         ['mms_refresh', 'A cookie holding your sign-in session. It is httpOnly, so no script can read it, and Secure in production. It lasts 30 days or until you sign out.'],
         ['mms_oauth', 'A short-lived cookie, ten minutes, used only while you are being sent to Google or Facebook and back. It protects that round trip against cross-site request forgery.'],
         ['Local storage', 'Your access token and a cached copy of your own profile, your bag, and your language and theme choices. These stay in your browser and are cleared when you sign out.'],
+        ['mms_recent, mms_wishlist', 'The last few pieces you looked at, and the pieces you saved with the heart. Kept in your browser only, so the site can show them again. If you are signed in, your saved pieces are also stored with your account so they follow you to another device.'],
       ],
     },
     {
@@ -147,6 +148,7 @@ const mn = {
         ['mms_refresh', 'Таны нэвтрэлтийн session-ыг хадгалах cookie. httpOnly — ямар ч script уншиж чадахгүй, production дээр Secure. 30 хоног эсвэл та гарах хүртэл.'],
         ['mms_oauth', 'Google/Facebook руу явж буцах хооронд л хэрэглэгддэг 10 минутын cookie. Тэр замыг cross-site request forgery-с хамгаална.'],
         ['Local storage', 'Таны access token, өөрийн профайлын хуулбар, сагс, хэл болон өнгөний сонголт. Эдгээр таны браузерт үлдэж, гарахад цэвэрлэгдэнэ.'],
+        ['mms_recent, mms_wishlist', 'Сүүлд үзсэн хэдэн бараа, зүрхээр хадгалсан бараанууд. Дахин харуулахын тулд зөвхөн таны браузерт хадгалагдана. Нэвтэрсэн бол хадгалсан бараа тань өөр төхөөрөмж дээр ч харагдахаар таны бүртгэлд мөн хадгалагдана.'],
       ],
     },
     {

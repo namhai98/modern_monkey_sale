@@ -216,6 +216,14 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- Saved pieces, the heart (see migration 015)
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, product_id)
+);
+
 -- Sample seed data — a small luxury demo catalogue (bags, watches, apparel)
 INSERT INTO categories (name, slug) VALUES
   ('Bags', 'bags'),

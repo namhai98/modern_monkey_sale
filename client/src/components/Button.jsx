@@ -19,15 +19,18 @@ const base =
   'micro font-medium tracking-button select-none ' +
   'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ' +
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold ' +
-  'disabled:opacity-50 disabled:pointer-events-none';
+  'disabled:pointer-events-none disabled:cursor-not-allowed';
 
 const variants = {
-  // Primary CTA everywhere — gold ground, champagne sweep on hover.
-  gold: 'bg-gold text-ink',
+  // Primary CTA everywhere — gold ground, champagne sweep on hover. Disabled,
+  // it does NOT fade: a half-transparent gold left its dark label at ~3:1, and
+  // a disabled CTA often carries an instruction ("Choose a size") that has to
+  // be read. It drops to a quiet panel with a hairline and muted text instead.
+  gold: 'bg-gold text-ink disabled:border disabled:border-line disabled:bg-surface disabled:text-muted',
   // Secondary, on a fixed-dark band.
-  outline: 'border border-white/40 text-white hover:border-gold hover:text-gold',
+  outline: 'border border-white/40 text-white hover:border-gold hover:text-gold disabled:opacity-50',
   // Secondary, on a theme surface.
-  'outline-dark': 'border border-line text-foreground hover:border-gold hover:text-gold',
+  'outline-dark': 'border border-line text-foreground hover:border-gold hover:text-gold disabled:opacity-50',
 };
 
 // The variant names this component shipped with before it adopted the

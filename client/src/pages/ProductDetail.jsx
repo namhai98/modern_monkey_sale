@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../api/client';
 import Accordion from '../components/Accordion';
@@ -6,12 +6,16 @@ import Breadcrumb from '../components/Breadcrumb';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import Price from '../components/Price';
-import ProductCard from '../components/ProductCard';
+import ProductRow from '../components/ProductRow';
+import HeartButton from '../components/HeartButton';
+import Icon from '../components/Icon';
 import ProductGallery from '../components/ProductGallery';
 import QuantityStepper from '../components/QuantityStepper';
-import Reveal from '../components/Reveal';
+import RecentlyViewed from '../components/RecentlyViewed';
 import Section from '../components/Section';
 import { RowHeading } from '../components/SectionHeading';
+import SizeGuide from '../components/SizeGuide';
+import StickyBuyBar from '../components/StickyBuyBar';
 import { ProductDetailSkeleton } from '../components/Skeleton';
 import { useCart } from '../context/CartContext';
 import { useLocale } from '../context/LocaleContext';
@@ -19,6 +23,8 @@ import { useToast } from '../context/ToastContext';
 import { useUI } from '../context/UIContext';
 import { categoryLabel } from '../lib/i18n';
 import { isDiscounted, useMoney } from '../lib/price';
+import { recordView } from '../lib/recent';
+import { site } from '../lib/site';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 export default function ProductDetail() {
@@ -27,11 +33,20 @@ export default function ProductDetail() {
   const money = useMoney();
   const [product, setProduct] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  // Any other failure (offline, server down): say so and offer a retry
+  // instead of leaving the skeleton up forever.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
   const [variantId, setVariantId] = useState(null);
   const [openSection, setOpenSection] = useState(0);
   const [added, setAdded] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  // The add-to-bag row (watched by the phone's sticky buy bar) and the size
+  // picker (where that bar sends a shopper who has not chosen one yet).
+  const buyRowRef = useRef(null);
+  const sizesRef = useRef(null);
   const { addItem } = useCart();
   const { openCart } = useUI();
   const { success } = useToast();
@@ -40,16 +55,22 @@ export default function ProductDetail() {
   useEffect(() => {
     setProduct(null);
     setNotFound(false);
+    setFailed(false);
+    setRelated([]); // the previous piece's rail must not linger under this one
     setQty(1);
     setVariantId(null);
     window.scrollTo({ top: 0 });
     client
       .get(`/products/${id}`)
-      .then((res) => setProduct(res.data))
+      .then((res) => {
+        setProduct(res.data);
+        recordView(res.data.id);
+      })
       .catch((err) => {
         if (err.response?.status === 404) setNotFound(true);
+        else setFailed(true);
       });
-  }, [id]);
+  }, [id, attempt]);
 
   useEffect(() => {
     if (!product?.category?.slug) return;
@@ -65,6 +86,22 @@ export default function ProductDetail() {
         eyebrow="404"
         title={t('pdp.gone')}
         actions={<Button to="/shop?all=1">{t('pdp.backToCollection')}</Button>}
+      />
+    );
+  }
+  if (failed) {
+    return (
+      <EmptyState
+        eyebrow={t('common.loadFailedEyebrow')}
+        title={t('common.loadFailed')}
+        actions={
+          <>
+            <Button onClick={() => setAttempt((n) => n + 1)}>{t('common.retry')}</Button>
+            <Button to="/shop?all=1" variant="outline-dark">
+              {t('pdp.backToCollection')}
+            </Button>
+          </>
+        }
       />
     );
   }
@@ -184,8 +221,19 @@ export default function ProductDetail() {
             </div>
 
             {hasVariants && (
-              <div className="mt-10">
-                <p className="micro mb-4 text-muted">{t('pdp.size')}</p>
+              <div ref={sizesRef} className="mt-10 scroll-mt-[calc(var(--header-h)+1.5rem)]">
+                <div className="mb-4 flex items-baseline justify-between gap-4">
+                  <p className="micro text-muted">{t('pdp.size')}</p>
+                  {slug === 'apparel' && (
+                    <button
+                      type="button"
+                      onClick={() => setSizeGuideOpen(true)}
+                      className="link-lux tap-area micro tracking-meta text-muted hover:text-gold"
+                    >
+                      {t('sizeGuide.link')}
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((v) => {
                     const out = v.stock <= 0;
@@ -212,13 +260,12 @@ export default function ProductDetail() {
                     );
                   })}
                 </div>
-                {needsSize && (
-                  <p className="micro mt-4 text-muted">{t('pdp.selectSize')}</p>
-                )}
               </div>
             )}
 
-            <div className="mt-10 flex flex-wrap items-stretch gap-4">
+            {/* No separate "choose a size" note under the sizes: the button
+                below already says it, in the one place a shopper looks. */}
+            <div ref={buyRowRef} className="mt-10 flex flex-wrap items-stretch gap-4">
               <QuantityStepper
                 value={qty}
                 max={maxQty}
@@ -229,7 +276,9 @@ export default function ProductDetail() {
                 onClick={addToBag}
                 disabled={soldOut || needsSize}
                 size="lg"
-                className="min-w-0 flex-1"
+                // A phone gives the button a row of its own under the stepper
+                // and heart, so a long label like "Choose a size" stays on one line.
+                className="order-last min-w-0 basis-full sm:order-none sm:basis-0 sm:flex-1"
               >
                 {soldOut
                   ? t('product.soldOut')
@@ -239,11 +288,26 @@ export default function ProductDetail() {
                       ? t('pdp.added')
                       : t('pdp.addToBag')}
               </Button>
+              <HeartButton productId={product.id} variant="outline" />
             </div>
 
             {!soldOut && product.low_stock && (
               <p className="micro mt-5 tracking-meta text-gold">{t('pdp.fewRemain')}</p>
             )}
+
+            {/* A question before buying goes straight to the boutique; the ref
+                tells them which piece the conversation is about. */}
+            <Button
+              href={`${site.social.messenger}?ref=product-${product.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="outline-dark"
+              full
+              className="mt-6"
+            >
+              <Icon name="messageCircle" className="h-4 w-4" />
+              {t('pdp.ask')}
+            </Button>
 
             <div className="mt-14 border-t border-line">
               {sections.map((s, i) => (
@@ -268,22 +332,32 @@ export default function ProductDetail() {
               product.category && (
                 <Link
                   to={`/shop?category=${product.category.slug}`}
-                  className="link-lux micro tracking-button text-gold"
+                  className="link-lux tap-area micro tracking-button text-gold"
                 >
                   {t('shop.explore')}
                 </Link>
               )
             }
           />
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 md:mt-14 lg:grid-cols-4">
-            {related.map((p, i) => (
-              <Reveal key={p.id} delay={i * 0.08}>
-                <ProductCard product={p} />
-              </Reveal>
-            ))}
-          </div>
+          <ProductRow products={related} cols="md:grid-cols-2 lg:grid-cols-4" className="mt-10 md:mt-14" />
         </Section>
       )}
+
+      <StickyBuyBar
+        watchRef={buyRowRef}
+        product={product}
+        soldOut={soldOut}
+        needsSize={needsSize}
+        added={added}
+        onAdd={addToBag}
+        onChooseSize={() => sizesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
+
+      {slug === 'apparel' && (
+        <SizeGuide open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} highlight={selectedVariant?.label} />
+      )}
+
+      <RecentlyViewed excludeId={product.id} tone={related.length > 0 ? 'theme' : 'surface'} />
     </>
   );
 }

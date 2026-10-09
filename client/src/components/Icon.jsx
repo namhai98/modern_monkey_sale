@@ -15,6 +15,9 @@ const PATHS = {
     </>
   ),
   check: <path d="M20 6 9 17l-5-5" />,
+  heart: (
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  ),
   x: <path d="M18 6 6 18M6 6l12 12" />,
   sun: (
     <>
@@ -154,13 +157,14 @@ const PATHS = {
   ),
 };
 
-export default function Icon({ name, className = 'h-4 w-4', strokeWidth = 1.5 }) {
+// `filled` paints the glyph solid — the saved state of the heart.
+export default function Icon({ name, className = 'h-4 w-4', strokeWidth = 1.5, filled = false }) {
   const glyph = PATHS[name];
   if (!glyph) return null;
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       /* 1.5 is the house stroke weight — a 2px stroke reads heavy next to
          Montserrat at 500 and the hairline borders everything else uses. */

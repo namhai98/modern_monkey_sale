@@ -52,7 +52,9 @@ export function RowHeading({ eyebrow, title, action, dark = false, className = '
   return (
     <div className={`flex flex-wrap items-end justify-between gap-4 ${className}`}>
       <div>
-        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        {/* With no title, the eyebrow is the row's only label — so it is the
+            row's heading too, keeping the outline h1 → h2 → card h3 intact. */}
+        {eyebrow && (title ? <p className="eyebrow">{eyebrow}</p> : <h2 className="eyebrow">{eyebrow}</h2>)}
         {title && (
           <h2
             className={`heading-serif mt-3 text-2xl md:text-3xl ${

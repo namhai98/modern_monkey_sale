@@ -17,13 +17,19 @@ export default function Orders() {
   const money = useMoney();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  // A failed load is not "no orders" — it gets its own message and a retry.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setFailed(false);
     client
       .get('/orders/mine')
       .then((res) => setOrders(res.data))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [attempt]);
 
   return (
     <>
@@ -49,7 +55,15 @@ export default function Orders() {
           </div>
         )}
 
-        {!loading && orders.length === 0 && (
+        {!loading && failed && (
+          <EmptyState
+            inline
+            title={t('common.loadFailed')}
+            actions={<Button onClick={() => setAttempt((n) => n + 1)}>{t('common.retry')}</Button>}
+          />
+        )}
+
+        {!loading && !failed && orders.length === 0 && (
           <EmptyState
             inline
             title={t('orders.none')}

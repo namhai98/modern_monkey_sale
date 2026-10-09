@@ -1,6 +1,11 @@
 import { serializeProductImage } from './serializeProductImage.js';
 import { computeDiscountedPrice } from './discount.js';
 
+// The same "stock" rule in SQL, for filters and reports over `products p`:
+// the sum of the sizes when there are any, else the products row.
+export const EFFECTIVE_STOCK_SQL =
+  '(COALESCE((SELECT SUM(v.stock) FROM product_variants v WHERE v.product_id = p.id), p.stock))';
+
 // Shape a products row (joined with categories; `images` is a jsonb array of
 // product_images rows; `discount` is the single best active discount as jsonb,
 // or null) for API responses.

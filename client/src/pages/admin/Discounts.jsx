@@ -1,13 +1,15 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import client from '../../api/client';
-import { money } from '../../lib/price';
-import Select from '../../components/Select';
 import Icon from '../../components/Icon';
 import EmptyState from '../../components/EmptyState';
 import Skeleton from '../../components/Skeleton';
 import { useToast } from '../../context/ToastContext';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls, btnPrimary, btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
+import {
+  AdminPage, Drawer, FormSection, RowAction, SearchInput, Segmented, SelectField, TableWrap,
+  TextField, ToggleChip, Toolbar, usd,
+} from './kit';
+import { btnPrimary, btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const ymd = (d) => d.toISOString().slice(0, 10);
 const today = () => ymd(new Date());
@@ -27,18 +29,24 @@ const emptyForm = {
   product_ids: [],
 };
 
+// Same language as the rest of the admin: gold for live, plain for upcoming,
+// muted for over, danger only for switched off.
 const STATUS_STYLE = {
-  active: 'text-gold',
-  scheduled: 'text-foreground',
-  expired: 'text-muted',
-  disabled: 'text-danger',
+  active: 'border-gold/50 text-gold',
+  scheduled: 'border-line text-foreground',
+  expired: 'border-line text-muted',
+  disabled: 'border-danger/50 text-danger',
 };
 
-function valueLabel(d) {
-  return d.type === 'percentage' ? `${Number(d.value)}%` : money(d.value);
-}
+// "2026.09.08" — dots read as a date at a glance; ISO dashes looked like a range.
+const fmtDay = (ymdStr) => ymdStr.replaceAll('-', '.');
+// Inclusive: a discount from the 8th to the 30th runs 23 days.
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000) + 1;
 
-/* ── product multi-select with search ─────────────────────────── */
+const valueLabel = (d) => (d.type === 'percentage' ? `${Number(d.value)}%` : usd(d.value));
+
+/* ── Product multi-select with search ───────────────────────────────────── */
+
 function ProductPicker({ selected, onChange }) {
   const { t } = useLocale();
   const [term, setTerm] = useState('');
@@ -54,7 +62,7 @@ function ProductPicker({ selected, onChange }) {
     });
   }, []);
 
-  // resolve names for anything already selected (edit mode)
+  // Resolve names for anything already selected (edit mode).
   useEffect(() => {
     const missing = selected.filter((id) => !names[id]);
     if (missing.length === 0) return;
@@ -68,9 +76,7 @@ function ProductPicker({ selected, onChange }) {
     setLoading(true);
     const id = setTimeout(() => {
       client
-        .get('/products', {
-          params: { ...(term ? { search: term } : {}), limit: 40, include_inactive: 1 },
-        })
+        .get('/products', { params: { ...(term ? { search: term } : {}), limit: 40, include_inactive: 1 } })
         .then((res) => {
           setResults(res.data.items);
           remember(res.data.items);
@@ -88,65 +94,65 @@ function ProductPicker({ selected, onChange }) {
     else next.add(pid);
     onChange([...next]);
   };
+  const allShownSelected = results.length > 0 && results.every((p) => selectedSet.has(p.id));
+  const toggleShown = () => {
+    const next = new Set(selectedSet);
+    for (const p of results) (allShownSelected ? next.delete(p.id) : next.add(p.id));
+    onChange([...next]);
+  };
 
   return (
-    <div className="md:col-span-2 border-t border-line pt-3">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-muted">{t('admin.picker.products')}</p>
-        <span className="text-xs text-muted">{t('admin.picker.selected', { n: selected.length })}</span>
-      </div>
-
+    <div>
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <div className="mb-4 flex flex-wrap gap-1.5">
           {selected.map((pid) => (
             <button
               key={pid}
               type="button"
               onClick={() => toggle(pid)}
-              className="inline-flex items-center gap-1 border border-line text-foreground hover:border-gold px-2 py-0.5 text-xs transition-colors"
+              className="inline-flex items-center gap-1.5 border border-gold/40 px-2.5 py-1 text-xs text-foreground transition-colors hover:border-danger hover:text-danger"
             >
               {names[pid] || `#${pid}`}
-              <span aria-hidden="true">×</span>
+              <Icon name="x" className="h-3 w-3" />
             </button>
           ))}
         </div>
       )}
 
-      <input
-        className={`${inputCls} w-full mb-2`}
-        placeholder={t('admin.picker.searchPlaceholder')}
-        value={term}
-        onChange={(e) => setTerm(e.target.value)}
-      />
-      <div className="max-h-56 overflow-y-auto border border-line divide-y divide-line/60">
-        {loading && <p className="text-sm text-muted p-3">{t('admin.picker.loading')}</p>}
-        {!loading && results.length === 0 && (
-          <p className="text-sm text-muted p-3">{t('admin.picker.none')}</p>
+      <div className="flex items-end gap-4">
+        <SearchInput value={term} onChange={setTerm} placeholder={t('admin.picker.searchPlaceholder')} label={t('admin.picker.search')} className="flex-1" />
+        {results.length > 0 && (
+          <button type="button" onClick={toggleShown} className="link-lux micro mb-2.5 shrink-0 text-gold">
+            {allShownSelected ? t('admin.picker.clearShown') : t('admin.picker.selectShown')}
+          </button>
         )}
-        {results.map((p) => (
-          <label
-            key={p.id}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-surface"
-          >
-            <input
-              type="checkbox"
-              checked={selectedSet.has(p.id)}
-              onChange={() => toggle(p.id)}
-            />
-            <span className="flex-1 text-foreground">
-              {p.name}
-              {!p.is_active && <span className="text-xs text-muted"> {t('admin.picker.inactive')}</span>}
-            </span>
-            <span className="text-muted text-xs">{money(p.price)}</span>
-          </label>
-        ))}
+      </div>
+
+      <div className="mt-3 max-h-72 divide-y divide-line overflow-y-auto border border-line">
+        {loading && <p className="p-3 text-sm text-muted">{t('admin.picker.loading')}</p>}
+        {!loading && results.length === 0 && <p className="p-3 text-sm text-muted">{t('admin.picker.none')}</p>}
+        {!loading &&
+          results.map((p) => {
+            const on = selectedSet.has(p.id);
+            return (
+              <label key={p.id} className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm transition-colors hover:bg-surface ${on ? 'bg-surface' : ''}`}>
+                <input type="checkbox" className="accent-[var(--color-gold)]" checked={on} onChange={() => toggle(p.id)} />
+                <span className="flex-1 text-foreground">
+                  {p.name}
+                  {!p.is_active && <span className="text-xs text-muted"> {t('admin.picker.inactive')}</span>}
+                </span>
+                <span className="text-xs tabular-nums text-muted">{usd(p.price)}</span>
+              </label>
+            );
+          })}
       </div>
     </div>
   );
 }
 
-/* ── create / edit form ──────────────────────────────────────── */
-function DiscountForm({ initial, onCancel, onSaved }) {
+/* ── Create / edit panel ────────────────────────────────────────────────── */
+
+function DiscountDrawer({ initial, onClose, onSaved }) {
   const { t } = useLocale();
   const [form, setForm] = useState(initial);
   const [error, setError] = useState(null);
@@ -189,87 +195,63 @@ function DiscountForm({ initial, onCancel, onSaved }) {
       onSaved();
     } catch (err) {
       setError(err.response?.data?.error || t('admin.discounts.saveFailed'));
-    } finally {
       setSaving(false);
     }
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="border border-line bg-surface p-4 mb-6 grid gap-3 md:grid-cols-2"
+    <Drawer
+      open
+      wide
+      title={editing ? initial.name : t('admin.discounts.newTitle')}
+      subtitle={t('admin.picker.selected', { n: form.product_ids.length })}
+      onClose={onClose}
+      footer={
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" form="discount-form" className={btnPrimary} disabled={saving}>
+            {saving ? t('admin.discounts.saving') : editing ? t('admin.discounts.saveChanges') : t('admin.discounts.create')}
+          </button>
+          <button type="button" onClick={onClose} className={btnGhost}>{t('admin.discounts.cancel')}</button>
+          {error && <p className="w-full text-sm text-danger">{error}</p>}
+        </div>
+      }
     >
-      <div className="md:col-span-2 heading-serif text-lg text-foreground">
-        {editing ? t('admin.discounts.editTitle', { name: initial.name }) : t('admin.discounts.newTitle')}
-      </div>
+      <form id="discount-form" onSubmit={submit} noValidate>
+        <FormSection title={t('admin.discounts.secBasic')}>
+          <TextField className="sm:col-span-2" label={t('admin.discounts.colName')} required
+            placeholder={t('admin.discounts.namePlaceholder')} value={form.name} onChange={(e) => set('name', e.target.value)} />
+          <SelectField label={t('admin.discounts.colType')} value={form.type} onChange={(e) => set('type', e.target.value)}>
+            <option value="percentage">{t('admin.discounts.percentage')}</option>
+            <option value="fixed">{t('admin.discounts.fixed')}</option>
+          </SelectField>
+          <TextField
+            label={form.type === 'percentage' ? t('admin.discounts.labelPercent') : t('admin.discounts.labelAmount')}
+            required type="number" step={form.type === 'percentage' ? '1' : '0.01'} min="0"
+            max={form.type === 'percentage' ? '100' : undefined}
+            placeholder={form.type === 'percentage' ? t('admin.discounts.percentPlaceholder') : t('admin.discounts.fixedPlaceholder')}
+            value={form.value} onChange={(e) => set('value', e.target.value)} />
+          <div className="sm:col-span-2">
+            <ToggleChip checked={form.is_active} onChange={(v) => set('is_active', v)}>{t('admin.discounts.active')}</ToggleChip>
+            <p className="mt-2 text-xs text-muted">{t('admin.discounts.activeHint')}</p>
+          </div>
+        </FormSection>
 
-      <input
-        className={inputCls}
-        placeholder={t('admin.discounts.namePlaceholder')}
-        value={form.name}
-        onChange={(e) => set('name', e.target.value)}
-        required
-      />
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input
-          type="checkbox"
-          checked={form.is_active}
-          onChange={(e) => set('is_active', e.target.checked)}
-        />
-        {t('admin.discounts.active')}
-      </label>
+        <FormSection title={t('admin.discounts.secDates')} hint={t('admin.discounts.datesHint')}>
+          <TextField label={t('admin.discounts.startDate')} type="date" required value={form.start_date}
+            onChange={(e) => set('start_date', e.target.value)} />
+          <TextField label={t('admin.discounts.endDate')} type="date" required value={form.end_date}
+            onChange={(e) => set('end_date', e.target.value)} />
+        </FormSection>
 
-      <Select value={form.type} onChange={(e) => set('type', e.target.value)}>
-        <option value="percentage">{t('admin.discounts.percentage')}</option>
-        <option value="fixed">{t('admin.discounts.fixed')}</option>
-      </Select>
-      <input
-        className={inputCls}
-        type="number"
-        step={form.type === 'percentage' ? '1' : '0.01'}
-        min="0"
-        max={form.type === 'percentage' ? '100' : undefined}
-        placeholder={form.type === 'percentage' ? t('admin.discounts.percentPlaceholder') : t('admin.discounts.fixedPlaceholder')}
-        value={form.value}
-        onChange={(e) => set('value', e.target.value)}
-        required
-      />
-
-      <label className="text-xs text-muted">
-        {t('admin.discounts.startDate')}
-        <input
-          className={`${inputCls} w-full mt-1`}
-          type="date"
-          value={form.start_date}
-          onChange={(e) => set('start_date', e.target.value)}
-          required
-        />
-      </label>
-      <label className="text-xs text-muted">
-        {t('admin.discounts.endDate')}
-        <input
-          className={`${inputCls} w-full mt-1`}
-          type="date"
-          value={form.end_date}
-          onChange={(e) => set('end_date', e.target.value)}
-          required
-        />
-      </label>
-
-      <ProductPicker selected={form.product_ids} onChange={(ids) => set('product_ids', ids)} />
-
-      {error && <p className="md:col-span-2 text-danger text-sm">{error}</p>}
-      <div className="md:col-span-2 flex gap-2">
-        <button className={btnPrimary} disabled={saving}>
-          {saving ? t('admin.discounts.saving') : editing ? t('admin.discounts.saveChanges') : t('admin.discounts.create')}
-        </button>
-        <button type="button" onClick={onCancel} className={btnGhost}>
-          {t('admin.discounts.cancel')}
-        </button>
-      </div>
-    </form>
+        <FormSection title={t('admin.picker.products')} cols={1}>
+          <ProductPicker selected={form.product_ids} onChange={(ids) => set('product_ids', ids)} />
+        </FormSection>
+      </form>
+    </Drawer>
   );
 }
+
+/* ── Page ───────────────────────────────────────────────────────────────── */
 
 export default function AdminDiscounts() {
   const { t } = useLocale();
@@ -278,6 +260,7 @@ export default function AdminDiscounts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formFor, setFormFor] = useState(null); // 'new' | discount-with-product_ids | null
+  const [status, setStatus] = useState('all');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -291,9 +274,7 @@ export default function AdminDiscounts() {
       .finally(() => setLoading(false));
   }, [t]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   async function openEdit(d) {
     try {
@@ -314,9 +295,7 @@ export default function AdminDiscounts() {
   }
 
   async function remove(d) {
-    if (!confirm(t('admin.discounts.confirmDelete', { name: d.name }))) {
-      return;
-    }
+    if (!confirm(t('admin.discounts.confirmDelete', { name: d.name }))) return;
     try {
       await client.delete(`/discounts/${d.id}`);
       load();
@@ -325,34 +304,38 @@ export default function AdminDiscounts() {
     }
   }
 
-  function afterSave() {
-    setFormFor(null);
-    load();
-  }
+  const shown = status === 'all' ? discounts : discounts.filter((d) => d.status === status);
+  const STATUS_OPTIONS = ['all', 'active', 'scheduled', 'expired', 'disabled'];
 
   return (
-    <div className="max-w-5xl mx-auto pt-10 pb-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="heading-serif text-2xl text-foreground">{t('admin.discounts.title')}</h1>
-        <button
-          onClick={() => setFormFor(formFor === 'new' ? null : 'new')}
-          className={btnPrimary}
-        >
-          {formFor === 'new' ? t('admin.discounts.close') : t('admin.discounts.new')}
+    <AdminPage
+      title={t('admin.discounts.title')}
+      count={t('admin.discounts.count', { n: discounts.length })}
+      actions={
+        <button onClick={() => setFormFor('new')} className={`${btnPrimary} gap-2`}>
+          <Icon name="plus" className="h-3.5 w-3.5" />
+          {t('admin.discounts.new')}
         </button>
-      </div>
-
-      {formFor === 'new' && (
-        <DiscountForm initial={emptyForm} onCancel={() => setFormFor(null)} onSaved={afterSave} />
-      )}
-      {formFor && formFor.id && (
-        <DiscountForm initial={formFor} onCancel={() => setFormFor(null)} onSaved={afterSave} />
+      }
+    >
+      {discounts.length > 0 && (
+        <Toolbar active={status !== 'all'} onClear={() => setStatus('all')}>
+          <Segmented
+            label={t('admin.discounts.colStatus')}
+            value={status}
+            onChange={setStatus}
+            options={STATUS_OPTIONS.map((s) => ({
+              value: s,
+              label: s === 'all' ? t('admin.ui.all') : t(`admin.discountStatus.${s}`),
+            }))}
+          />
+        </Toolbar>
       )}
 
       {loading && (
         <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       )}
@@ -370,47 +353,66 @@ export default function AdminDiscounts() {
         />
       )}
 
-      {!loading && !error && discounts.length > 0 && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className={trCls}>
-              <th className={thCls}>{t('admin.discounts.colName')}</th>
-              <th className={thCls}>{t('admin.discounts.colType')}</th>
-              <th className={thCls}>{t('admin.discounts.colValue')}</th>
-              <th className={thCls}>{t('admin.discounts.colStart')}</th>
-              <th className={thCls}>{t('admin.discounts.colEnd')}</th>
-              <th className={thCls}>{t('admin.discounts.colProducts')}</th>
-              <th className={thCls}>{t('admin.discounts.colStatus')}</th>
-              <th className={thNumCls}>{t('admin.action')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {discounts.map((d) => (
-              <Fragment key={d.id}>
-                <tr className={`${trCls} transition-colors hover:bg-surface`}>
-                  <td className={`${tdCls} font-medium text-foreground`}>{d.name}</td>
-                  <td className={`${tdCls} text-muted`}>{d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}</td>
-                  <td className={`${tdCls} text-foreground`}>{valueLabel(d)}</td>
-                  <td className={`${tdCls} text-muted`}>{d.start_date}</td>
-                  <td className={`${tdCls} text-muted`}>{d.end_date}</td>
-                  <td className={`${tdCls} text-muted`}>{d.product_count}</td>
-                  <td className={`${tdCls} capitalize ${STATUS_STYLE[d.status] || 'text-muted'}`}>{t(`admin.discountStatus.${d.status}`)}</td>
-                  <td className={`${tdNumCls} space-x-3 whitespace-nowrap`}>
-                    <button onClick={() => openEdit(d)} className="inline-flex text-muted transition-colors hover:text-gold"
-                      aria-label={t('admin.discounts.edit')} title={t('admin.discounts.edit')}>
-                      <Icon name="edit" />
-                    </button>
-                    <button onClick={() => remove(d)} className="inline-flex text-danger transition-opacity duration-300 hover:opacity-70"
-                      aria-label={t('admin.discounts.delete')} title={t('admin.discounts.delete')}>
-                      <Icon name="trash" />
+      {!loading && !error && discounts.length > 0 && shown.length === 0 && (
+        <p className="py-10 text-center text-sm text-muted">{t('admin.ui.noMatch')}</p>
+      )}
+
+      {!loading && !error && shown.length > 0 && (
+        <TableWrap>
+          <table className="w-full min-w-[820px] text-sm">
+            <thead>
+              <tr className={trCls}>
+                <th className={thCls}>{t('admin.discounts.colName')}</th>
+                <th className={`${thCls} w-36`}>{t('admin.discounts.colValue')}</th>
+                <th className={`${thCls} w-56`}>{t('admin.discounts.colPeriod')}</th>
+                <th className={`${thNumCls} w-24`}>{t('admin.discounts.colProducts')}</th>
+                <th className={`${thCls} w-40`}>{t('admin.discounts.colStatus')}</th>
+                <th className={`${thNumCls} w-28`}><span className="sr-only">{t('admin.action')}</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((d) => (
+                <tr key={d.id} className={`${trCls} transition-colors hover:bg-surface`}>
+                  <td className={tdCls}>
+                    <button type="button" onClick={() => openEdit(d)} className="text-left font-medium text-foreground transition-colors hover:text-gold">
+                      {d.name}
                     </button>
                   </td>
+                  <td className={tdCls}>
+                    <div className="heading-serif text-lg tabular-nums text-foreground">{valueLabel(d)}</div>
+                    <div className="mt-0.5 text-xs text-muted">
+                      {d.type === 'percentage' ? t('admin.discounts.percentage') : t('admin.discounts.fixed')}
+                    </div>
+                  </td>
+                  <td className={`${tdCls} whitespace-nowrap`}>
+                    <div className="tabular-nums text-foreground">{fmtDay(d.start_date)} – {fmtDay(d.end_date)}</div>
+                    <div className="mt-0.5 text-xs text-muted">{t('admin.discounts.days', { n: daysBetween(d.start_date, d.end_date) })}</div>
+                  </td>
+                  <td className={`${tdNumCls} text-muted`}>{d.product_count}</td>
+                  <td className={tdCls}>
+                    <span className={`micro inline-flex border px-2.5 py-1 tracking-meta ${STATUS_STYLE[d.status] || 'border-line text-muted'}`}>
+                      {t(`admin.discountStatus.${d.status}`)}
+                    </span>
+                  </td>
+                  <td className={`${tdNumCls} whitespace-nowrap`}>
+                    <RowAction icon="edit" label={t('admin.discounts.edit')} onClick={() => openEdit(d)} />
+                    <RowAction icon="trash" danger label={t('admin.discounts.delete')} onClick={() => remove(d)} />
+                  </td>
                 </tr>
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </TableWrap>
       )}
-    </div>
+
+      {formFor && (
+        <DiscountDrawer
+          key={formFor === 'new' ? 'new' : formFor.id}
+          initial={formFor === 'new' ? emptyForm : formFor}
+          onClose={() => setFormFor(null)}
+          onSaved={() => { setFormFor(null); load(); }}
+        />
+      )}
+    </AdminPage>
   );
 }

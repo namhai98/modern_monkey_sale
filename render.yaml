@@ -76,3 +76,8 @@ services:
       #   sync: false
       # - key: MAIL_FROM
       #   value: Modern Monkey Sale <no-reply@example.com>
+
+      # Who gets an email for every new order (comma-separated). Needs the
+      # SMTP settings above to actually send; blank = nobody.
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false

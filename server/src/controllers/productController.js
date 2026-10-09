@@ -1,5 +1,5 @@
 import { query, pool } from '../config/db.js';
-import { serializeProduct } from '../utils/serializeProduct.js';
+import { EFFECTIVE_STOCK_SQL, serializeProduct } from '../utils/serializeProduct.js';
 import { isNonNegativeNumber, isNonNegativeInt } from '../utils/validators.js';
 
 const SORTABLE = {
@@ -81,58 +81,104 @@ async function fetchOne(id) {
   return rows[0] || null;
 }
 
+// The price a shopper actually pays: the cheapest currently-active discount
+// applied, or the list price. The same rule as SELECT_BASE's LATERAL join, as
+// an expression — so price filters and price sorting match the price shown.
+// (LEAST ignores the NULL of "no discount".)
+const EFFECTIVE_PRICE_SQL = `(SELECT LEAST(p.price, MIN(CASE d.type
+      WHEN 'percentage' THEN GREATEST(0, p.price - p.price * d.value / 100)
+      WHEN 'fixed' THEN GREATEST(0, p.price - d.value) END))
+   FROM discounts d
+   JOIN discount_products dp ON dp.discount_id = d.id AND dp.product_id = p.id
+   WHERE d.is_active = TRUE AND CURRENT_DATE BETWEEN d.start_date AND d.end_date)`;
+
+const ON_SALE_SQL = `EXISTS (
+  SELECT 1 FROM discount_products dps
+  JOIN discounts ds ON ds.id = dps.discount_id
+  WHERE dps.product_id = p.id
+    AND ds.is_active = TRUE
+    AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
+)`;
+
+const parsePrice = (v) => {
+  const n = Number(v);
+  return v !== undefined && v !== '' && Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+// `brand` takes one slug/id or several, comma-separated.
+const brandList = (v) =>
+  String(v || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+
+/* The storefront filters, shared by the listing and the facet counts so the
+   two can never disagree. `exclude` leaves one filter out — a facet is counted
+   under every filter but its own. Expects `products p` joined to
+   `categories c` and `brands br`. */
+function buildProductFilters(q, { exclude = null, includeInactive = false } = {}) {
+  const where = [];
+  const params = [];
+  const add = (v) => {
+    params.push(v);
+    return `$${params.length}`;
+  };
+
+  if (!includeInactive) where.push('p.is_active = TRUE');
+  if (q.search) {
+    const s = add(`%${q.search}%`);
+    where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
+  }
+  if (q.category) {
+    const cat = String(q.category);
+    where.push(/^\d+$/.test(cat) ? `p.category_id = ${add(Number(cat))}` : `c.slug = ${add(cat)}`);
+  }
+  if (exclude !== 'brand' && q.brand) {
+    const list = brandList(q.brand);
+    const ids = list.filter((b) => /^\d+$/.test(b)).map(Number);
+    const slugs = list.filter((b) => !/^\d+$/.test(b));
+    const parts = [];
+    if (ids.length) parts.push(`p.brand_id = ANY(${add(ids)}::int[])`);
+    if (slugs.length) parts.push(`br.slug = ANY(${add(slugs)}::text[])`);
+    if (parts.length) where.push(`(${parts.join(' OR ')})`);
+  }
+  if (exclude !== 'gender' && q.gender) {
+    where.push(`p.gender = ${add(String(q.gender))}`);
+  }
+  if (q.on_sale === '1') where.push(ON_SALE_SQL);
+  if (q.in_stock === '1') where.push(`${EFFECTIVE_STOCK_SQL} > 0`);
+  if (exclude !== 'price') {
+    const min = parsePrice(q.price_min);
+    const max = parsePrice(q.price_max);
+    if (min !== null) where.push(`${EFFECTIVE_PRICE_SQL} >= ${add(min)}`);
+    if (max !== null) where.push(`${EFFECTIVE_PRICE_SQL} <= ${add(max)}`);
+  }
+  return { where, params, add };
+}
+
 export async function listProducts(req, res) {
   try {
     const includeInactive = req.query.include_inactive === '1' && isStaff(req);
+    const { where, params, add } = buildProductFilters(req.query, { includeInactive });
 
-    const where = [];
-    const params = [];
-
-    if (!includeInactive) where.push('p.is_active = TRUE');
-
-    if (req.query.search) {
-      params.push(`%${req.query.search}%`);
-      const s = `$${params.length}`;
-      where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
-    }
-    if (req.query.category) {
-      const cat = String(req.query.category);
-      params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
-      where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
-    }
     if (req.query.ids) {
       const ids = String(req.query.ids)
         .split(',')
         .map((n) => Number(n.trim()))
         .filter(Number.isInteger);
       if (ids.length === 0) return res.json({ items: [], total: 0, page: 1, limit: 0 });
-      params.push(ids);
-      where.push(`p.id = ANY($${params.length})`);
-    }
-    if (req.query.brand) {
-      const b = String(req.query.brand);
-      params.push(/^\d+$/.test(b) ? Number(b) : b);
-      where.push(/^\d+$/.test(b) ? `p.brand_id = $${params.length}` : `br.slug = $${params.length}`);
-    }
-    if (req.query.gender) {
-      params.push(String(req.query.gender));
-      where.push(`p.gender = $${params.length}`);
-    }
-    if (req.query.on_sale === '1') {
-      where.push(`EXISTS (
-        SELECT 1 FROM discount_products dps
-        JOIN discounts ds ON ds.id = dps.discount_id
-        WHERE dps.product_id = p.id
-          AND ds.is_active = TRUE
-          AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
-      )`);
+      where.push(`p.id = ANY(${add(ids)})`);
     }
     if (req.query.low_stock === '1') {
-      where.push('p.stock <= p.low_stock_threshold');
+      // A piece sold in sizes keeps its stock per size, so count those —
+      // the same total the serializer uses for the low-stock tag.
+      where.push(`${EFFECTIVE_STOCK_SQL} <= p.low_stock_threshold`);
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const sortKey = SORTABLE[req.query.sort] || 'p.created_at';
+    // Price sorts by what the shopper pays, matching the price on the card.
+    const sortKey = req.query.sort === 'price' ? EFFECTIVE_PRICE_SQL : SORTABLE[req.query.sort] || 'p.created_at';
     const order = String(req.query.order).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -173,36 +219,7 @@ export async function listProductFacets(req, res) {
     // an empty page — while a facet never narrows itself to the one option
     // already picked, which would leave nothing to switch to.
     const scope = (exclude) => {
-      const params = [];
-      const where = ['p.is_active = TRUE'];
-      if (req.query.category) {
-        const cat = String(req.query.category);
-        params.push(/^\d+$/.test(cat) ? Number(cat) : cat);
-        where.push(/^\d+$/.test(cat) ? `p.category_id = $${params.length}` : `c.slug = $${params.length}`);
-      }
-      if (req.query.search) {
-        params.push(`%${req.query.search}%`);
-        const s = `$${params.length}`;
-        where.push(`(p.name ILIKE ${s} OR br.name ILIKE ${s} OR p.sku ILIKE ${s})`);
-      }
-      if (req.query.on_sale === '1') {
-        where.push(`EXISTS (
-          SELECT 1 FROM discount_products dps
-          JOIN discounts ds ON ds.id = dps.discount_id
-          WHERE dps.product_id = p.id
-            AND ds.is_active = TRUE
-            AND CURRENT_DATE BETWEEN ds.start_date AND ds.end_date
-        )`);
-      }
-      if (exclude !== 'brand' && req.query.brand) {
-        const b = String(req.query.brand);
-        params.push(/^\d+$/.test(b) ? Number(b) : b);
-        where.push(/^\d+$/.test(b) ? `p.brand_id = $${params.length}` : `br.slug = $${params.length}`);
-      }
-      if (exclude !== 'gender' && req.query.gender) {
-        params.push(String(req.query.gender));
-        where.push(`p.gender = $${params.length}`);
-      }
+      const { where, params } = buildProductFilters(req.query, { exclude });
       return {
         params,
         from: `FROM products p
@@ -234,20 +251,27 @@ export async function listProductFacets(req, res) {
     // A selected option the other filters have emptied must stay on screen —
     // otherwise the shopper sees "0 products" with nothing visibly chosen and
     // no chip to unpick (e.g. a brand with nothing on sale, then Sale ticked).
-    if (req.query.brand) {
-      const sel = String(req.query.brand);
-      const isId = /^\d+$/.test(sel);
-      if (!brands.some((r) => (isId ? r.id === Number(sel) : r.slug === sel))) {
-        const { rows } = await query(
-          `SELECT id, name, slug FROM brands WHERE ${isId ? 'id' : 'slug'} = $1`,
-          [isId ? Number(sel) : sel]
-        );
-        if (rows[0]) {
-          brands.push({ ...rows[0], count: 0 });
-          brands.sort((x, y) => x.name.localeCompare(y.name));
-        }
-      }
+    const missing = brandList(req.query.brand).filter(
+      (sel) => !brands.some((r) => (/^\d+$/.test(sel) ? r.id === Number(sel) : r.slug === sel))
+    );
+    if (missing.length) {
+      const { rows } = await query(
+        `SELECT id, name, slug FROM brands WHERE slug = ANY($1::text[]) OR id::text = ANY($1::text[])`,
+        [missing]
+      );
+      for (const r of rows) brands.push({ ...r, count: 0 });
+      brands.sort((x, y) => x.name.localeCompare(y.name));
     }
+
+    // The price span of the current selection (every filter but price), in
+    // USD as paid — the rail shows it as a hint beside the price inputs.
+    const pr = scope('price');
+    const priceRow = (
+      await query(
+        `SELECT MIN(${EFFECTIVE_PRICE_SQL})::float AS min, MAX(${EFFECTIVE_PRICE_SQL})::float AS max ${pr.from}`,
+        pr.params
+      )
+    ).rows[0];
     const order = { women: 0, men: 1, unisex: 2 };
     const selGender = req.query.gender;
     if (typeof selGender === 'string' && Object.hasOwn(order, selGender) && !genders.some((r) => r.value === selGender)) {
@@ -257,6 +281,7 @@ export async function listProductFacets(req, res) {
     res.json({
       brands,
       genders: genders.sort((a, b) => (order[a.value] ?? 9) - (order[b.value] ?? 9)),
+      price: { min: priceRow?.min ?? null, max: priceRow?.max ?? null },
     });
   } catch (err) {
     console.error(err);

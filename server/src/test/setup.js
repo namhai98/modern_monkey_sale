@@ -22,6 +22,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // Tables integration tests can write to, in an order TRUNCATE ... CASCADE
 // can safely clear without also needing every other table listed.
 const TEST_TABLES = [
+  'wishlist_items',
   'stock_movements',
   'order_status_history',
   'order_items',

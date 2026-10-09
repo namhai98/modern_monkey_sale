@@ -30,6 +30,8 @@ export default function Price({
   // price is already ~90px — wider than half a product card. On a card that
   // pair ate the whole meta row and printed itself over the product name.
   // Stacked, a discounted card measures exactly like an undiscounted one.
+  // `stack="sm"` stacks only from the sm breakpoint: on a phone the card's
+  // meta is a column, so the pair sits on one line under the name instead.
   stack = false,
   className = '',
 }) {
@@ -51,7 +53,11 @@ export default function Price({
   return (
     <span
       className={`inline-flex ${
-        stack ? 'flex-col items-end gap-y-0.5' : 'flex-wrap items-baseline gap-2'
+        stack === 'sm'
+          ? 'flex-wrap items-baseline gap-x-2 sm:flex-col sm:items-end sm:gap-x-0 sm:gap-y-0.5'
+          : stack
+            ? 'flex-col items-end gap-y-0.5'
+            : 'flex-wrap items-baseline gap-2'
       } ${className}`}
     >
       <span className={`${s.now} ${nowColor} tabular-nums`}>{money(now)}</span>

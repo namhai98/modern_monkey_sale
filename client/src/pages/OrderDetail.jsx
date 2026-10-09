@@ -1,25 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import OrderStatusBadge from '../components/OrderStatusBadge';
+import OrderTimeline from '../components/OrderTimeline';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
-import { useMoney } from '../lib/price';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import PageHero from '../components/PageHero';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import LineItem, { OrderSummary } from '../components/LineItem';
 import Section from '../components/Section';
 import Skeleton from '../components/Skeleton';
 import TextButton from '../components/TextButton';
 
 export default function OrderDetail() {
   const { id } = useParams();
-  const location = useLocation();
-  const justPlaced = Boolean(location.state?.justPlaced);
+  const [params] = useSearchParams();
+  // From the URL (?placed=1), so the confirmation survives a refresh.
+  const justPlaced = params.get('placed') === '1';
   const { t } = useLocale();
   const { error: toastError } = useToast();
-  const money = useMoney();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
@@ -108,86 +109,54 @@ export default function OrderDetail() {
       </PageHero>
 
       <Section containerClassName="max-w-3xl">
-        {/* The presentation site has no tables at all, so this one is built from
-            the same parts as everything else: micro-type column heads over a
-            hairline, hairline row rules, and no fills or zebra striping. */}
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line text-left">
-              <th className="micro pb-4 font-normal text-muted">{t('orderDetail.item')}</th>
-              <th className="micro pb-4 text-right font-normal text-muted">{t('orderDetail.qty')}</th>
-              <th className="micro pb-4 text-right font-normal text-muted">{t('orderDetail.price')}</th>
-              <th className="micro pb-4 text-right font-normal text-muted">{t('orderDetail.total')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((it) => (
-              <tr key={it.id} className="border-b border-line">
-                <td className="py-4 pr-4">
-                  <span className="heading-serif text-base">{it.name || `#${it.product_id}`}</span>
-                  {(it.variant_label || it.sku) && (
-                    <span className="micro mt-1 block tracking-meta text-muted">
-                      {[it.variant_label, it.sku].filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                </td>
-                <td className="py-4 text-right tabular-nums">{it.quantity}</td>
-                <td className="py-4 text-right tabular-nums">
-                  {it.discount_amount > 0 ? (
-                    <span className="inline-flex flex-col items-end leading-tight">
-                      <s className="text-xs text-muted/60">{money(it.original_price)}</s>
-                      <span>{money(it.price)}</span>
-                    </span>
-                  ) : (
-                    money(it.price)
-                  )}
-                </td>
-                <td className="py-4 text-right tabular-nums">{money(it.line_total)}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={3} className="pt-6 text-right">
-                <span className="micro text-muted">{t('orderDetail.total')}</span>
-              </td>
-              <td className="pt-6 text-right">
-                <span className="heading-serif text-xl tabular-nums">{money(order.total)}</span>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <div className="mt-14 grid gap-10 md:grid-cols-2">
-          <div>
-            <p className="eyebrow mb-4">{t('orderDetail.shippingAddress')}</p>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
-              {order.shipping_address || '—'}
-            </p>
-            <p className="micro mt-5 tracking-meta text-muted">
-              {t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() })}
-            </p>
+        {/* Right after checkout: what happens now, in three plain steps — the
+            shopper's next question once the order is in. */}
+        {justPlaced && (
+          <div className="mb-14 border border-gold/40 bg-surface p-6 md:p-8">
+            <p className="eyebrow">{t('orderDetail.nextTitle')}</p>
+            <ol className="mt-5 space-y-4">
+              {[1, 2, 3].map((n) => (
+                <li key={n} className="flex gap-4 text-sm leading-relaxed">
+                  <span className="heading-serif text-gold">{String(n).padStart(2, '0')}</span>
+                  <span className="text-muted">{t(`orderDetail.next${n}`)}</span>
+                </li>
+              ))}
+            </ol>
           </div>
+        )}
 
-          {order.status_history?.length > 0 && (
-            <div>
-              <p className="eyebrow mb-4">{t('orderDetail.history')}</p>
-              <ol className="space-y-3 text-sm">
-                {order.status_history.map((h) => (
-                  <li key={h.id} className="border-b border-line pb-3">
-                    <span className="micro block tracking-meta text-muted">
-                      {new Date(h.created_at).toLocaleString()}
-                    </span>
-                    <span className="mt-1 block">
-                      {h.from_status ? `${t(`status.${h.from_status}`)} → ` : ''}
-                      <span className="text-gold">{t(`status.${h.to_status}`)}</span>
-                    </span>
-                    {h.note && <span className="mt-1 block text-xs text-muted">{h.note}</span>}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+        <OrderTimeline status={order.status} history={order.status_history} createdAt={order.created_at} />
+
+        {/* The same order line as the bag and checkout — photo, name, size,
+            quantity and price — instead of a four-column table that would not
+            fit a phone. */}
+        <div className="mt-14 divide-y divide-line border-y border-line">
+          {order.items.map((it) => (
+            <LineItem
+              key={it.id}
+              name={it.name || `#${it.product_id}`}
+              image={it.image_url}
+              variantLabel={it.variant_label}
+              quantity={it.quantity}
+              price={it.price}
+              originalPrice={it.original_price}
+            />
+          ))}
+        </div>
+        <OrderSummary
+          className="mt-8"
+          subtotal={order.items.reduce((n, it) => n + it.original_price * it.quantity, 0)}
+          total={order.total}
+        />
+
+        <div className="mt-14">
+          <p className="eyebrow mb-4">{t('orderDetail.shippingAddress')}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
+            {order.shipping_address || '—'}
+          </p>
+          <p className="micro mt-5 tracking-meta text-muted">
+            {t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() })}
+          </p>
         </div>
 
         {order.status === 'pending' && (

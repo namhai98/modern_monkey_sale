@@ -23,6 +23,7 @@ export function serializeOrderItem(row) {
     product_id: row.product_id,
     name: row.product_name ?? null,
     sku: row.product_sku ?? null,
+    image_url: row.product_image ?? null, // current product photo, for the order page
     variant_label: row.variant_label ?? null,
     quantity: row.quantity,
     price,

@@ -147,7 +147,8 @@ export default function SiteFooter({ flush = false }) {
             <Link to="/privacy" className="link-lux transition-colors hover:text-white">
               {t('footer.legal.privacy')}
             </Link>
-            <LangSwitch tipSide="top" />
+            {/* The last thing on the row: its label hangs left, not off-screen. */}
+            <LangSwitch tipSide="top" tipAlign="end" />
           </div>
         </div>
       </div>

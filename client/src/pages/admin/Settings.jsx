@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import client from '../../api/client';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
-import { inputCls, btnPrimary } from './ui';
+import { AdminPage } from './kit';
+import { inputCls, btnPrimary, errorCls, okCls } from './ui';
 
 const fmtMnt = (n) => `${(Math.floor(n / 1000) * 1000).toLocaleString('en-US')}₮`;
 const fmtRate = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -69,69 +70,70 @@ export default function AdminSettings() {
   const sourceHealthy = source === 'live' && !current?.mnt_rate_stale;
 
   return (
-    <div className="max-w-3xl mx-auto pt-10 pb-8">
-      <h1 className="heading-serif text-2xl text-foreground mb-6">{t('admin.settings.title')}</h1>
-
+    <AdminPage title={t('admin.settings.title')}>
       {loading ? (
-        <div className="max-w-md space-y-6">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-40 w-full" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
         </div>
       ) : (
-        <div className="max-w-md space-y-6">
-          <div className="border border-line bg-surface p-6">
-            <p className="micro text-muted">{t('admin.settings.liveTitle')}</p>
-            <p className="text-sm text-muted mt-1 mb-4 leading-relaxed">
-              {t('admin.settings.liveBody')}
-            </p>
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+          <section className="border border-line bg-surface p-6 md:p-8">
+            <h2 className="micro tracking-button text-gold">{t('admin.settings.liveTitle')}</h2>
+            <p className="mb-6 mt-2 text-sm leading-relaxed text-muted">{t('admin.settings.liveBody')}</p>
 
-            <p className="heading-serif text-2xl text-foreground tabular-nums">
+            <p className="heading-serif text-3xl tabular-nums text-foreground">
               {effective > 0 ? t('admin.settings.liveRate', { value: fmtRate(effective) }) : '—'}
             </p>
-            <p className={`text-xs mt-2 ${sourceHealthy ? 'text-muted/70' : 'text-gold'}`}>
+            <p className={`mt-2 inline-flex items-center gap-2 text-xs ${sourceHealthy ? 'text-muted' : 'text-gold'}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${sourceHealthy ? 'bg-gold' : 'bg-gold/50'}`} aria-hidden="true" />
               {sourceNote}
             </p>
 
             {preview && (
-              <p className="text-xs text-muted mt-4">
+              <p className="mt-6 border-t border-line pt-4 text-xs text-muted">
                 {t('admin.settings.preview', { value: preview })}
               </p>
             )}
-          </div>
+          </section>
 
-          <div className="border border-line bg-surface p-6">
-            <p className="micro text-muted">{t('admin.settings.rateTitle')}</p>
-            <p className="text-sm text-muted mt-1 mb-4 leading-relaxed">
-              {t('admin.settings.rateBody')}
-            </p>
+          <section className="border border-line bg-surface p-6 md:p-8">
+            <h2 className="micro tracking-button text-gold">{t('admin.settings.rateTitle')}</h2>
+            <p className="mb-6 mt-2 text-sm leading-relaxed text-muted">{t('admin.settings.rateBody')}</p>
 
-            <form onSubmit={save} className="flex items-center gap-2">
-              <span className="shrink-0 whitespace-nowrap text-sm text-muted">$1 =</span>
-              <input
-                className={`${inputCls} w-28`}
-                type="number"
-                step="0.01"
-                min="0"
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                required
-              />
-              <span className="shrink-0 text-sm text-muted">₮</span>
-              <button className={btnPrimary} disabled={saving}>
-                {saving ? t('admin.settings.saving') : t('admin.settings.save')}
-              </button>
+            <form onSubmit={save}>
+              <label htmlFor="mnt-rate" className="micro mb-1 block text-muted">
+                {t('admin.settings.rateLabel')}
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="shrink-0 whitespace-nowrap text-sm text-muted">$1 =</span>
+                <input
+                  id="mnt-rate"
+                  className={`${inputCls} w-32 tabular-nums`}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  required
+                />
+                <span className="shrink-0 text-sm text-muted">₮</span>
+                <button className={`${btnPrimary} ml-auto`} disabled={saving}>
+                  {saving ? t('admin.settings.saving') : t('admin.settings.save')}
+                </button>
+              </div>
             </form>
 
             {current?.updated_at && (
-              <p className="text-xs text-muted/70 mt-3">
+              <p className="mt-4 text-xs text-muted">
                 {t('admin.settings.lastUpdated', { date: fmtDate(current.updated_at) })}
               </p>
             )}
-            {msg && <p className="text-gold text-sm mt-3">{msg}</p>}
-            {error && <p className="text-danger text-sm mt-3">{error}</p>}
-          </div>
+            {msg && <p className={`${okCls} mt-4`} role="status">{msg}</p>}
+            {error && <p className={`${errorCls} mt-4`} role="alert">{error}</p>}
+          </section>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

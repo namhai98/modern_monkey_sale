@@ -82,6 +82,10 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
             stranding it off-screen on a short one. */}
         <div className="mt-auto pt-8">
           <div className="flex flex-col gap-1 border-t border-white/10 pt-6">
+            {/* Saved works signed in or not — a guest's list lives in the browser. */}
+            <Link to="/saved" onClick={onNavigate} className={ACCOUNT_LINK}>
+              {t('nav.saved')}
+            </Link>
             {user ? (
               <>
                 <p className="micro pb-2 text-gold/80">{user.name}</p>
@@ -92,7 +96,7 @@ export default function MobileMenu({ links, onNavigate, onSearch, closing }) {
                   {t('nav.orders')}
                 </Link>
                 {STAFF_ROLES.includes(user.role) && (
-                  <Link to="/admin/orders" onClick={onNavigate} className={ACCOUNT_LINK}>
+                  <Link to="/admin" onClick={onNavigate} className={ACCOUNT_LINK}>
                     {t('nav.admin')}
                   </Link>
                 )}

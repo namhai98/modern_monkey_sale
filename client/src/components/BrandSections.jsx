@@ -19,7 +19,7 @@ export function TextLink({ to, children, className = '' }) {
   return (
     <Link
       to={to}
-      className={`link-lux micro inline-flex items-center gap-2 tracking-button text-gold ${className}`}
+      className={`link-lux tap-area micro inline-flex items-center gap-2 tracking-button text-gold ${className}`}
     >
       {children}
       <Icon name="arrowRight" className="h-3.5 w-3.5" />
@@ -49,7 +49,7 @@ export function Statement() {
     <Section aria-label={t('home.statement.eyebrow')}>
       <Reveal className="mx-auto max-w-3xl text-center">
         <p className="eyebrow">{t('home.statement.eyebrow')}</p>
-        <p className="heading-serif mt-8 text-2xl leading-[1.5] md:text-[2rem] md:leading-[1.45]">
+        <p className="heading-serif mt-8 text-[1.3rem] leading-[1.6] sm:text-2xl sm:leading-[1.5] md:text-[2rem] md:leading-[1.45]">
           {t('home.statement.before')}
           <span className="gold-script">{t('home.statement.gold')}</span>
           {t('home.statement.after')}
@@ -70,7 +70,7 @@ export function House() {
           <ImageFallback
             src={homeMedia.houseLogo}
             alt="Modern Monkey"
-            className="aspect-[4/5] w-full bg-black object-cover"
+            className="mx-auto aspect-square w-full max-w-sm bg-black object-cover md:max-w-md lg:aspect-[4/5] lg:max-w-none"
           />
         </RevealScale>
         <div className="lg:pl-6">
@@ -113,7 +113,8 @@ export function Craftsmanship() {
             {steps.map((s, i) => (
               <Reveal key={s.title} delay={i * 0.12}>
                 <div className="group flex gap-5 border-b border-white/10 pb-7 md:gap-8 md:pb-10">
-                  <span className="heading-serif text-3xl text-gold/50 transition-colors duration-500 group-hover:text-gold">
+                  {/* A fixed column, so every title starts on the same line. */}
+                  <span className="heading-serif w-12 shrink-0 text-3xl text-gold/50 transition-colors duration-500 group-hover:text-gold md:w-14">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div>

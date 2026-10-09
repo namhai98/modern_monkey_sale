@@ -9,7 +9,7 @@ import Icon from './Icon';
    simply omits `to`. */
 export default function Breadcrumb({ items = [], className = '' }) {
   const { t } = useLocale();
-  const link = 'transition-colors hover:text-gold';
+  const link = 'tap-area transition-colors hover:text-gold';
 
   return (
     <nav aria-label={t('nav.breadcrumb')} className={className}>

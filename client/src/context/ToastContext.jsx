@@ -13,7 +13,9 @@ export function ToastProvider({ children }) {
   const push = useCallback(
     (message, type = 'info', ms = 3500) => {
       const id = (idRef.current += 1);
-      setToasts((list) => [...list, { id, message, type }]);
+      // The same message twice at once (two syncs racing, a double click) is
+      // one toast, not a stack of identical ones.
+      setToasts((list) => (list.some((x) => x.message === message) ? list : [...list, { id, message, type }]));
       if (ms) setTimeout(() => dismiss(id), ms);
       return id;
     },
@@ -38,7 +40,7 @@ export function ToastProvider({ children }) {
              centred at the foot of the page, fading up over 500ms. A toast is a
              floating layer, which is the one place a shadow is allowed. */}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-8 z-[80] flex flex-col items-center gap-3 px-4"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(2rem+var(--float-lift,0px))] z-[80] flex flex-col items-center gap-3 px-4"
         role="status"
         aria-live="polite"
       >

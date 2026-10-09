@@ -8,6 +8,7 @@ export default function AdminNav() {
   const isManager = ['manager', 'admin'].includes(user?.role);
 
   const tabs = [
+    { to: '/admin', label: t('admin.tab.dashboard'), show: true, end: true },
     { to: '/admin/orders', label: t('admin.tab.orders'), show: true },
     { to: '/admin/products', label: t('admin.tab.products'), show: isManager },
     { to: '/admin/categories', label: t('admin.tab.categories'), show: isManager },
@@ -25,6 +26,7 @@ export default function AdminNav() {
         <NavLink
           key={tab.to}
           to={tab.to}
+          end={tab.end}
           className={({ isActive }) =>
             // Active tab is gold and nothing else — the same single signal the
             // storefront nav uses for the current route.

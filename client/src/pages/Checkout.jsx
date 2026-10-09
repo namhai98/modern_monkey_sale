@@ -1,33 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
+import { useToast } from '../context/ToastContext';
 import { apiErrorMessage } from '../lib/apiError';
 import client from '../api/client';
-import { resizeUnsplash } from '../lib/media';
-import { useMoney } from '../lib/price';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import Button from '../components/Button';
-import ImageFallback from '../components/ImageFallback';
 import Field, { FormMessage } from '../components/Field';
-import Price from '../components/Price';
+import Icon from '../components/Icon';
+import LineItem, { OrderSummary } from '../components/LineItem';
 import PageHero from '../components/PageHero';
 import EmptyState from '../components/EmptyState';
 import Section from '../components/Section';
 
 export default function Checkout() {
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, syncPrices } = useCart();
   const { user } = useAuth();
   const { t, locale } = useLocale();
+  const { info } = useToast();
   useDocumentTitle(t('checkout.title'));
-  const money = useMoney();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ name: '', line1: '', city: '', postcode: '', country: '' });
+  const [form, setForm] = useState({ name: '', phone: '', line1: '', city: '', postcode: '', country: '' });
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState(null);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Same as the bag: re-read live prices on arrival, so the total a shopper
+  // confirms is the one the server will charge (discounts can end mid-visit).
+  useEffect(() => {
+    syncPrices().then((n) => {
+      if (n) info(t('cart.pricesUpdated'));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -39,12 +47,17 @@ export default function Checkout() {
     );
   }
 
+  const subtotal = items.reduce((n, i) => n + (i.original_price ?? i.price) * i.quantity, 0);
+
   async function placeOrder(e) {
     e.preventDefault();
     setPlacing(true);
     setError(null);
+    // The order API has a single free-text address field; the phone number
+    // rides in it as its own labelled line so staff see it with the address.
     const shipping_address = [
       form.name,
+      `${t('checkout.phone')}: ${form.phone.trim()}`,
       form.line1,
       `${form.postcode} ${form.city}`.trim(),
       form.country,
@@ -61,7 +74,9 @@ export default function Checkout() {
         shipping_address,
       });
       clearCart();
-      navigate(`/orders/${data.id}`, { state: { justPlaced: true } });
+      // ?placed=1 rather than router state: the confirmation survives a
+      // refresh or a shared link instead of silently disappearing.
+      navigate(`/orders/${data.id}?placed=1`);
     } catch (err) {
       setError(apiErrorMessage(err, { t, locale, fallbackKey: 'checkout.fail' }));
     } finally {
@@ -85,7 +100,7 @@ export default function Checkout() {
         </ol>
       </PageHero>
 
-      <Section containerClassName="lg:grid lg:grid-cols-[1fr_380px] lg:gap-16 xl:gap-20">
+      <Section containerClassName="lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-16 xl:gap-20">
         <div>
           <p className="text-sm text-muted">{t('checkout.signedIn', { email: user?.email })}</p>
 
@@ -96,13 +111,27 @@ export default function Checkout() {
                   an address needs to see what each line is once they've typed in
                   it, which a placeholder alone can't do. */}
               <div className="space-y-6">
-                <Field
-                  label={t('checkout.fullName')}
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                  autoComplete="name"
-                  required
-                />
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field
+                    label={t('checkout.fullName')}
+                    value={form.name}
+                    onChange={(e) => set('name', e.target.value)}
+                    autoComplete="name"
+                    required
+                  />
+                  {/* The boutique confirms every order by phone — so it is
+                      required, and at least the 8 digits of a local number. */}
+                  <Field
+                    label={t('checkout.phone')}
+                    type="tel"
+                    inputMode="tel"
+                    value={form.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                    autoComplete="tel"
+                    minLength={8}
+                    required
+                  />
+                </div>
                 <Field
                   label={t('checkout.address')}
                   value={form.line1}
@@ -136,46 +165,39 @@ export default function Checkout() {
               </div>
             </div>
 
+            {/* How payment works, said plainly before the button — not a
+                footnote after it. */}
+            <div className="flex gap-3 border border-line bg-surface p-5">
+              <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+              <p className="text-sm leading-relaxed text-muted">{t('checkout.demoNote')}</p>
+            </div>
+
             <FormMessage>{error}</FormMessage>
 
             <Button as="button" type="submit" disabled={placing} full size="lg">
               {placing ? t('checkout.placing') : t('checkout.place')}
             </Button>
-            <p className="text-xs leading-relaxed text-muted">{t('checkout.demoNote')}</p>
           </form>
         </div>
 
-        <aside className="mt-16 border-t border-line pt-10 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
-          <p className="eyebrow mb-6">{t('checkout.yourOrder')}</p>
-          <div className="divide-y divide-line border-y border-line">
+        {/* Sticky on desktop: the order stays in view the whole way down the
+            form. */}
+        <aside className="mt-16 border-t border-line pt-10 lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:mt-0 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
+          <p className="eyebrow mb-2">{t('checkout.yourOrder')}</p>
+          <div className="divide-y divide-line border-b border-line">
             {items.map((i) => (
-              <div key={`${i.id}:${i.variant_id ?? ''}`} className="flex gap-4 py-5">
-                <div className="h-24 w-18 shrink-0 overflow-hidden bg-surface">
-                  <ImageFallback
-                    src={resizeUnsplash(i.image_url, 150)}
-                    alt={i.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="heading-serif text-base leading-snug">{i.name}</p>
-                  <p className="micro mt-1.5 tracking-meta text-muted">
-                    {i.variant_label ? `${i.variant_label} · ` : ''}
-                    {t('checkout.qty', { n: i.quantity })}
-                  </p>
-                  <Price
-                    price={i.price * i.quantity}
-                    originalPrice={i.original_price * i.quantity}
-                    className="mt-2"
-                  />
-                </div>
-              </div>
+              <LineItem
+                key={`${i.id}:${i.variant_id ?? ''}`}
+                name={i.name}
+                image={i.image_url}
+                variantLabel={i.variant_label}
+                quantity={i.quantity}
+                price={i.price}
+                originalPrice={i.original_price}
+              />
             ))}
           </div>
-          <div className="mt-8 flex items-baseline justify-between">
-            <span className="micro text-muted">{t('checkout.total')}</span>
-            <span className="heading-serif text-2xl tabular-nums">{money(total)}</span>
-          </div>
+          <OrderSummary className="mt-8" subtotal={subtotal} total={total} />
           <p className="mt-6 text-xs leading-relaxed text-muted">{t('checkout.trust')}</p>
         </aside>
       </Section>

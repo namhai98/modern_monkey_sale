@@ -16,6 +16,8 @@ import brandRoutes from './routes/brands.js';
 import discountRoutes from './routes/discounts.js';
 import settingsRoutes from './routes/settings.js';
 import newsletterRoutes from './routes/newsletter.js';
+import wishlistRoutes from './routes/wishlist.js';
+import dashboardRoutes from './routes/dashboard.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { storage, STORAGE_PROVIDER, IMMUTABLE_CACHE_CONTROL } from './storage/index.js';
 
@@ -86,6 +88,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404 fallback
 app.use((req, res) => {

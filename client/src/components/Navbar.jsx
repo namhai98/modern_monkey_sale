@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import client from '../api/client';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
@@ -22,8 +23,8 @@ import Tooltip from './Tooltip';
 
    MOBILE (<768)   64px. Hamburger · brand lockup · search + bag. Everything
                    else lives in the menu, whose rows sit in the thumb zone.
-   TABLET (768–1179) 72px. The brand keeps its wordmark, Products and Sale get
-                   a real nav row, and the secondary controls collapse into the
+   TABLET (768–1179) 72px. The brand keeps its wordmark, Products gets a real
+                   nav link, and the secondary controls collapse into the
                    same menu. Touch, so no hover surfaces: every nav item is a
                    direct link.
    DESKTOP (≥1180) 72px, constant. Nav left of the centred lockup, action
@@ -142,8 +143,11 @@ function AccountMenu() {
           <Link to="/orders" className={row} onClick={() => setOpen(false)}>
             {t('nav.orders')}
           </Link>
+          <Link to="/saved" className={row} onClick={() => setOpen(false)}>
+            {t('nav.saved')}
+          </Link>
           {STAFF_ROLES.includes(user.role) && (
-            <Link to="/admin/orders" className={row} onClick={() => setOpen(false)}>
+            <Link to="/admin" className={row} onClick={() => setOpen(false)}>
               {t('nav.admin')}
             </Link>
           )}
@@ -168,6 +172,7 @@ export default function Navbar() {
   const { t } = useLocale();
   const location = useLocation();
   const count = items.reduce((n, i) => n + i.quantity, 0);
+  const { count: savedCount } = useWishlist();
 
   const overHero = location.pathname === '/';
   const [atTop, setAtTop] = useState(true);
@@ -297,18 +302,16 @@ export default function Navbar() {
   // hero, a scrolled page, or an open menu/panel of our own.
   const solid = !overHero || !atTop || menuOpen || Boolean(mega);
 
-  const search = new URLSearchParams(location.search);
-  const onSale = search.get('sale') === '1';
-  // Products reads as current on any listing that is not the sale view — a
-  // shopper who has narrowed to one brand is still inside Products.
-  const onShop = location.pathname.startsWith('/shop') && !onSale;
+  // Products reads as current on any listing — a shopper who has narrowed to
+  // one brand, or to the sale, is still inside Products.
+  const onShop = location.pathname.startsWith('/shop');
 
-  const menuLinks = [
-    { to: SHOP_ALL, label: t('nav.products') },
-    { to: '/shop?sale=1', label: t('nav.sale'), gold: true },
-  ];
+  // Sale is no longer a header link of its own: it is a filter in the shop
+  // (and a row in the Products panel), reached from inside the catalogue.
+  const menuLinks = [{ to: SHOP_ALL, label: t('nav.products') }];
 
   const bagLabel = count > 0 ? `${t('nav.bag')} (${count})` : t('nav.bag');
+  const savedLabel = savedCount > 0 ? `${t('nav.saved')} (${savedCount})` : t('nav.saved');
 
   return (
     <header
@@ -373,10 +376,12 @@ export default function Navbar() {
           {/* Tablet: Products and Sale as direct links. No hover surfaces on a
               touch screen. 44px in both directions — a target a finger misses
               is not a target. */}
-          <nav
-            className="hidden items-center gap-4 md:flex lg:gap-7 hdr:hidden"
-            aria-label={t('nav.menu')}
-          >
+          {/* One landmark for the header's links: the tablet and desktop sets
+              are alternatives (only one is ever displayed), so they share a
+              single <nav> rather than two landmarks with the same name. The
+              hamburger panel is its own "Цэс" landmark. */}
+          <nav aria-label={t('nav.primary')} className="flex items-center">
+          <div className="hidden items-center gap-4 md:flex lg:gap-7 hdr:hidden">
             <Link
               to={SHOP_ALL}
               className={`${NAV_ITEM} flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center ${
@@ -385,15 +390,7 @@ export default function Navbar() {
             >
               {t('nav.products')}
             </Link>
-            <Link
-              to="/shop?sale=1"
-              className={`${NAV_ITEM} flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center ${
-                onSale ? 'text-gold' : 'text-gold/80 hover:text-gold'
-              }`}
-            >
-              {t('nav.sale')}
-            </Link>
-          </nav>
+          </div>
 
           {/* Desktop: Products, which opens the whole catalogue on click and a
               panel of ways into it on hover. Left of the centred mark — the
@@ -401,15 +398,9 @@ export default function Navbar() {
               flex child of its own: with the lockup lifted out of flow, a third
               child would be spaced by justify-between into the middle of the
               row, straight under the mark. */}
-          <nav
-            className="ml-2 hidden items-center gap-6 hdr:flex min-[1440px]:gap-9"
-            aria-label={t('nav.menu')}
-          >
-            {/* flex items-center: without it this Link renders inline (its
-                only block-level sibling here, the plain `Хямдрал` Link below,
-                is a direct flex child of `nav` and gets blockified + centered
-                by the nav's own `items-center`) — a couple of px off the
-                baseline the sibling sits on. */}
+          <div className="ml-2 hidden items-center gap-6 hdr:flex min-[1440px]:gap-9">
+            {/* flex items-center: without it this Link renders inline and sits
+                a couple of px off the row's centre line. */}
             <div
               className="flex items-center"
               onMouseEnter={() => openMega(true)}
@@ -424,13 +415,7 @@ export default function Navbar() {
                 {t('nav.products')}
               </Link>
             </div>
-            <Link
-              to="/shop?sale=1"
-              onMouseEnter={scheduleMegaClose}
-              className={`${NAV_ITEM} ${onSale ? 'text-gold' : 'text-gold/80 hover:text-gold'}`}
-            >
-              {t('nav.sale')}
-            </Link>
+          </div>
           </nav>
         </div>
 
@@ -459,6 +444,26 @@ export default function Navbar() {
               <Icon name="search" className="h-[1.15rem] w-[1.15rem]" />
             </button>
           </Tooltip>
+
+          {/* Saved pieces — from a small tablet up; on a phone the row lives in
+              the hamburger panel so the header keeps its four controls. */}
+          <span className="hidden sm:contents">
+          <Tooltip label={savedLabel}>
+            <Link
+              to="/saved"
+              onMouseEnter={scheduleMegaClose}
+              className={`${ICON_BTN} relative text-white/80`}
+              aria-label={savedLabel}
+            >
+              <Icon name="heart" className="h-[1.15rem] w-[1.15rem]" />
+              {savedCount > 0 && (
+                <span className="pop-in absolute right-1 top-1.5 min-w-[1rem] text-center text-badge font-medium tabular-nums text-gold">
+                  {savedCount > 9 ? '9+' : savedCount}
+                </span>
+              )}
+            </Link>
+          </Tooltip>
+          </span>
 
           {/* Account is a menu of its own; on tablet its rows live in the
               hamburger panel instead, so the header keeps one popover only. */}
@@ -498,7 +503,11 @@ export default function Navbar() {
           onMouseEnter={() => clearTimeout(megaTimer.current)}
           onMouseLeave={scheduleMegaClose}
         >
-          <NavMegaPanel brands={catalog?.brands || []} onNavigate={() => setMega(false)} />
+          <NavMegaPanel
+            categories={catalog?.categories || []}
+            brands={catalog?.brands || []}
+            onNavigate={() => setMega(false)}
+          />
         </div>
       )}
 

@@ -97,7 +97,7 @@ function Face({ Flag, label, back = false }) {
 
    tipSide: where the hover label opens — below in the header, above where the
    switch sits at the very bottom of the page (the footer's legal bar). */
-export default function LangSwitch({ className = '', tipSide = 'bottom', size = 'md' }) {
+export default function LangSwitch({ className = '', tipSide = 'bottom', tipAlign = 'center', size = 'md' }) {
   const { locale, setLocale, t } = useLocale();
   const [front, back] = LOCALES;
   const next = locale === front.code ? back : front;
@@ -113,7 +113,7 @@ export default function LangSwitch({ className = '', tipSide = 'bottom', size = 
   const label = t('lang.switchTo', { name: next.name });
 
   return (
-    <Tooltip label={label} side={tipSide} className={className}>
+    <Tooltip label={label} side={tipSide} align={tipAlign} className={className}>
       <button
         type="button"
         onClick={() => setLocale(next.code)}

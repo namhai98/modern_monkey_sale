@@ -22,7 +22,7 @@ export default function CollectionCard({ to, label, index, image, meta, classNam
           srcSet={unsplashSrcSet(image, [500, 800, 1200])}
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           alt={label}
-          className="aspect-[3/4] w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
+          className="aspect-[4/3] w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] sm:aspect-[3/4]"
         />
         <div
           aria-hidden="true"

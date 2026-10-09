@@ -3,4 +3,4 @@
 // then link-lux rows at white/65 that brighten on hover.
 export const INK_COL_HEAD = 'micro tracking-button text-gold';
 export const INK_COL_LINK =
-  'link-lux w-fit text-sm text-white/65 transition-colors duration-300 hover:text-white';
+  'link-lux tap-area w-fit text-sm text-white/65 transition-colors duration-300 hover:text-white';

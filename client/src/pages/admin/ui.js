@@ -13,9 +13,11 @@
 // in index.css; declared here as a string so the many admin inputs that need
 // extra width/number classes can compose it.
 export const inputCls =
-  'w-full border-b border-line bg-transparent py-2.5 text-sm text-foreground ' +
+  'w-full border-b border-line bg-transparent py-3 text-sm text-foreground ' +
   'placeholder:text-muted/60 transition-colors duration-300 ' +
-  'focus:border-gold focus:outline-none disabled:opacity-50';
+  'focus:border-gold focus:outline-none disabled:opacity-50 ' +
+  // no native number spinners — they render as a bright widget on the dark theme
+  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
 
 // Compact primary action. The storefront's <Button> is right for a CTA, but a
 // row of them in a table toolbar needs less presence than px-9 py-4.
@@ -39,10 +41,12 @@ export const okCls = 'border-l-2 border-gold py-1 pl-4 text-sm text-foreground';
 
 // Hairline table: micro-type heads over a rule, hairline row rules, no fills
 // and no zebra striping — same as the storefront's order table.
-export const thCls = 'micro py-3 pr-4 text-left font-normal text-muted';
-export const thNumCls = 'micro py-3 pl-4 text-right font-normal text-muted';
-export const tdCls = 'py-3 pr-4 align-middle';
-export const tdNumCls = 'py-3 pl-4 text-right align-middle tabular-nums';
+// Both sides padded: a right-aligned number next to a left-aligned column
+// would otherwise run straight into it.
+export const thCls = 'micro px-4 py-3 text-left font-normal text-muted first:pl-0 last:pr-0';
+export const thNumCls = 'micro px-4 py-3 text-right font-normal text-muted first:pl-0 last:pr-0';
+export const tdCls = 'px-4 py-4 align-middle first:pl-0 last:pr-0';
+export const tdNumCls = 'px-4 py-4 text-right align-middle tabular-nums first:pl-0 last:pr-0';
 export const trCls = 'border-b border-line';
 
 /* Row state, expressed the way the storefront expresses status: gold when it is

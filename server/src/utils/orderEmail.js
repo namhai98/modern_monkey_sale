@@ -52,3 +52,49 @@ ${shippingAddress || '—'}</p>
 
   return sendMail({ to, subject: `Modern Monkey — order #${orderId}`, text, html });
 }
+
+const escapeHtml = (s) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// Who hears about new orders: ADMIN_NOTIFY_EMAIL, comma-separated.
+export function adminNotifyRecipients(env = process.env) {
+  return String(env.ADMIN_NOTIFY_EMAIL || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// Fire-and-forget "new order" note to the boutique, with a link straight to
+// the order in the admin. Skipped when no recipient is configured; like every
+// email here it only logs until SMTP is set up. Amounts are the stored USD.
+export async function sendNewOrderNotice({ orderId, customer, items, total, shippingAddress }) {
+  const to = adminNotifyRecipients();
+  if (to.length === 0) return { skipped: true };
+
+  const appUrl = (process.env.APP_URL || 'http://localhost:5173').replace(/\/+$/, '');
+  const link = `${appUrl}/admin/orders/${orderId}`;
+  const who = [customer?.name, customer?.email].filter(Boolean).join(' · ') || '—';
+  const rows = items.map(
+    (i) => `${i.quantity} × ${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ''} — ${usd(i.price * i.quantity)}`
+  );
+
+  const text =
+    `New order #${orderId}\n\n` +
+    `Customer: ${who}\n\n` +
+    rows.map((r) => `  ${r}`).join('\n') +
+    `\n\nTotal: ${usd(total)}\n\n` +
+    `Shipping to:\n${shippingAddress || '—'}\n\n` +
+    `Open it: ${link}\n`;
+
+  const html = `<div style="font-family:Georgia,'Times New Roman',serif;color:#17140f;max-width:520px">
+    <h2 style="font-weight:400;font-size:22px;margin:0 0 4px">New order #${orderId}</h2>
+    <p style="color:#8a8378;margin:0 0 16px;font-size:14px">${escapeHtml(who)}</p>
+    <ul style="padding-left:18px;font-size:14px;margin:0 0 12px">${rows.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
+    <p style="font-size:15px;margin:0 0 16px">Total: <strong>${usd(total)}</strong></p>
+    <p style="color:#8a8378;white-space:pre-line;font-size:14px">Shipping to:
+${escapeHtml(shippingAddress || '—')}</p>
+    <p><a href="${link}" style="color:#9a7b2f">Open order #${orderId} in the admin</a></p>
+  </div>`;
+
+  return sendMail({ to: to.join(', '), subject: `New order #${orderId} — ${usd(total)}`, text, html });
+}

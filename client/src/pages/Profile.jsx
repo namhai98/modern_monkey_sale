@@ -35,6 +35,7 @@ export default function Profile() {
 
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersFailed, setOrdersFailed] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -46,11 +47,19 @@ export default function Profile() {
   const hasPassword = user.has_password !== false;
   const linked = user.providers || [];
 
-  useEffect(() => {
+  // A failed load says so (with a retry) rather than claiming "no orders".
+  function loadOrders() {
+    setOrdersLoading(true);
+    setOrdersFailed(false);
     client
       .get('/orders/mine')
       .then((res) => setOrders(res.data))
+      .catch(() => setOrdersFailed(true))
       .finally(() => setOrdersLoading(false));
+  }
+
+  useEffect(() => {
+    loadOrders();
   }, []);
 
   async function saveName(e) {
@@ -250,7 +259,16 @@ export default function Profile() {
                 </div>
               )}
 
-              {!ordersLoading && orders.length === 0 && (
+              {!ordersLoading && ordersFailed && (
+                <div className="border-y border-line py-8">
+                  <p className="text-sm text-muted">{t('common.loadFailed')}</p>
+                  <TextButton tone="gold" onClick={loadOrders} className="mt-4 inline-block">
+                    {t('common.retry')}
+                  </TextButton>
+                </div>
+              )}
+
+              {!ordersLoading && !ordersFailed && orders.length === 0 && (
                 <div className="border-y border-line py-8">
                   <p className="text-sm text-muted">{t('orders.none')}</p>
                   <Link

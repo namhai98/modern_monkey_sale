@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { ToastProvider } from './context/ToastContext';
+import { WishlistProvider } from './context/WishlistContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import Layout from './components/Layout';
@@ -31,6 +32,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const ProductCare = lazy(() => import('./pages/ProductCare'));
 const Story = lazy(() => import('./pages/Story'));
 const Faq = lazy(() => import('./pages/Faq'));
+const Saved = lazy(() => import('./pages/Saved'));
 
 // Admin bundles are behind auth and rarely hit by shoppers — load on demand.
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -40,6 +42,7 @@ const AdminBrands = lazy(() => import('./pages/admin/Brands'));
 const AdminDiscounts = lazy(() => import('./pages/admin/Discounts'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminOrderDetail = lazy(() => import('./pages/admin/OrderDetail'));
 
 const STAFF = ['staff', 'manager', 'admin'];
@@ -51,6 +54,7 @@ export default function App() {
     <LocaleProvider>
       <AuthProvider>
         <CartProvider>
+        <WishlistProvider>
           <BrowserRouter>
             <ToastProvider>
               <UIProvider>
@@ -61,6 +65,7 @@ export default function App() {
                   <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Login />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
@@ -68,6 +73,7 @@ export default function App() {
                   <Route path="/product-care" element={<ProductCare />} />
                   <Route path="/story" element={<Story />} />
                   <Route path="/faq" element={<Faq />} />
+                  <Route path="/saved" element={<Saved />} />
                   <Route path="/forbidden" element={<Forbidden />} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
@@ -76,6 +82,7 @@ export default function App() {
                   {/* AdminNav stays mounted across every /admin/* navigation — only
                       the Outlet content below it swaps while a page's chunk loads. */}
                   <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<ProtectedRoute roles={STAFF}><AdminDashboard /></ProtectedRoute>} />
                     <Route path="orders" element={<ProtectedRoute roles={STAFF}><AdminOrders /></ProtectedRoute>} />
                     <Route path="orders/:id" element={<ProtectedRoute roles={STAFF}><AdminOrderDetail /></ProtectedRoute>} />
                     <Route path="products" element={<ProtectedRoute roles={MANAGER}><AdminProducts /></ProtectedRoute>} />
@@ -91,6 +98,7 @@ export default function App() {
               </UIProvider>
             </ToastProvider>
           </BrowserRouter>
+        </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </LocaleProvider>

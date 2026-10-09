@@ -1,13 +1,29 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client from '../../api/client';
+import EmptyState from '../../components/EmptyState';
+import Icon from '../../components/Icon';
+import ImageFallback from '../../components/ImageFallback';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import Skeleton from '../../components/Skeleton';
-import { money } from '../../lib/price';
 import { useLocale } from '../../context/LocaleContext';
-import { btnPrimary } from './ui';
+import { AdminPage, TextField, ToggleChip, usd } from './kit';
+import { btnPrimary, btnGhost } from './ui';
 
 const RESTOCKING = new Set(['cancelled', 'refunded']);
+const fmtDateTime = (d) =>
+  new Date(d).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+// A titled block in the side column — same micro-label + hairline language as
+// the forms.
+function Panel({ title, children }) {
+  return (
+    <section className="border border-line bg-surface p-6">
+      <h2 className="micro tracking-button text-gold">{title}</h2>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
 
 function TransitionPanel({ orderId, target, onDone, onCancel }) {
   const { t } = useLocale();
@@ -16,8 +32,10 @@ function TransitionPanel({ orderId, target, onDone, onCancel }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const restocks = RESTOCKING.has(target);
+  const danger = RESTOCKING.has(target);
 
-  async function apply() {
+  async function apply(e) {
+    e.preventDefault();
     setBusy(true);
     setError(null);
     try {
@@ -34,33 +52,79 @@ function TransitionPanel({ orderId, target, onDone, onCancel }) {
   }
 
   return (
-    <div className="border border-line p-4 mt-3 bg-surface text-sm space-y-2">
-      <p className="text-foreground">
+    <form onSubmit={apply} className={`mt-5 space-y-5 border-l-2 pl-4 ${danger ? 'border-danger' : 'border-gold'}`}>
+      <p className="text-sm text-foreground">
         {t('admin.orderDetail.moveTo', { target: t(`status.${target}`) })}
       </p>
-      <textarea
-        className="w-full border border-line bg-transparent px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:border-gold transition-colors"
+      <TextField
+        as="textarea"
         rows={2}
-        placeholder={t('admin.orderDetail.notePlaceholder')}
+        label={t('admin.orderDetail.noteLabel')}
+        hint={t('admin.orderDetail.noteHint')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
+        className="[&_textarea]:resize-y"
       />
       {restocks && (
-        <label className="flex items-center gap-2 text-muted">
-          <input type="checkbox" checked={restock} onChange={(e) => setRestock(e.target.checked)} />
-          {t('admin.orderDetail.returnStock')}
-        </label>
+        <ToggleChip checked={restock} onChange={setRestock}>{t('admin.orderDetail.returnStock')}</ToggleChip>
       )}
-      {error && <p className="text-danger">{error}</p>}
-      <div className="flex gap-2">
-        <button onClick={apply} disabled={busy} className={btnPrimary}>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" disabled={busy} className={btnPrimary}>
           {busy ? t('admin.orderDetail.applying') : t('admin.orderDetail.confirm')}
         </button>
-        <button onClick={onCancel} className="px-4 py-1.5 text-muted hover:text-foreground">
+        <button type="button" onClick={onCancel} className={btnGhost}>
           {t('admin.orderDetail.cancel')}
         </button>
       </div>
-    </div>
+    </form>
+  );
+}
+
+function StatusActions({ order, onChange }) {
+  const { t } = useLocale();
+  const [target, setTarget] = useState(null);
+  const groupId = useId();
+
+  if (!order.allowed_transitions?.length) {
+    return <p className="text-sm text-muted">{t('admin.orderDetail.noTransitions', { status: t(`status.${order.status}`) })}</p>;
+  }
+  return (
+    <>
+      <p id={groupId} className="micro mb-3 text-muted">{t('admin.orderDetail.changeStatus')}</p>
+      <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
+        {order.allowed_transitions.map((s) => {
+          const on = target === s;
+          const danger = RESTOCKING.has(s);
+          return (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setTarget(on ? null : s)}
+              className={`micro border px-3.5 py-2 tracking-meta transition-colors duration-300 ${
+                on
+                  ? danger ? 'border-danger text-danger' : 'border-gold text-gold'
+                  : danger
+                    ? 'border-line text-muted hover:border-danger hover:text-danger'
+                    : 'border-line text-muted hover:border-gold hover:text-foreground'
+              }`}
+            >
+              {t(`status.${s}`)}
+            </button>
+          );
+        })}
+      </div>
+      {target && (
+        <TransitionPanel
+          key={target}
+          orderId={order.id}
+          target={target}
+          onDone={(fresh) => { onChange(fresh); setTarget(null); }}
+          onCancel={() => setTarget(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -69,150 +133,168 @@ export default function AdminOrderDetail() {
   const { t } = useLocale();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
-  const [target, setTarget] = useState(null);
 
   const load = useCallback(() => {
+    setError(null);
     client
       .get(`/orders/${id}`)
-      .then((res) => { setOrder(res.data); setError(null); })
+      .then((res) => setOrder(res.data))
       .catch((err) => setError(err.response?.data?.error || t('admin.orderDetail.loadFailed')));
   }, [id, t]);
 
   useEffect(() => { load(); }, [load]);
 
+  const back = (
+    <Link to="/admin/orders" className="link-lux micro mb-6 inline-block text-muted hover:text-gold">
+      {t('admin.orderDetail.back')}
+    </Link>
+  );
+
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto pt-10 pb-8">
-        <p className="text-muted">{error}</p>
-      </div>
+      <AdminPage title={t('admin.orderDetail.title', { id })} back={back}>
+        <EmptyState
+          inline
+          title={error}
+          actions={<button type="button" onClick={load} className={btnGhost}>{t('admin.ui.retry')}</button>}
+        />
+      </AdminPage>
     );
   }
   if (!order) {
     return (
-      <div className="max-w-3xl mx-auto pt-10 pb-8 space-y-3">
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
+      <AdminPage title={t('admin.orderDetail.title', { id })} back={back}>
+        <div className="grid gap-10 lg:grid-cols-[1fr_22rem]">
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+        </div>
+      </AdminPage>
     );
   }
 
+  const itemCount = order.items.reduce((n, it) => n + it.quantity, 0);
+  const subtotal = order.items.reduce((n, it) => n + Number(it.original_price ?? it.price) * it.quantity, 0);
+  const savings = subtotal - Number(order.total);
+
   return (
-    <div className="max-w-3xl mx-auto pt-10 pb-8">
-      <Link to="/admin/orders" className="text-sm text-muted hover:text-gold">{t('admin.orderDetail.back')}</Link>
-
-      <div className="flex items-center justify-between mt-3 mb-6">
-        <h1 className="heading-serif text-2xl text-foreground">{t('admin.orderDetail.title', { id: order.id })}</h1>
-        <OrderStatusBadge status={order.status} />
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4 text-sm text-muted mb-8">
+    <AdminPage
+      title={t('admin.orderDetail.title', { id: order.id })}
+      count={`${fmtDateTime(order.created_at)} · ${t('admin.orderDetail.itemCount', { n: itemCount })}`}
+      back={back}
+      actions={<OrderStatusBadge status={order.status} />}
+    >
+      <div className="grid gap-10 lg:grid-cols-[1fr_22rem] lg:items-start">
+        {/* Items + totals */}
         <div>
-          <p className="micro text-muted">{t('admin.orderDetail.customer')}</p>
-          {order.user ? (
-            <>
-              <p>{order.user.name}</p>
-              <p className="text-muted/70">{order.user.email}</p>
-            </>
-          ) : (
-            <p>—</p>
-          )}
-        </div>
-        <div>
-          <p className="micro text-muted">{t('admin.orderDetail.shippingAddress')}</p>
-          <p className="whitespace-pre-line">{order.shipping_address || '—'}</p>
-        </div>
-      </div>
-
-      <table className="w-full text-sm mb-6">
-        <thead>
-          <tr className="text-left micro text-muted border-b border-line">
-            <th className="py-3 font-normal">{t('admin.orderDetail.colItem')}</th>
-            <th className="py-3 text-right font-normal">{t('admin.orderDetail.colQty')}</th>
-            <th className="py-3 text-right font-normal">{t('admin.orderDetail.colPrice')}</th>
-            <th className="py-3 text-right font-normal">{t('admin.orderDetail.colTotal')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.items.map((it) => (
-            <tr key={it.id} className="border-b border-line/60">
-              <td className="py-3 text-foreground">
-                {it.name || `Product #${it.product_id}`}
-                {it.variant_label && <span className="text-xs text-muted"> · {it.variant_label}</span>}
-                {it.sku && <span className="text-xs text-muted/70"> · {it.sku}</span>}
-              </td>
-              <td className="py-3 text-right text-muted">{it.quantity}</td>
-              <td className="py-3 text-right">
-                {it.discount_amount > 0 ? (
-                  <span className="inline-flex flex-col items-end leading-tight">
-                    <s className="text-xs text-muted/70">{money(it.original_price)}</s>
-                    <span className="text-foreground">{money(it.price)}</span>
-                    {it.discount_name && (
-                      <span className="text-[10px] text-muted">{it.discount_name}</span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-foreground">{money(it.price)}</span>
-                )}
-              </td>
-              <td className="py-3 text-right text-foreground">{money(it.line_total)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={3} className="py-3 text-right font-medium text-foreground">{t('admin.orderDetail.total')}</td>
-            <td className="py-3 text-right font-medium text-foreground">{money(order.total)}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div className="mb-10">
-        <p className="micro mb-3 text-muted">{t('admin.orderDetail.changeStatus')}</p>
-        {order.allowed_transitions?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {order.allowed_transitions.map((s) => (
-              <button
-                key={s}
-                onClick={() => setTarget(target === s ? null : s)}
-                className={`px-3 py-1.5 text-sm border transition-colors ${
-                  target === s
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-line text-muted hover:border-gold hover:text-foreground'
-                }`}
-              >
-                {t(`status.${s}`)}
-              </button>
+          <h2 className="micro mb-2 tracking-button text-gold">{t('admin.orderDetail.items')}</h2>
+          <ul className="divide-y divide-line border-y border-line">
+            {order.items.map((it) => (
+              <li key={it.id} className="flex items-center gap-4 py-4">
+                <div className="h-20 w-16 shrink-0 overflow-hidden border border-line bg-surface">
+                  {it.image_url ? (
+                    <ImageFallback src={it.image_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted">
+                      <Icon name="tag" className="h-5 w-5" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-foreground">
+                    {it.product_id ? (
+                      <Link to={`/products/${it.product_id}`} className="transition-colors hover:text-gold">
+                        {it.name || `#${it.product_id}`}
+                      </Link>
+                    ) : (it.name || '—')}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {[it.variant_label, it.sku].filter(Boolean).join(' · ')}
+                  </p>
+                  {it.discount_amount > 0 && it.discount_name && (
+                    <p className="micro mt-1.5 text-[10px] text-gold">{it.discount_name}</p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right text-sm tabular-nums">
+                  <p className="text-muted">
+                    {it.quantity} ×{' '}
+                    {it.discount_amount > 0 && <s className="mr-1 text-xs text-muted/70">{usd(it.original_price)}</s>}
+                    {usd(it.price)}
+                  </p>
+                  <p className="mt-1 text-foreground">{usd(it.line_total)}</p>
+                </div>
+              </li>
             ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">{t('admin.orderDetail.noTransitions', { status: t(`status.${order.status}`) })}</p>
-        )}
-        {target && (
-          <TransitionPanel
-            orderId={order.id}
-            target={target}
-            onDone={(fresh) => { setOrder(fresh); setTarget(null); }}
-            onCancel={() => setTarget(null)}
-          />
-        )}
-      </div>
+          </ul>
 
-      <div>
-        <h2 className="micro mb-3 text-muted">{t('admin.orderDetail.history')}</h2>
-        <ol className="space-y-1.5 text-sm text-muted">
-          {order.status_history.map((h) => (
-            <li key={h.id}>
-              <span className="text-muted/70">{new Date(h.created_at).toLocaleString()}</span>
-              {' — '}
-              {h.from_status ? `${t(`status.${h.from_status}`)} → ` : ''}
-              <span className="text-foreground">{t(`status.${h.to_status}`)}</span>
-              {h.user?.name && <span className="text-muted/70"> {t('admin.orderDetail.by', { name: h.user.name })}</span>}
-              {h.note && <span className="text-muted/70"> ({h.note})</span>}
-            </li>
-          ))}
-        </ol>
+          <dl className="ml-auto mt-6 max-w-xs space-y-2 text-sm tabular-nums">
+            {savings > 0.005 && (
+              <>
+                <div className="flex justify-between text-muted">
+                  <dt>{t('admin.orderDetail.subtotal')}</dt>
+                  <dd>{usd(subtotal)}</dd>
+                </div>
+                <div className="flex justify-between text-gold">
+                  <dt>{t('admin.orderDetail.discount')}</dt>
+                  <dd>−{usd(savings)}</dd>
+                </div>
+              </>
+            )}
+            <div className="flex items-baseline justify-between border-t border-line pt-3">
+              <dt className="micro text-muted">{t('admin.orderDetail.total')}</dt>
+              <dd className="heading-serif text-2xl text-foreground">{usd(order.total)}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Side column: status, customer, delivery, history */}
+        <div className="space-y-6 lg:sticky lg:top-[calc(var(--header-h)+2rem)]">
+          <Panel title={t('admin.orderDetail.statusTitle')}>
+            <StatusActions order={order} onChange={setOrder} />
+          </Panel>
+
+          <Panel title={t('admin.orderDetail.customer')}>
+            {order.user ? (
+              <div className="text-sm">
+                <p className="text-foreground">{order.user.name}</p>
+                <a href={`mailto:${order.user.email}`} className="mt-0.5 block break-all text-muted transition-colors hover:text-gold">
+                  {order.user.email}
+                </a>
+              </div>
+            ) : (
+              <p className="text-sm text-muted">—</p>
+            )}
+            <p className="micro mb-1.5 mt-5 text-muted">{t('admin.orderDetail.shippingAddress')}</p>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{order.shipping_address || '—'}</p>
+          </Panel>
+
+          <Panel title={t('admin.orderDetail.history')}>
+            <ol className="relative space-y-5 border-l border-line pl-5">
+              {[...order.status_history].reverse().map((h, i) => (
+                <li key={h.id} className="relative">
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -left-[1.5625rem] top-1.5 h-2 w-2 rounded-full ${i === 0 ? 'bg-gold' : 'border border-line bg-background'}`}
+                  />
+                  <p className="text-sm text-foreground">
+                    {h.from_status && <span className="text-muted">{t(`status.${h.from_status}`)} → </span>}
+                    {t(`status.${h.to_status}`)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {fmtDateTime(h.created_at)}
+                    {h.user?.name && ` · ${t('admin.orderDetail.by', { name: h.user.name })}`}
+                  </p>
+                  {h.note && <p className="mt-1.5 border-l-2 border-line pl-3 text-xs italic text-muted">{h.note}</p>}
+                </li>
+              ))}
+            </ol>
+          </Panel>
+        </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

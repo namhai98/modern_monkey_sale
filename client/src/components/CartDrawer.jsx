@@ -4,13 +4,10 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
-import { resizeUnsplash } from '../lib/media';
-import { useMoney } from '../lib/price';
 import { useFocusTrap } from '../lib/useFocusTrap';
 import Button from './Button';
 import EmptyState from './EmptyState';
-import ImageFallback from './ImageFallback';
-import Price from './Price';
+import LineItem, { OrderSummary } from './LineItem';
 import QuantityStepper from './QuantityStepper';
 import TextButton from './TextButton';
 
@@ -25,7 +22,6 @@ export default function CartDrawer() {
   const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
   const { t } = useLocale();
   const { info } = useToast();
-  const money = useMoney();
   const navigate = useNavigate();
   const panelRef = useFocusTrap(cartOpen);
 
@@ -52,6 +48,7 @@ export default function CartDrawer() {
   }
 
   const count = items.reduce((n, i) => n + i.quantity, 0);
+  const subtotal = items.reduce((n, i) => n + (i.original_price ?? i.price) * i.quantity, 0);
 
   return (
     /* inert, not aria-hidden: the drawer stays mounted while closed, and
@@ -64,7 +61,9 @@ export default function CartDrawer() {
         }`}
       />
 
-      <aside
+      {/* A <div>, not <aside>: the element is a dialog, and ARIA does not
+          allow the dialog role on a complementary landmark. */}
+      <div
         ref={panelRef}
         tabIndex={-1}
         role="dialog"
@@ -100,43 +99,31 @@ export default function CartDrawer() {
               {items.map((item) => {
                 const key = lineKey(item.id, item.variant_id);
                 return (
-                  <div key={key} className="flex gap-4 py-6">
-                    <div className="h-28 w-22 shrink-0 overflow-hidden bg-surface">
-                      <ImageFallback
-                        src={resizeUnsplash(item.image_url, 200)}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-catalog text-product font-medium leading-snug">{item.name}</p>
-                      {item.variant_label && (
-                        <p className="micro mt-1.5 tracking-meta text-muted">{item.variant_label}</p>
-                      )}
-                      <Price
-                        price={item.price}
-                        originalPrice={item.original_price}
-                        className="mt-2"
-                      />
-                      <div className="mt-4 flex items-center gap-5">
+                  <LineItem
+                    key={key}
+                    name={item.name}
+                    image={item.image_url}
+                    variantLabel={item.variant_label}
+                    quantity={item.quantity}
+                    price={item.price}
+                    originalPrice={item.original_price}
+                    controls={
+                      <>
                         <QuantityStepper
                           value={item.quantity}
                           size="sm"
                           onChange={(n) => updateQuantity(key, n)}
                         />
                         <TextButton onClick={() => removeItem(key)}>{t('cart.remove')}</TextButton>
-                      </div>
-                    </div>
-                  </div>
+                      </>
+                    }
+                  />
                 );
               })}
             </div>
 
             <div className="shrink-0 space-y-5 border-t border-line px-6 py-6">
-              <div className="flex items-baseline justify-between">
-                <span className="micro text-muted">{t('cart.subtotal')}</span>
-                <span className="heading-serif text-2xl tabular-nums">{money(total)}</span>
-              </div>
+              <OrderSummary subtotal={subtotal} total={total} />
               <p className="text-xs leading-relaxed text-muted">{t('cart.calcNote')}</p>
               <Button full onClick={() => go('/checkout')}>
                 {t('cart.checkout')}
@@ -147,7 +134,7 @@ export default function CartDrawer() {
             </div>
           </>
         )}
-      </aside>
+      </div>
     </div>
   );
 }
