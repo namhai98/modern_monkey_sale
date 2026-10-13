@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 const base =
   'group relative inline-flex items-center justify-center gap-3 overflow-hidden ' +
   'whitespace-normal text-balance text-center sm:whitespace-nowrap ' +
-  'micro font-medium tracking-button select-none ' +
+  'micro font-medium select-none ' +
   'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ' +
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold ' +
   'disabled:pointer-events-none disabled:cursor-not-allowed';
@@ -26,11 +26,14 @@ const variants = {
   // it does NOT fade: a half-transparent gold left its dark label at ~3:1, and
   // a disabled CTA often carries an instruction ("Choose a size") that has to
   // be read. It drops to a quiet panel with a hairline and muted text instead.
-  gold: 'bg-gold text-ink disabled:border disabled:border-line disabled:bg-surface disabled:text-muted',
+  gold: 'bg-gold-fill text-ink disabled:border disabled:border-line disabled:bg-surface disabled:text-muted',
   // Secondary, on a fixed-dark band.
   outline: 'border border-white/40 text-white hover:border-gold hover:text-gold disabled:opacity-50',
   // Secondary, on a theme surface.
   'outline-dark': 'border border-line text-foreground hover:border-gold hover:text-gold disabled:opacity-50',
+  // Irreversible actions (delete, disable, cancel an order): the one place the
+  // danger token fills a button.
+  danger: 'border border-danger bg-danger text-white hover:opacity-90 disabled:opacity-50',
 };
 
 // The variant names this component shipped with before it adopted the
@@ -39,9 +42,12 @@ const variants = {
 const ALIASES = { primary: 'gold', secondary: 'outline-dark', onDark: 'outline' };
 
 const sizes = {
-  sm: 'px-6 py-2.5',
-  md: 'px-6 py-4 sm:px-9',
-  lg: 'px-7 py-[1.15rem] sm:px-10',
+  // Compact, for admin toolbars and table actions: 36px tall, the meta tracking
+  // step instead of the button rung so a row of them stays narrow.
+  xs: 'px-4 py-2 tracking-meta',
+  sm: 'px-6 py-2.5 tracking-button',
+  md: 'px-6 py-4 tracking-button sm:px-9',
+  lg: 'px-7 py-[1.15rem] tracking-button sm:px-10',
 };
 
 export default function Button({

@@ -70,7 +70,13 @@
 
   /* Fixed brand — identical in both themes */
   --color-ink: #0a0a0a;
-  --color-gold: #c8a24a;
+  /* Gold for text, borders, focus and small marks is theme-reactive: the
+     bright #c8a24a reads at 8.2:1 on ink but only 2.4:1 on white, so the
+     light theme deepens it (see --gold below). A gold FILL with ink text on
+     it — the primary button, a ticked box — stays bright in both themes:
+     that is --color-gold-fill. */
+  --color-gold: var(--gold);
+  --color-gold-fill: #c8a24a;
   --color-champagne: #e9ddbf;
 
   /* The one colour the presentation site does not have, because it has nothing
@@ -117,6 +123,7 @@
 }
 
 :root {
+  --gold: #c8a24a;
   --background: #0a0a0a;
   --foreground: #f3efe6;
   --muted-color: #9a958a;
@@ -126,6 +133,8 @@
 }
 
 .light {
+  /* 5.05:1 on white, 4.59:1 on the light surface. */
+  --gold: #8a6a1f;
   --background: #ffffff;
   --foreground: #0a0a0a;
   --muted-color: #6f6a5f;
@@ -157,14 +166,20 @@
     letter-spacing: -0.01em;
   }
 
+  /* Surfaces that stay ink in the light theme too — header, footer, the dark
+     bands, overlays and photo tags — keep the bright gold. */
+  .light :where(header, footer, [class*='bg-ink']) {
+    --gold: #c8a24a;
+  }
+
   ::selection {
-    background: var(--color-gold);
+    background: var(--color-gold-fill);
     color: var(--color-ink);
   }
 
   /* One consistent, visible focus treatment across the whole storefront */
   :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2px solid var(--gold);
     outline-offset: 3px;
   }
 
@@ -209,7 +224,7 @@
     font-weight: 500;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
-    color: var(--color-gold);
+    color: var(--gold);
   }
 }
 
@@ -239,7 +254,7 @@
   font-family: var(--font-script);
   font-weight: 400;
   letter-spacing: normal;
-  color: var(--color-gold);
+  color: var(--gold);
 }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
@@ -314,10 +329,16 @@
     color: color-mix(in srgb, var(--color-muted) 60%, transparent);
   }
   &:focus {
-    border-color: var(--color-gold);
+    border-color: var(--gold);
   }
   &:disabled {
     opacity: 0.5;
+  }
+  /* No native number spinners: they draw as a bright widget on the dark theme. */
+  appearance: textfield;
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
   }
 }
 
@@ -333,9 +354,13 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
-/* The admin's side panel sliding in from the right edge. */
+/* SidePanel sliding in from the right edge, or from the left. */
 @keyframes drawerIn {
   from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes drawerInLeft {
+  from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
 @keyframes fadeUp {
@@ -459,3 +484,21 @@
     inset: -0.75rem -0.5rem;
   }
 }
+
+/* The page's stacking layers, named so a new overlay picks its place instead
+   of guessing a number. Low to high: the sticky buy bar, the floating contact
+   buttons, the phone menu, the header, the cart drawer, search, side panels,
+   confirmations, the photo lightbox, toasts (above everything a message might
+   be about), and the skip link. Local stacking inside a component (z-10, a
+   dropdown's z-30, a tooltip's z-50) stays numeric. */
+@utility z-sticky { z-index: 30; }
+@utility z-float { z-index: 40; }
+@utility z-menu { z-index: 45; }
+@utility z-header { z-index: 50; }
+@utility z-drawer { z-index: 60; }
+@utility z-overlay { z-index: 70; }
+@utility z-panel { z-index: 80; }
+@utility z-dialog { z-index: 85; }
+@utility z-lightbox { z-index: 90; }
+@utility z-toast { z-index: 95; }
+@utility z-skip { z-index: 100; }

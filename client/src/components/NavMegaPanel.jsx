@@ -25,18 +25,23 @@ const GENDERS = ['women', 'men', 'unisex'];
 const ORDER = ['watches', 'bags', 'apparel'];
 const IMAGE = homeMedia.bands;
 
-export default function NavMegaPanel({ categories = [], brands, onNavigate }) {
-  const { t, locale } = useLocale();
-  const base = '/shop?all=1';
-
-  // Until /categories answers, show the three known houses without counts so
-  // the panel opens at its full size instead of growing under the pointer.
+// Until /categories answers, show the three known houses without counts so a
+// panel opens at its full size instead of growing under the finger or pointer.
+// Shared with the hamburger menu, which leads with the same three houses.
+export function houseCards(categories = []) {
   const known = new Map(categories.map((c) => [c.slug, c]));
-  const cards = (categories.length ? ORDER.filter((s) => known.has(s)) : ORDER).map((slug) => ({
+  return (categories.length ? ORDER.filter((s) => known.has(s)) : ORDER).map((slug) => ({
     slug,
     category: known.get(slug) || { slug, name: slug },
     count: known.get(slug)?.product_count,
   }));
+}
+
+export default function NavMegaPanel({ categories = [], brands, onNavigate }) {
+  const { t, locale } = useLocale();
+  const base = '/shop?all=1';
+
+  const cards = houseCards(categories);
 
   // Brands with nothing in them would be dead ends. Six keeps the column to one
   // readable block; the filter rail in the shop has the full list.

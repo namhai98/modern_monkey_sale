@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import Button from '../../components/Button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import EmptyState from '../../components/EmptyState';
@@ -8,8 +9,8 @@ import Pager from '../../components/Pager';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
 import { useToast } from '../../context/ToastContext';
-import { AdminPage, DateFilter, SearchInput, SelectFilter, TableWrap, Toolbar, usd, useDebounced } from './kit';
-import { btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
+import { LoadError, AdminPage, DateFilter, SearchInput, SelectFilter, TableWrap, Toolbar, usd, useDebounced } from './kit';
+import { thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded'];
 const LIMIT = 20;
@@ -88,10 +89,10 @@ export default function AdminOrders() {
       title={t('admin.orders.title')}
       count={t('admin.orders.count', { n: data.total })}
       actions={
-        <button type="button" onClick={exportCsv} disabled={exporting || data.total === 0} className={`${btnGhost} gap-2`}>
+        <Button variant="outline-dark" size="xs" type="button" onClick={exportCsv} disabled={exporting || data.total === 0}>
           <Icon name="arrowUp" className="h-3.5 w-3.5 rotate-180" />
           {exporting ? t('admin.orders.exporting') : t('admin.orders.export')}
-        </button>
+        </Button>
       }
     >
       <Toolbar active={filtered} onClear={clear}>
@@ -111,7 +112,7 @@ export default function AdminOrders() {
           ))}
         </div>
       )}
-      {error && <p className="text-danger">{error}</p>}
+      {error && <LoadError message={error} onRetry={load} />}
 
       {!loading && !error && data.items.length === 0 && (
         <EmptyState inline title={t('admin.orders.none')} />

@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Button from '../../components/Button';
 import client from '../../api/client';
 import Icon from '../../components/Icon';
+import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import Skeleton from '../../components/Skeleton';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { useLocale } from '../../context/LocaleContext';
 import {
-  AdminPage, Drawer, FormSection, RowAction, SearchInput, Segmented, SelectField, TableWrap,
+  LoadError, AdminPage, Drawer, FormSection, RowAction, SearchInput, Segmented, SelectField, TableWrap,
   TextField, ToggleChip, Toolbar, usd,
 } from './kit';
-import { btnPrimary, btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
+import { thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const ymd = (d) => d.toISOString().slice(0, 10);
 const today = () => ymd(new Date());
@@ -31,11 +34,11 @@ const emptyForm = {
 
 // Same language as the rest of the admin: gold for live, plain for upcoming,
 // muted for over, danger only for switched off.
-const STATUS_STYLE = {
-  active: 'border-gold/50 text-gold',
-  scheduled: 'border-line text-foreground',
-  expired: 'border-line text-muted',
-  disabled: 'border-danger/50 text-danger',
+const STATUS_TONE = {
+  active: 'active',
+  scheduled: 'open',
+  expired: 'closed',
+  disabled: 'danger',
 };
 
 // "2026.09.08" — dots read as a date at a glance; ISO dashes looked like a range.
@@ -136,7 +139,7 @@ function ProductPicker({ selected, onChange }) {
             const on = selectedSet.has(p.id);
             return (
               <label key={p.id} className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm transition-colors hover:bg-surface ${on ? 'bg-surface' : ''}`}>
-                <input type="checkbox" className="accent-[var(--color-gold)]" checked={on} onChange={() => toggle(p.id)} />
+                <input type="checkbox" className="accent-[var(--gold)]" checked={on} onChange={() => toggle(p.id)} />
                 <span className="flex-1 text-foreground">
                   {p.name}
                   {!p.is_active && <span className="text-xs text-muted"> {t('admin.picker.inactive')}</span>}
@@ -208,10 +211,10 @@ function DiscountDrawer({ initial, onClose, onSaved }) {
       onClose={onClose}
       footer={
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" form="discount-form" className={btnPrimary} disabled={saving}>
+          <Button size="xs" type="submit" form="discount-form" disabled={saving}>
             {saving ? t('admin.discounts.saving') : editing ? t('admin.discounts.saveChanges') : t('admin.discounts.create')}
-          </button>
-          <button type="button" onClick={onClose} className={btnGhost}>{t('admin.discounts.cancel')}</button>
+          </Button>
+          <Button variant="outline-dark" size="xs" type="button" onClick={onClose}>{t('admin.discounts.cancel')}</Button>
           {error && <p className="w-full text-sm text-danger">{error}</p>}
         </div>
       }
@@ -256,6 +259,7 @@ function DiscountDrawer({ initial, onClose, onSaved }) {
 export default function AdminDiscounts() {
   const { t } = useLocale();
   const { error: toastError } = useToast();
+  const confirm = useConfirm();
   const [discounts, setDiscounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -295,7 +299,13 @@ export default function AdminDiscounts() {
   }
 
   async function remove(d) {
-    if (!confirm(t('admin.discounts.confirmDelete', { name: d.name }))) return;
+    const ok = await confirm({
+      title: t('admin.discounts.confirmDelete', { name: d.name }),
+      body: t('admin.discounts.confirmDeleteBody'),
+      confirmLabel: t('admin.discounts.delete'),
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await client.delete(`/discounts/${d.id}`);
       load();
@@ -312,10 +322,10 @@ export default function AdminDiscounts() {
       title={t('admin.discounts.title')}
       count={t('admin.discounts.count', { n: discounts.length })}
       actions={
-        <button onClick={() => setFormFor('new')} className={`${btnPrimary} gap-2`}>
+        <Button size="xs" onClick={() => setFormFor('new')}>
           <Icon name="plus" className="h-3.5 w-3.5" />
           {t('admin.discounts.new')}
-        </button>
+        </Button>
       }
     >
       {discounts.length > 0 && (
@@ -339,16 +349,16 @@ export default function AdminDiscounts() {
           ))}
         </div>
       )}
-      {error && <p className="text-danger">{error}</p>}
+      {error && <LoadError message={error} onRetry={load} />}
 
       {!loading && !error && discounts.length === 0 && (
         <EmptyState
           inline
           title={t('admin.discounts.none')}
           actions={
-            <button onClick={() => setFormFor('new')} className={btnPrimary}>
+            <Button size="xs" onClick={() => setFormFor('new')}>
               {t('admin.discounts.createFirst')}
-            </button>
+            </Button>
           }
         />
       )}
@@ -358,7 +368,7 @@ export default function AdminDiscounts() {
       )}
 
       {!loading && !error && shown.length > 0 && (
-        <TableWrap>
+        <TableWrap stickyFirst>
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className={trCls}>
@@ -390,9 +400,7 @@ export default function AdminDiscounts() {
                   </td>
                   <td className={`${tdNumCls} text-muted`}>{d.product_count}</td>
                   <td className={tdCls}>
-                    <span className={`micro inline-flex border px-2.5 py-1 tracking-meta ${STATUS_STYLE[d.status] || 'border-line text-muted'}`}>
-                      {t(`admin.discountStatus.${d.status}`)}
-                    </span>
+                    <StatusBadge tone={STATUS_TONE[d.status]}>{t(`admin.discountStatus.${d.status}`)}</StatusBadge>
                   </td>
                   <td className={`${tdNumCls} whitespace-nowrap`}>
                     <RowAction icon="edit" label={t('admin.discounts.edit')} onClick={() => openEdit(d)} />

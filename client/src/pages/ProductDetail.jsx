@@ -248,7 +248,7 @@ export default function ProductDetail() {
                           setQty((q) => Math.min(Math.max(1, q), v.stock || 1));
                         }}
                         aria-pressed={active}
-                        className={`min-w-12 border px-4 py-2.5 text-sm transition-colors duration-300 ${active
+                        className={`min-h-11 min-w-12 border px-4 py-2.5 text-sm transition-colors duration-300 ${active
                           ? 'border-gold text-gold'
                           : out
                             ? 'cursor-not-allowed border-line text-muted/40 line-through'

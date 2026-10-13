@@ -5,6 +5,7 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import OrderTimeline from '../components/OrderTimeline';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import PageHero from '../components/PageHero';
 import Button from '../components/Button';
@@ -21,6 +22,7 @@ export default function OrderDetail() {
   const justPlaced = params.get('placed') === '1';
   const { t } = useLocale();
   const { error: toastError } = useToast();
+  const confirm = useConfirm();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
@@ -41,7 +43,14 @@ export default function OrderDetail() {
   }, [load]);
 
   async function cancel() {
-    if (!confirm(t('orderDetail.confirmCancel'))) return;
+    const ok = await confirm({
+      title: t('orderDetail.confirmCancel'),
+      body: t('orderDetail.cancelBody'),
+      confirmLabel: t('orderDetail.cancel'),
+      cancelLabel: t('orderDetail.keep'),
+      tone: 'danger',
+    });
+    if (!ok) return;
     setCancelling(true);
     try {
       const res = await client.post(`/orders/${id}/cancel`);

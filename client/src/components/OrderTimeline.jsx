@@ -60,10 +60,10 @@ export default function OrderTimeline({ status, history = [], createdAt }) {
               )}
               <span
                 className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center border ${
-                  done ? 'border-gold bg-gold text-ink' : now ? 'border-gold bg-background text-gold' : 'border-line bg-background text-muted'
+                  done ? 'border-gold-fill bg-gold-fill text-ink' : now ? 'border-gold bg-background text-gold' : 'border-line bg-background text-muted'
                 }`}
               >
-                {done ? <Icon name="check" className="h-3.5 w-3.5" strokeWidth={2} /> : <span className="text-[11px] tabular-nums">{i + 1}</span>}
+                {done ? <Icon name="check" className="h-3.5 w-3.5" strokeWidth={2} /> : <span className="text-meta tabular-nums">{i + 1}</span>}
               </span>
               <div className="md:mt-4">
                 <p className={`text-sm ${now ? 'text-gold' : reached ? 'text-foreground' : 'text-muted'}`}>

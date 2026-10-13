@@ -47,7 +47,7 @@ function Lightbox({ pics, index, alt, main, onStep, onClose }) {
     <div
       ref={dialogRef}
       tabIndex={-1}
-      className="fixed inset-0 z-[90] flex animate-[fadeIn_0.2s_ease-out] cursor-zoom-out items-center justify-center bg-ink/95 p-6 outline-none backdrop-blur-sm"
+      className="fixed inset-0 z-lightbox flex animate-[fadeIn_0.2s_ease-out] cursor-zoom-out items-center justify-center bg-ink/95 p-6 outline-none backdrop-blur-sm"
       onClick={onClose}
       onTouchStart={(e) => {
         touch.current = { x: e.touches[0].clientX, t: Date.now() };
@@ -175,7 +175,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
   // one fixed frame for every image: portrait on small screens, viewport-bound
   // on desktop so the thumbnail strip + product info stay on screen.
   const FRAME =
-    'aspect-[4/5] sm:aspect-square lg:aspect-auto lg:h-[calc(100svh-12.5rem)] lg:min-h-[440px]';
+    'aspect-[4/5] sm:aspect-square md:aspect-auto md:h-[52svh] lg:h-[calc(100svh-12.5rem)] lg:min-h-[440px]';
 
   if (pics.length === 0) {
     return (
@@ -226,7 +226,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
                 alt={alt}
                 width={p.width || undefined}
                 height={p.height || undefined}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover md:object-contain lg:object-cover"
                 priority={i === 0}
               />
             </button>

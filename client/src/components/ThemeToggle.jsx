@@ -34,8 +34,8 @@ function WatchIcon({ lit, turns, className }) {
         r="6.75"
         className="transition-[fill,filter] duration-500"
         style={{
-          fill: lit ? 'color-mix(in oklab, var(--color-gold) 35%, transparent)' : 'transparent',
-          filter: lit ? 'drop-shadow(0 0 3px var(--color-gold))' : 'none',
+          fill: lit ? 'color-mix(in oklab, var(--gold) 35%, transparent)' : 'transparent',
+          filter: lit ? 'drop-shadow(0 0 3px var(--gold))' : 'none',
         }}
       />
       {/* Hands: hour at ten past, minute at twelve. */}

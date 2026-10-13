@@ -306,17 +306,13 @@ export default function Navbar() {
   // one brand, or to the sale, is still inside Products.
   const onShop = location.pathname.startsWith('/shop');
 
-  // Sale is no longer a header link of its own: it is a filter in the shop
-  // (and a row in the Products panel), reached from inside the catalogue.
-  const menuLinks = [{ to: SHOP_ALL, label: t('nav.products') }];
-
   const bagLabel = count > 0 ? `${t('nav.bag')} (${count})` : t('nav.bag');
   const savedLabel = savedCount > 0 ? `${t('nav.saved')} (${savedCount})` : t('nav.saved');
 
   return (
     <header
       ref={headerRef}
-      className={`fixed inset-x-0 top-0 z-50 text-white transition-colors duration-500 ${
+      className={`fixed inset-x-0 top-0 z-header text-white transition-colors duration-500 ${
         solid ? 'border-b border-white/10' : 'border-b border-transparent'
       }`}
       onMouseLeave={scheduleMegaClose}
@@ -514,7 +510,7 @@ export default function Navbar() {
       {/* ── Mobile / tablet menu ─────────────────────────────────────────── */}
       {menuOpen && (
         <MobileMenu
-          links={menuLinks}
+          categories={catalog?.categories || []}
           closing={menuClosing}
           onNavigate={closeMenu}
           onSearch={() => {

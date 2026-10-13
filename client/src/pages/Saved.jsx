@@ -22,6 +22,8 @@ export default function Saved() {
   const { ids } = useWishlist();
   const [byId, setById] = useState({});
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useDocumentTitle(t('wishlist.title'));
 
   const missing = ids.filter((id) => !(id in byId));
@@ -35,6 +37,7 @@ export default function Saved() {
     let live = true;
     const want = missingKey.split(',').map(Number);
     setLoading(true);
+    setFailed(false);
     client
       .get('/products', { params: { ids: missingKey, limit: want.length } })
       .then((res) => {
@@ -46,12 +49,12 @@ export default function Saved() {
           return next;
         });
       })
-      .catch(() => {})
+      .catch(() => live && setFailed(true))
       .finally(() => live && setLoading(false));
     return () => {
       live = false;
     };
-  }, [missingKey]);
+  }, [missingKey, attempt]);
 
   const items = ids.map((id) => byId[id]).filter(Boolean);
 
@@ -65,7 +68,13 @@ export default function Saved() {
       />
 
       <Section pad="content">
-        {loading && items.length === 0 ? (
+        {failed && items.length === 0 ? (
+          <EmptyState
+            inline
+            title={t('wishlist.loadFailed')}
+            actions={<Button variant="outline-dark" onClick={() => setAttempt((n) => n + 1)}>{t('common.retry')}</Button>}
+          />
+        ) : loading && items.length === 0 ? (
           <ProductGridSkeleton count={Math.min(Math.max(ids.length, 4), 8)} />
         ) : items.length === 0 ? (
           <EmptyState

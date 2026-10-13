@@ -87,7 +87,7 @@ export default function SearchOverlay() {
       role="dialog"
       aria-modal="true"
       aria-label={t('nav.search')}
-      className="fixed inset-0 z-[70] animate-[fadeIn_0.25s_ease-out] overflow-y-auto bg-ink/97 text-white outline-none backdrop-blur-sm"
+      className="fixed inset-0 z-overlay animate-[fadeIn_0.25s_ease-out] overflow-y-auto bg-ink/97 text-white outline-none backdrop-blur-sm"
     >
       <div className="container-lux max-w-3xl pb-20 pt-24 md:pt-32">
         <div className="mb-8 flex items-center justify-between">

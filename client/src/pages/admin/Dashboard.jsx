@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import client from '../../api/client';
-import EmptyState from '../../components/EmptyState';
 import ImageFallback from '../../components/ImageFallback';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import Skeleton from '../../components/Skeleton';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
-import { AdminPage, TableWrap, usd } from './kit';
-import { btnGhost, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
+import { LoadError, AdminPage, TableWrap, usd } from './kit';
+import { thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded'];
 const PERIODS = ['today', 'week', 'month'];
@@ -59,11 +58,7 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <AdminPage title={t('admin.dashboard.title')}>
-        <EmptyState
-          inline
-          title={error}
-          actions={<button type="button" onClick={load} className={btnGhost}>{t('admin.ui.retry')}</button>}
-        />
+        <LoadError message={error} onRetry={load} />
       </AdminPage>
     );
   }

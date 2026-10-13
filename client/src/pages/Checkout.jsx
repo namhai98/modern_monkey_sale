@@ -14,11 +14,13 @@ import LineItem, { OrderSummary } from '../components/LineItem';
 import PageHero from '../components/PageHero';
 import EmptyState from '../components/EmptyState';
 import Section from '../components/Section';
+import { useMoney } from '../lib/price';
 
 export default function Checkout() {
   const { items, total, clearCart, syncPrices } = useCart();
   const { user } = useAuth();
   const { t, locale } = useLocale();
+  const money = useMoney();
   const { info } = useToast();
   useDocumentTitle(t('checkout.title'));
   const navigate = useNavigate();
@@ -89,18 +91,52 @@ export default function Checkout() {
       <PageHero compact eyebrow={t('checkout.step.details')} title={t('checkout.title')}>
         {/* Step rail — micro-type with the current step in gold, the single
             signal this design uses for "you are here". */}
-        <ol className="micro mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
-          <li>{t('checkout.step.bag')}</li>
-          <li aria-hidden="true">—</li>
-          <li aria-current="step" className="text-gold">
+        <ol className="micro mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-muted">
+          <li className="inline-flex items-center gap-2">
+            <span className="tabular-nums">1</span>
+            {t('checkout.step.bag')}
+          </li>
+          <li aria-current="step" className="inline-flex items-center gap-2 text-gold">
+            <span className="tabular-nums">2</span>
             {t('checkout.step.details')}
           </li>
-          <li aria-hidden="true">—</li>
-          <li>{t('checkout.step.confirm')}</li>
+          <li className="inline-flex items-center gap-2">
+            <span className="tabular-nums">3</span>
+            {t('checkout.step.confirm')}
+          </li>
         </ol>
       </PageHero>
 
       <Section containerClassName="lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-16 xl:gap-20">
+        {/* Phone and tablet: the order and its total at the top, folded —
+            on a narrow screen the side column below would come after the
+            whole form. */}
+        <details className="group mb-10 border-y border-line lg:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+            <span className="micro tracking-meta text-muted">
+              {t('checkout.yourOrder')} · {t('checkout.itemCount', { n: items.reduce((n, i) => n + i.quantity, 0) })}
+            </span>
+            <span className="flex items-center gap-3">
+              <span className="tabular-nums text-foreground">{money(total)}</span>
+              <Icon name="chevronDown" className="h-4 w-4 text-muted transition-transform duration-300 group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="divide-y divide-line border-t border-line">
+            {items.map((i) => (
+              <LineItem
+                key={`${i.id}:${i.variant_id ?? ''}`}
+                name={i.name}
+                image={i.image_url}
+                variantLabel={i.variant_label}
+                quantity={i.quantity}
+                price={i.price}
+                originalPrice={i.original_price}
+              />
+            ))}
+          </div>
+          <OrderSummary className="mb-6 mt-6" subtotal={subtotal} total={total} />
+        </details>
+
         <div>
           <p className="text-sm text-muted">{t('checkout.signedIn', { email: user?.email })}</p>
 
@@ -182,7 +218,7 @@ export default function Checkout() {
 
         {/* Sticky on desktop: the order stays in view the whole way down the
             form. */}
-        <aside className="mt-16 border-t border-line pt-10 lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:mt-0 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
+        <aside className="hidden lg:sticky lg:block lg:top-[calc(var(--header-h)+2rem)] lg:mt-0 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
           <p className="eyebrow mb-2">{t('checkout.yourOrder')}</p>
           <div className="divide-y divide-line border-b border-line">
             {items.map((i) => (

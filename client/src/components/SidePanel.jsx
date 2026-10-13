@@ -5,13 +5,24 @@ import IconButton from './IconButton';
 import { useLocale } from '../context/LocaleContext';
 import { useFocusTrap } from '../lib/useFocusTrap';
 
-/* A side panel that slides in from the right — admin create/edit forms, the
-   storefront size guide. Portalled to <body> (the route wrapper
-   is transformed, which would pin a fixed panel to it), focus kept inside,
-   Escape and the scrim close it, the page behind does not scroll. */
-export default function SidePanel({ open, title, subtitle, onClose, children, footer, wide = false }) {
+const WIDTH = { sm: 'max-w-sm', md: 'max-w-xl', lg: 'max-w-3xl' };
+
+/* A side panel that slides in from the edge — admin create/edit forms, the
+   storefront size guide, the shop's filters on a phone. Portalled to <body>
+   (the route wrapper is transformed, which would pin a fixed panel to it),
+   focus kept inside, Escape and the scrim close it, the page behind does not
+   scroll.
+
+   side     'right' (default) or 'left'
+   size     'sm' | 'md' (default) | 'lg'; `wide` is the older spelling of lg
+   actions  extra controls in the header, before the close button */
+export default function SidePanel({
+  open, title, subtitle, onClose, children, footer, wide = false, side = 'right', size, actions,
+}) {
   const { t } = useLocale();
   const ref = useFocusTrap(open);
+  const width = WIDTH[size || (wide ? 'lg' : 'md')];
+  const left = side === 'left';
 
   useEffect(() => {
     if (!open) return undefined;
@@ -27,7 +38,7 @@ export default function SidePanel({ open, title, subtitle, onClose, children, fo
 
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[80]">
+    <div className="fixed inset-0 z-panel">
       <div className="absolute inset-0 animate-[fadeIn_0.2s_ease-out] bg-ink/70 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={ref}
@@ -35,18 +46,23 @@ export default function SidePanel({ open, title, subtitle, onClose, children, fo
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-line bg-background text-foreground shadow-2xl outline-none ${
-          wide ? 'max-w-3xl' : 'max-w-xl'
-        } animate-[drawerIn_0.35s_cubic-bezier(0.22,1,0.36,1)]`}
+        className={`absolute top-0 flex h-full w-full flex-col bg-background text-foreground shadow-2xl outline-none ${width} ${
+          left
+            ? 'left-0 border-r border-line animate-[drawerInLeft_0.35s_cubic-bezier(0.22,1,0.36,1)]'
+            : 'right-0 border-l border-line animate-[drawerIn_0.35s_cubic-bezier(0.22,1,0.36,1)]'
+        }`}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 py-5 md:px-8">
           <div className="min-w-0">
             <h2 className="heading-serif truncate text-xl">{title}</h2>
             {subtitle && <p className="micro mt-1.5 tracking-meta text-muted">{subtitle}</p>}
           </div>
-          <IconButton tone="theme" size="sm" onClick={onClose} aria-label={t('nav.close')}>
-            <Icon name="x" className="h-4 w-4" />
-          </IconButton>
+          <div className="flex shrink-0 items-center gap-4">
+            {actions}
+            <IconButton tone="theme" size="sm" onClick={onClose} aria-label={t('nav.close')}>
+              <Icon name="x" className="h-4 w-4" />
+            </IconButton>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8">{children}</div>
         {footer && <div className="shrink-0 border-t border-line bg-surface px-6 py-4 md:px-8">{footer}</div>}

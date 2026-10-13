@@ -31,6 +31,15 @@ import { homeMedia, unsplashSrcSet } from '../lib/media';
 function Hero() {
   const { t, locale } = useLocale();
   const ref = useRef(null);
+  // The sale button only when something is actually on sale — otherwise it
+  // led to an empty page.
+  const [onSale, setOnSale] = useState(false);
+  useEffect(() => {
+    client
+      .get('/products', { params: { on_sale: 1, limit: 1 } })
+      .then((res) => setOnSale(res.data.total > 0))
+      .catch(() => {});
+  }, []);
   const bgRef = useRef(null);
   const copyRef = useRef(null);
 
@@ -124,9 +133,11 @@ function Hero() {
           style={{ animationDelay: '1.2s' }}
         >
           <Button to="/shop?all=1">{t('home.hero.cta')}</Button>
-          <Button to="/shop?sale=1" variant="outline">
-            {t('nav.sale')}
-          </Button>
+          {onSale && (
+            <Button to="/shop?sale=1" variant="outline">
+              {t('nav.sale')}
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useId, useState } from 'react';
+import Button from '../../components/Button';
 import { Link, useParams } from 'react-router-dom';
 import client from '../../api/client';
-import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
 import ImageFallback from '../../components/ImageFallback';
 import OrderStatusBadge from '../../components/OrderStatusBadge';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
-import { AdminPage, TextField, ToggleChip, usd } from './kit';
-import { btnPrimary, btnGhost } from './ui';
+import { LoadError, AdminPage, TextField, ToggleChip, usd } from './kit';
 
 const RESTOCKING = new Set(['cancelled', 'refunded']);
 const fmtDateTime = (d) =>
@@ -70,12 +69,12 @@ function TransitionPanel({ orderId, target, onDone, onCancel }) {
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className={btnPrimary}>
+        <Button size="xs" type="submit" disabled={busy}>
           {busy ? t('admin.orderDetail.applying') : t('admin.orderDetail.confirm')}
-        </button>
-        <button type="button" onClick={onCancel} className={btnGhost}>
+        </Button>
+        <Button variant="outline-dark" size="xs" type="button" onClick={onCancel}>
           {t('admin.orderDetail.cancel')}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -153,11 +152,7 @@ export default function AdminOrderDetail() {
   if (error) {
     return (
       <AdminPage title={t('admin.orderDetail.title', { id })} back={back}>
-        <EmptyState
-          inline
-          title={error}
-          actions={<button type="button" onClick={load} className={btnGhost}>{t('admin.ui.retry')}</button>}
-        />
+        <LoadError message={error} onRetry={load} />
       </AdminPage>
     );
   }
@@ -216,13 +211,13 @@ export default function AdminOrderDetail() {
                     {[it.variant_label, it.sku].filter(Boolean).join(' · ')}
                   </p>
                   {it.discount_amount > 0 && it.discount_name && (
-                    <p className="micro mt-1.5 text-[10px] text-gold">{it.discount_name}</p>
+                    <p className="micro mt-1.5 text-badge text-gold">{it.discount_name}</p>
                   )}
                 </div>
                 <div className="shrink-0 text-right text-sm tabular-nums">
                   <p className="text-muted">
                     {it.quantity} ×{' '}
-                    {it.discount_amount > 0 && <s className="mr-1 text-xs text-muted/70">{usd(it.original_price)}</s>}
+                    {it.discount_amount > 0 && <s className="mr-1 text-xs text-muted">{usd(it.original_price)}</s>}
                     {usd(it.price)}
                   </p>
                   <p className="mt-1 text-foreground">{usd(it.line_total)}</p>

@@ -9,32 +9,13 @@
    tighter spacing than the storefront's editorial rhythm. What it does not do
    is invent its own colours or type. */
 
-// Underline-only field, the house input. Same treatment as the `field` utility
-// in index.css; declared here as a string so the many admin inputs that need
-// extra width/number classes can compose it.
-export const inputCls =
-  'w-full border-b border-line bg-transparent py-3 text-sm text-foreground ' +
-  'placeholder:text-muted/60 transition-colors duration-300 ' +
-  'focus:border-gold focus:outline-none disabled:opacity-50 ' +
-  // no native number spinners — they render as a bright widget on the dark theme
-  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+// Underline-only field, the house input: the `field` utility in index.css, the
+// same one the storefront's <Field> uses. A string so the few hand-placed admin
+// inputs (inline rename, the rate input) can add width classes to it.
+export const inputCls = 'field';
 
-// Compact primary action. The storefront's <Button> is right for a CTA, but a
-// row of them in a table toolbar needs less presence than px-9 py-4.
-export const btnPrimary =
-  'inline-flex items-center justify-center border border-gold bg-gold px-5 py-2 micro ' +
-  'font-medium tracking-[0.2em] text-ink transition-colors duration-300 ' +
-  'hover:bg-champagne hover:border-champagne disabled:opacity-50 disabled:pointer-events-none';
-
-export const btnGhost =
-  'inline-flex items-center justify-center border border-line px-5 py-2 micro tracking-[0.2em] ' +
-  'text-foreground transition-colors duration-300 hover:border-gold hover:text-gold ' +
-  'disabled:opacity-50 disabled:pointer-events-none';
-
-// Destructive, and the only place the danger token appears.
-export const btnDanger =
-  'inline-flex items-center text-danger transition-opacity duration-300 hover:opacity-70 ' +
-  'disabled:opacity-40 disabled:pointer-events-none';
+// Buttons are the shared <Button> (components/Button.jsx), size="xs" in the
+// admin's toolbars and forms, variant="danger" for irreversible actions.
 
 export const errorCls = 'border-l-2 border-danger py-1 pl-4 text-sm text-danger';
 export const okCls = 'border-l-2 border-gold py-1 pl-4 text-sm text-foreground';

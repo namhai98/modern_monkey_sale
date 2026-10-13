@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import Button from '../../components/Button';
 import client from '../../api/client';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
 import { AdminPage } from './kit';
-import { inputCls, btnPrimary, errorCls, okCls } from './ui';
+import { inputCls, errorCls, okCls } from './ui';
 
 const fmtMnt = (n) => `${(Math.floor(n / 1000) * 1000).toLocaleString('en-US')}₮`;
 const fmtRate = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -118,9 +119,9 @@ export default function AdminSettings() {
                   required
                 />
                 <span className="shrink-0 text-sm text-muted">₮</span>
-                <button className={`${btnPrimary} ml-auto`} disabled={saving}>
+                <Button size="xs" className="ml-auto" disabled={saving}>
                   {saving ? t('admin.settings.saving') : t('admin.settings.save')}
-                </button>
+                </Button>
               </div>
             </form>
 

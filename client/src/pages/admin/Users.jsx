@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
 import Pager from '../../components/Pager';
@@ -9,10 +11,10 @@ import Select from '../../components/Select';
 import Skeleton from '../../components/Skeleton';
 import { useLocale } from '../../context/LocaleContext';
 import {
-  AdminPage, Drawer, FormSection, SearchInput, SelectField, SelectFilter, StatusPill, TableWrap,
+  StatusToggle, LoadError, AdminPage, Drawer, FormSection, SearchInput, SelectField, SelectFilter, StatusPill, TableWrap,
   TextField, Toolbar, useDebounced,
 } from './kit';
-import { btnPrimary, btnGhost, thCls, tdCls, trCls } from './ui';
+import { thCls, tdCls, trCls } from './ui';
 
 const ROLES = ['customer', 'staff', 'manager', 'admin'];
 const NEW_USER_ROLES = ['staff', 'manager', 'admin'];
@@ -50,10 +52,10 @@ function NewUserDrawer({ onClose, onCreated }) {
       onClose={onClose}
       footer={
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" form="user-form" className={btnPrimary} disabled={saving}>
+          <Button size="xs" type="submit" form="user-form" disabled={saving}>
             {saving ? t('admin.users.adding') : t('admin.users.add')}
-          </button>
-          <button type="button" onClick={onClose} className={btnGhost}>{t('admin.products.cancel')}</button>
+          </Button>
+          <Button variant="outline-dark" size="xs" type="button" onClick={onClose}>{t('admin.products.cancel')}</Button>
           {error && <p className="w-full text-sm text-danger">{error}</p>}
         </div>
       }
@@ -82,6 +84,7 @@ function NewUserDrawer({ onClose, onCreated }) {
 export default function AdminUsers() {
   const { t } = useLocale();
   const { error: toastError, success } = useToast();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const isAdmin = user.role === 'admin';
 
@@ -116,7 +119,11 @@ export default function AdminUsers() {
   useEffect(() => { load(); }, [load]);
 
   async function changeRole(u, next) {
-    if (!confirm(t('admin.users.confirmRole', { name: u.name, role: t(`admin.role.${next}`) }))) return;
+    const ok = await confirm({
+      title: t('admin.users.confirmRole', { name: u.name, role: t(`admin.role.${next}`) }),
+      body: t('admin.users.roleHint'),
+    });
+    if (!ok) return;
     try {
       await client.patch(`/users/${u.id}/role`, { role: next });
       await load();
@@ -127,7 +134,13 @@ export default function AdminUsers() {
 
   async function toggleStatus(u) {
     const key = u.is_active ? 'admin.users.confirmDisable' : 'admin.users.confirmEnable';
-    if (!confirm(t(key, { name: u.name }))) return;
+    const ok = await confirm({
+      title: t(key, { name: u.name }),
+      body: u.is_active ? t('admin.users.disableBody') : t('admin.users.enableBody'),
+      confirmLabel: u.is_active ? t('admin.users.disable') : t('admin.users.enable'),
+      tone: u.is_active ? 'danger' : undefined,
+    });
+    if (!ok) return;
     try {
       await client.patch(`/users/${u.id}/status`, { is_active: !u.is_active });
       await load();
@@ -144,10 +157,10 @@ export default function AdminUsers() {
       count={t('admin.users.count', { n: total })}
       actions={
         isAdmin && (
-          <button onClick={() => setAdding(true)} className={`${btnPrimary} gap-2`}>
+          <Button size="xs" onClick={() => setAdding(true)}>
             <Icon name="plus" className="h-3.5 w-3.5" />
             {t('admin.users.add')}
-          </button>
+          </Button>
         )
       }
     >
@@ -166,7 +179,7 @@ export default function AdminUsers() {
           ))}
         </div>
       )}
-      {error && <p className="text-danger">{error}</p>}
+      {error && <LoadError message={error} onRetry={load} />}
 
       {!loading && !error && users.length === 0 && (
         <EmptyState inline title={t('admin.users.none')} />
@@ -174,7 +187,7 @@ export default function AdminUsers() {
 
       {!loading && !error && users.length > 0 && (
         <>
-          <TableWrap>
+          <TableWrap stickyFirst>
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className={trCls}>
@@ -197,7 +210,7 @@ export default function AdminUsers() {
                           <div className="min-w-0">
                             <div className="text-foreground">
                               {u.name}
-                              {u.id === user.id && <span className="micro ml-2 text-[10px] text-gold">{t('admin.users.you')}</span>}
+                              {u.id === user.id && <span className="micro ml-2 text-badge text-gold">{t('admin.users.you')}</span>}
                             </div>
                             <div className="truncate text-xs text-muted">{u.email}</div>
                           </div>
@@ -220,13 +233,13 @@ export default function AdminUsers() {
                       </td>
                       <td className={tdCls}>
                         {editable ? (
-                          <button type="button" onClick={() => toggleStatus(u)}
-                            aria-label={u.is_active ? t('admin.users.disable') : t('admin.users.enable')}
-                            title={u.is_active ? t('admin.users.disable') : t('admin.users.enable')}>
-                            <StatusPill on={u.is_active}>
-                              {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
-                            </StatusPill>
-                          </button>
+                          <StatusToggle
+                            on={u.is_active}
+                            onClick={() => toggleStatus(u)}
+                            action={u.is_active ? t('admin.users.disable') : t('admin.users.enable')}
+                          >
+                            {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}
+                          </StatusToggle>
                         ) : (
                           <StatusPill on={u.is_active}>
                             {u.is_active ? t('admin.users.active') : t('admin.users.disabled')}

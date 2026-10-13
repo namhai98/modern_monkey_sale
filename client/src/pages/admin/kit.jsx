@@ -1,4 +1,8 @@
-import { useEffect, useId, useState } from 'react';
+import { Children, useEffect, useId, useState } from 'react';
+import Button from '../../components/Button';
+import EmptyState from '../../components/EmptyState';
+import Field from '../../components/Field';
+import StatusBadge from '../../components/StatusBadge';
 import Icon from '../../components/Icon';
 import Select from '../../components/Select';
 import Tooltip from '../../components/Tooltip';
@@ -51,13 +55,56 @@ export function AdminPage({ title, count, back, actions, children }) {
   );
 }
 
-/* ── Filters ────────────────────────────────────────────────────────────── */
-
-export function Toolbar({ children, active = false, onClear }) {
+/* A failed load, said plainly with a way to try again — never a bare red
+   line the admin has to reload the page to get past. */
+export function LoadError({ message, onRetry }) {
   const { t } = useLocale();
   return (
+    <EmptyState
+      inline
+      title={message}
+      actions={
+        onRetry && (
+          <Button variant="outline-dark" size="xs" onClick={onRetry}>
+            {t('admin.ui.retry')}
+          </Button>
+        )
+      }
+    />
+  );
+}
+
+/* ── Filters ────────────────────────────────────────────────────────────── */
+
+/* On a phone the filters fold away behind one button so the list starts in
+   the first screen; a leading SearchInput stays out, since searching is the
+   common case. From md the row is unchanged (`md:contents` lets the folded
+   group's children sit in the row as before). */
+export function Toolbar({ children, active = false, onClear }) {
+  const { t } = useLocale();
+  const [open, setOpen] = useState(false);
+  const list = Children.toArray(children);
+  const primary = list[0]?.type === SearchInput ? list[0] : null;
+  const rest = primary ? list.slice(1) : list;
+  return (
     <div className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-5 border-b border-line pb-6">
-      {children}
+      {primary}
+      {rest.length > 0 && (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="micro inline-flex items-center gap-2 border border-line px-3.5 py-2.5 tracking-meta text-muted transition-colors duration-300 hover:text-foreground md:hidden"
+        >
+          <Icon name="filter" className="h-3.5 w-3.5" />
+          {t('admin.ui.filters')}
+          {active && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gold" />}
+          <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+      {rest.length > 0 && (
+        <div className={`${open ? 'flex' : 'hidden'} w-full flex-wrap items-end gap-x-6 gap-y-5 md:contents`}>{rest}</div>
+      )}
       {active && onClear && (
         <button
           type="button"
@@ -173,7 +220,7 @@ export function ToggleChip({ checked, onChange, children }) {
         checked ? 'border-gold text-gold' : 'border-line text-muted hover:text-foreground'
       }`}
     >
-      <span className={`flex h-3.5 w-3.5 items-center justify-center border ${checked ? 'border-gold bg-gold text-ink' : 'border-line'}`}>
+      <span className={`flex h-3.5 w-3.5 items-center justify-center border ${checked ? 'border-gold-fill bg-gold-fill text-ink' : 'border-line'}`}>
         {checked && <Icon name="check" className="h-2.5 w-2.5" strokeWidth={2.5} />}
       </span>
       {children}
@@ -198,33 +245,24 @@ export function FormSection({ title, hint, children, cols = 2 }) {
 }
 
 // An input/textarea with its label always visible above it.
-export function TextField({ label, hint, as = 'input', className = '', required, ...props }) {
-  const id = useId();
-  const Tag = as;
-  return (
-    <div className={className}>
-      <label htmlFor={id} className="micro mb-1 block text-muted">
-        {label}
-        {required && <span className="text-gold"> *</span>}
-      </label>
-      <Tag id={id} className={inputCls} required={required} {...props} />
-      {hint && <p className="mt-1.5 text-xs leading-relaxed text-muted">{hint}</p>}
-    </div>
-  );
+// The storefront's Field, so labels, hints, the required marker and errors
+// look and behave the same in the shop and the admin.
+export function TextField(props) {
+  return <Field {...props} />;
 }
 
 export function SelectField({ label, hint, value, onChange, children, className = '' }) {
-  const id = useId();
   return (
-    <div className={className}>
-      <label htmlFor={id} className="micro mb-1 block text-muted">
-        {label}
-      </label>
-      <Select id={id} value={value} onChange={onChange}>
-        {children}
-      </Select>
-      {hint && <p className="mt-1.5 text-xs leading-relaxed text-muted">{hint}</p>}
-    </div>
+    <Field
+      label={label}
+      hint={hint}
+      className={className}
+      control={
+        <Select value={value} onChange={onChange}>
+          {children}
+        </Select>
+      }
+    />
   );
 }
 
@@ -233,8 +271,20 @@ export function SelectField({ label, hint, value, onChange, children, className 
 // Horizontal scroll on narrow screens instead of crushing the columns.
 // `relative` makes it the containing block, so absolutely positioned bits in
 // the table (sr-only labels, tooltips) are clipped too instead of widening the page.
-export function TableWrap({ children }) {
-  return <div className="relative -mx-1 overflow-x-auto px-1">{children}</div>;
+// `stickyFirst`: the first column (the order or product name) stays put while
+// a wide table scrolls sideways on a phone, so a row never loses what it is.
+export function TableWrap({ children, stickyFirst = false }) {
+  return (
+    <div
+      className={`relative -mx-1 overflow-x-auto px-1 ${
+        stickyFirst
+          ? '[&_tr>*:first-child]:sticky [&_tr>*:first-child]:left-0 [&_tr>*:first-child]:z-10 [&_tr>*:first-child]:bg-background max-md:[&_tr>*:first-child]:border-r max-md:[&_tr>*:first-child]:border-line'
+          : ''
+      }`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function RowAction({ icon, label, onClick, danger = false, disabled = false }) {
@@ -256,15 +306,23 @@ export function RowAction({ icon, label, onClick, danger = false, disabled = fal
 }
 
 // A small status label: gold when live, hairline/muted otherwise.
+/* A status you can flip in place (product shown/hidden, user enabled/
+   disabled): the pill shows the state, the tooltip and accessible name say
+   what a click will do. */
+export function StatusToggle({ on, onClick, action, children }) {
+  return (
+    <Tooltip label={action}>
+      <button type="button" onClick={onClick} aria-label={action} className="inline-flex">
+        <StatusPill on={on}>{children}</StatusPill>
+      </button>
+    </Tooltip>
+  );
+}
+
 export function StatusPill({ on, children }) {
   return (
-    <span
-      className={`micro inline-flex items-center gap-1.5 border px-2.5 py-1 tracking-meta ${
-        on ? 'border-gold/50 text-gold' : 'border-line text-muted'
-      }`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-gold' : 'bg-muted/60'}`} />
+    <StatusBadge tone={on ? 'active' : 'closed'} dot>
       {children}
-    </span>
+    </StatusBadge>
   );
 }

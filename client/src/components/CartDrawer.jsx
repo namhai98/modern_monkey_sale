@@ -19,9 +19,17 @@ import TextButton from './TextButton';
    hairline rather than a drop shadow. */
 export default function CartDrawer() {
   const { cartOpen, closeCart } = useUI();
-  const { items, updateQuantity, removeItem, total, syncPrices, lineKey } = useCart();
+  const { items, updateQuantity, removeItem, restoreItem, total, syncPrices, lineKey } = useCart();
   const { t } = useLocale();
-  const { info } = useToast();
+  const { info, withAction } = useToast();
+  // Removing a line is one tap, so it can be taken back from the toast.
+  const removeWithUndo = (item, index) => {
+    removeItem(lineKey(item.id, item.variant_id));
+    withAction(t('cart.removed', { name: item.name }), {
+      label: t('common.undo'),
+      onClick: () => restoreItem(item, index),
+    });
+  };
   const navigate = useNavigate();
   const panelRef = useFocusTrap(cartOpen);
 
@@ -53,7 +61,7 @@ export default function CartDrawer() {
   return (
     /* inert, not aria-hidden: the drawer stays mounted while closed, and
        aria-hidden alone left every control in it reachable with Tab. */
-    <div className={`fixed inset-0 z-[60] ${cartOpen ? '' : 'pointer-events-none'}`} inert={!cartOpen}>
+    <div className={`fixed inset-0 z-drawer ${cartOpen ? '' : 'pointer-events-none'}`} inert={!cartOpen}>
       <div
         onClick={closeCart}
         className={`absolute inset-0 bg-ink/80 backdrop-blur-sm transition-opacity duration-500 ${
@@ -96,7 +104,7 @@ export default function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 divide-y divide-line overflow-y-auto px-6">
-              {items.map((item) => {
+              {items.map((item, index) => {
                 const key = lineKey(item.id, item.variant_id);
                 return (
                   <LineItem
@@ -114,7 +122,7 @@ export default function CartDrawer() {
                           size="sm"
                           onChange={(n) => updateQuantity(key, n)}
                         />
-                        <TextButton onClick={() => removeItem(key)}>{t('cart.remove')}</TextButton>
+                        <TextButton onClick={() => removeWithUndo(item, index)}>{t('cart.remove')}</TextButton>
                       </>
                     }
                   />

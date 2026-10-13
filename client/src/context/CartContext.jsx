@@ -63,6 +63,17 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.filter((i) => lineKey(i.id, i.variant_id) !== key));
   }, []);
 
+  // Undo for a removal: put the line back where it was (unless the same piece
+  // and size has been added again in the meantime).
+  const restoreItem = useCallback((line, index) => {
+    setItems((prev) => {
+      const key = lineKey(line.id, line.variant_id);
+      if (prev.some((i) => lineKey(i.id, i.variant_id) === key)) return prev;
+      const at = Math.min(Math.max(0, index), prev.length);
+      return [...prev.slice(0, at), line, ...prev.slice(at)];
+    });
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
   // Re-read live prices for the items in the cart (discounts can change / expire
@@ -94,8 +105,8 @@ export function CartProvider({ children }) {
 
   const total = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
   const value = useMemo(
-    () => ({ items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total, lineKey }),
-    [items, addItem, updateQuantity, removeItem, clearCart, syncPrices, total]
+    () => ({ items, addItem, updateQuantity, removeItem, restoreItem, clearCart, syncPrices, total, lineKey }),
+    [items, addItem, updateQuantity, removeItem, restoreItem, clearCart, syncPrices, total]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

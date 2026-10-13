@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
+import Button from '../../components/Button';
 import client from '../../api/client';
 import EmptyState from '../../components/EmptyState';
 import Icon from '../../components/Icon';
 import Skeleton from '../../components/Skeleton';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { useLocale } from '../../context/LocaleContext';
 import { categoryLabel } from '../../lib/i18n';
 import { AdminPage, RowAction, SearchInput, TableWrap, TextField, Toolbar } from './kit';
-import { btnPrimary, inputCls, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
+import { inputCls, thCls, thNumCls, tdCls, tdNumCls, trCls } from './ui';
 
 /* Categories and brands are the same screen — a named list with a slug and a
    product count, add / rename / delete — so one component serves both.
@@ -16,6 +18,7 @@ import { btnPrimary, inputCls, thCls, thNumCls, tdCls, tdNumCls, trCls } from '.
 export default function TaxonomyPage({ endpoint, ns, localize = false }) {
   const { t, locale } = useLocale();
   const { error: toastError } = useToast();
+  const confirm = useConfirm();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,7 +65,13 @@ export default function TaxonomyPage({ endpoint, ns, localize = false }) {
   }
 
   async function remove(row) {
-    if (!confirm(t(`admin.${ns}.confirmDelete`, { name: row.name }))) return;
+    const ok = await confirm({
+      title: t(`admin.${ns}.confirmDelete`, { name: row.name }),
+      body: t('confirm.cannotUndo'),
+      confirmLabel: t(`admin.${ns}.delete`),
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await client.delete(`/${endpoint}/${row.id}`);
       load();
@@ -164,10 +173,10 @@ export default function TaxonomyPage({ endpoint, ns, localize = false }) {
           <TextField className="mt-5" label={t(`admin.${ns}.colName`)} required value={name}
             placeholder={t(`admin.${ns}.newPlaceholder`)} onChange={(e) => setName(e.target.value)} />
           <p className="mt-2 text-xs leading-relaxed text-muted">{t('admin.ui.slugHint')}</p>
-          <button className={`${btnPrimary} mt-6 w-full gap-2`} disabled={creating || !name.trim()}>
+          <Button size="xs" full className="mt-6" disabled={creating || !name.trim()}>
             <Icon name="plus" className="h-3.5 w-3.5" />
             {creating ? t(`admin.${ns}.adding`) : t(`admin.${ns}.add`)}
-          </button>
+          </Button>
           {error && <p className="mt-3 text-sm text-danger">{error}</p>}
         </form>
       </div>

@@ -37,7 +37,7 @@ export default function StickyBuyBar({ watchRef, product, soldOut, needsSize, ad
     <div
       aria-hidden={!show}
       inert={!show}
-      className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl transition-transform duration-500 ease-[var(--ease-luxe)] lg:hidden ${
+      className={`fixed inset-x-0 bottom-0 z-sticky border-t border-line bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl transition-transform duration-500 ease-[var(--ease-luxe)] lg:hidden ${
         show ? 'translate-y-0' : 'translate-y-full'
       }`}
     >

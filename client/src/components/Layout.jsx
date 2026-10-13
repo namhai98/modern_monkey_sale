@@ -42,7 +42,7 @@ export default function Layout({ children }) {
           with this many nav controls needs one more, not less. */}
       <a
         href="#content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-gold focus:px-4 focus:py-2 focus:text-ink"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-skip focus:bg-gold-fill focus:px-4 focus:py-2 focus:text-ink"
       >
         {/* Deliberately untranslated: it mirrors the presentation site's own
             skip link, which is English in both languages. */}

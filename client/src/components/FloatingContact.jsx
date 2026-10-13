@@ -66,7 +66,7 @@ export default function FloatingContact() {
   return (
     <div
       ref={ref}
-      className="fixed bottom-[calc(1rem+var(--float-lift,0px))] right-4 z-40 flex flex-col items-center gap-2.5 transition-[bottom] duration-500 ease-[var(--ease-luxe)] md:bottom-[calc(1.5rem+var(--float-lift,0px))] md:right-6 md:gap-3"
+      className="fixed bottom-[calc(1rem+var(--float-lift,0px))] right-4 z-float flex flex-col items-center gap-2.5 transition-[bottom] duration-500 ease-[var(--ease-luxe)] md:bottom-[calc(1.5rem+var(--float-lift,0px))] md:right-6 md:gap-3"
     >
       {showTop && (
         <IconButton

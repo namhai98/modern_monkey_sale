@@ -7,6 +7,7 @@ import { UIProvider } from './context/UIContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { ToastProvider } from './context/ToastContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import Layout from './components/Layout';
@@ -58,6 +59,7 @@ export default function App() {
           <BrowserRouter>
             <ToastProvider>
               <UIProvider>
+              <ConfirmProvider>
                 <Layout>
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -95,6 +97,7 @@ export default function App() {
                   <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
+              </ConfirmProvider>
               </UIProvider>
             </ToastProvider>
           </BrowserRouter>

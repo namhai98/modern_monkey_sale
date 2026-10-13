@@ -12,7 +12,7 @@ const TONES = {
   theme: 'border-line text-foreground hover:border-gold hover:text-gold',
   // Floating above the page — the only place a shadow is allowed.
   floating:
-    'border-gold/40 bg-ink/90 text-gold backdrop-blur shadow-lg shadow-black/30 hover:bg-gold hover:text-ink hover:scale-110',
+    'border-gold/40 bg-ink/90 text-gold backdrop-blur shadow-lg shadow-black/30 hover:bg-gold-fill hover:text-ink hover:scale-110',
 };
 
 const SIZES = {
