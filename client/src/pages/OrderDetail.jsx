@@ -8,8 +8,11 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import PageHero from '../components/PageHero';
+import QPayPanel from '../components/QPayPanel';
+import Breadcrumb from '../components/Breadcrumb';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import Icon from '../components/Icon';
 import LineItem, { OrderSummary } from '../components/LineItem';
 import Section from '../components/Section';
 import Skeleton from '../components/Skeleton';
@@ -67,7 +70,12 @@ export default function OrderDetail() {
       <EmptyState
         eyebrow={t('orders.title')}
         title={error}
-        actions={<Button to="/orders">{t('orderDetail.back')}</Button>}
+        actions={
+          <Button to="/orders">
+            <Icon name="arrowLeft" className="h-3.5 w-3.5" />
+            {t('orderDetail.back')}
+          </Button>
+        }
       />
     );
   }
@@ -98,83 +106,97 @@ export default function OrderDetail() {
   }
 
   const label = t('orders.order', { id: order.id });
+  const crumbs = [{ label: t('orders.title'), to: '/orders' }, { label }];
+  const eyebrow = justPlaced ? t('checkout.confirmedEyebrow') : t('account.eyebrow');
+
+  const items = (
+    <div className="divide-y divide-line border-y border-line">
+      {order.items.map((it) => (
+        <LineItem
+          key={it.id}
+          name={it.name || `#${it.product_id}`}
+          image={it.image_url}
+          variantLabel={it.variant_label}
+          quantity={it.quantity}
+          price={it.price}
+          originalPrice={it.original_price}
+        />
+      ))}
+    </div>
+  );
+  const subtotal = order.items.reduce((n, it) => n + it.original_price * it.quantity, 0);
+  const placed = t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() });
+
+  /* Awaiting payment: one screen on a tablet or computer — the order on the
+     left, the way to pay it on the right, using the page's full width. On a
+     phone they stack, payment first. Once paid, the page returns to its usual
+     single column with the timeline. */
+  if (order.status === 'pending') {
+    return (
+      <section className="container-lux py-8 md:py-10">
+        <Breadcrumb items={crumbs} className="mb-6" />
+        <p className="eyebrow">{eyebrow}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <h1 className="heading-serif text-3xl leading-[1.05] md:text-4xl">{label}</h1>
+          <OrderStatusBadge status={order.status} />
+        </div>
+
+        <div className="mt-8 grid gap-10 md:grid-cols-2 md:items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-16">
+          <div className="order-first min-w-0 md:order-last">
+            <QPayPanel orderId={order.id} onPaid={load} />
+          </div>
+
+          <div className="min-w-0">
+            {/* A long order scrolls inside its own list, so the column never
+                pushes the page past the screen. */}
+            <div className="md:max-h-[34svh] md:overflow-y-auto">{items}</div>
+            <OrderSummary className="mt-6" subtotal={subtotal} total={order.total} />
+
+            <div className="mt-8 grid gap-6 border-t border-line pt-6 lg:grid-cols-2">
+              <div>
+                <p className="eyebrow mb-3">{t('orderDetail.shippingAddress')}</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
+                  {order.shipping_address || '—'}
+                </p>
+              </div>
+              <p className="micro tracking-meta text-muted lg:self-end lg:text-right">{placed}</p>
+            </div>
+
+            <div className="mt-6">
+              <TextButton onClick={cancel} disabled={cancelling}>
+                {cancelling ? t('orderDetail.cancelling') : t('orderDetail.cancel')}
+              </TextButton>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
-      <PageHero
-        compact
-        eyebrow={justPlaced ? t('checkout.confirmedEyebrow') : t('account.eyebrow')}
-        title={label}
-        crumbs={[{ label: t('orders.title'), to: '/orders' }, { label }]}
-      >
-        {justPlaced && (
-          <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted">
-            {t('checkout.confirmedNote')}
-          </p>
-        )}
-        <div className="mt-6">
+      <PageHero compact eyebrow={eyebrow} title={label} crumbs={crumbs}>
+        <div className="mt-4">
           <OrderStatusBadge status={order.status} />
         </div>
       </PageHero>
 
       <Section containerClassName="max-w-3xl">
-        {/* Right after checkout: what happens now, in three plain steps — the
-            shopper's next question once the order is in. */}
-        {justPlaced && (
-          <div className="mb-14 border border-gold/40 bg-surface p-6 md:p-8">
-            <p className="eyebrow">{t('orderDetail.nextTitle')}</p>
-            <ol className="mt-5 space-y-4">
-              {[1, 2, 3].map((n) => (
-                <li key={n} className="flex gap-4 text-sm leading-relaxed">
-                  <span className="heading-serif text-gold">{String(n).padStart(2, '0')}</span>
-                  <span className="text-muted">{t(`orderDetail.next${n}`)}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
         <OrderTimeline status={order.status} history={order.status_history} createdAt={order.created_at} />
 
         {/* The same order line as the bag and checkout — photo, name, size,
             quantity and price — instead of a four-column table that would not
             fit a phone. */}
-        <div className="mt-14 divide-y divide-line border-y border-line">
-          {order.items.map((it) => (
-            <LineItem
-              key={it.id}
-              name={it.name || `#${it.product_id}`}
-              image={it.image_url}
-              variantLabel={it.variant_label}
-              quantity={it.quantity}
-              price={it.price}
-              originalPrice={it.original_price}
-            />
-          ))}
-        </div>
-        <OrderSummary
-          className="mt-8"
-          subtotal={order.items.reduce((n, it) => n + it.original_price * it.quantity, 0)}
-          total={order.total}
-        />
+        <div className="mt-14">{items}</div>
+        <OrderSummary className="mt-8" subtotal={subtotal} total={order.total} />
 
         <div className="mt-14">
           <p className="eyebrow mb-4">{t('orderDetail.shippingAddress')}</p>
           <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
             {order.shipping_address || '—'}
           </p>
-          <p className="micro mt-5 tracking-meta text-muted">
-            {t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() })}
-          </p>
+          <p className="micro mt-5 tracking-meta text-muted">{placed}</p>
         </div>
-
-        {order.status === 'pending' && (
-          <div className="mt-14 border-t border-line pt-8">
-            <TextButton onClick={cancel} disabled={cancelling}>
-              {cancelling ? t('orderDetail.cancelling') : t('orderDetail.cancel')}
-            </TextButton>
-          </div>
-        )}
       </Section>
     </>
   );

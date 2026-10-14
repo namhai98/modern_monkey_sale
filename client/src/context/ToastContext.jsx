@@ -50,7 +50,7 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex w-full max-w-sm animate-[fadeUp_0.5s_cubic-bezier(0.22,1,0.36,1)] items-stretch border bg-ink text-sm text-white shadow-2xl shadow-black/40 backdrop-blur sm:w-auto ${
+            className={`pointer-events-auto flex w-full max-w-sm animate-[fadeUp_0.5s_cubic-bezier(0.22,1,0.36,1)] items-stretch border bg-ink text-sm text-white backdrop-blur sm:w-auto ${
               t.type === 'error' ? 'border-gold' : 'border-gold/40'
             }`}
           >

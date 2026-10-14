@@ -2,6 +2,7 @@ import { query, pool } from '../config/db.js';
 import { ORDER_STATUSES, TRANSITIONS, RESTOCKING, canTransition } from '../utils/orderStatus.js';
 import { computeDiscountedPrice, pickBestActiveDiscount } from '../utils/discount.js';
 import { sendNewOrderNotice, sendOrderConfirmation } from '../utils/orderEmail.js';
+import { cancelOpenInvoices } from './paymentController.js';
 import {
   serializeOrderRow,
   serializeOrderItem,
@@ -47,6 +48,12 @@ async function restockOrder(client, orderId, userId, reason) {
       [it.product_id, it.variant_id, it.quantity, reason, orderId, userId]
     );
   }
+}
+
+// A cancelled order's open QPay invoice is closed off the response path —
+// QPay being slow or down must never hold up a cancellation.
+function closeInvoices(orderId) {
+  cancelOpenInvoices(orderId).catch((e) => console.warn('[qpay] closing invoices:', e.message));
 }
 
 // Shared fetch of a full order (row + items + history) for detail responses.
@@ -100,6 +107,14 @@ export async function createOrder(req, res) {
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item' });
+    }
+    // The delivery address is the courier's only instruction: required, and
+    // bounded so a pasted novel can't land in the orders table.
+    const address = typeof shipping_address === 'string' ? shipping_address.trim() : '';
+    if (!address || address.length > 1000) {
+      return res
+        .status(400)
+        .json({ error: 'A delivery address of up to 1000 characters is required', code: 'VALIDATION_ERROR' });
     }
 
     await client.query('BEGIN');
@@ -175,7 +190,7 @@ export async function createOrder(req, res) {
 
     const orderResult = await client.query(
       'INSERT INTO orders (user_id, status, total, shipping_address) VALUES ($1, $2, $3, $4) RETURNING *',
-      [userId, 'pending', total, shipping_address]
+      [userId, 'pending', total, address]
     );
     const order = orderResult.rows[0];
 
@@ -307,8 +322,20 @@ function buildOrderFilters(q) {
     where.push(`o.created_at < ($${params.length}::date + 1)`);
   }
   if (q.search) {
-    params.push(`%${q.search}%`);
-    where.push(`(u.name ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+    // "#25" is an order number and nothing else; anything else is looked for
+    // in the name, email, phone and address, or as a bare order number.
+    const raw = String(q.search).trim();
+    if (/^#\d+$/.test(raw)) {
+      params.push(raw.slice(1));
+      where.push(`o.id::text = $${params.length}`);
+    } else {
+      params.push(`%${raw}%`);
+      const like = `$${params.length}`;
+      params.push(raw);
+      where.push(
+        `(u.name ILIKE ${like} OR u.email ILIKE ${like} OR o.shipping_address ILIKE ${like} OR o.id::text = $${params.length})`
+      );
+    }
   }
   return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }
@@ -337,9 +364,19 @@ export async function listAllOrders(req, res) {
       [...params, limit, offset]
     );
 
+    // How many orders each status holds under the other filters, for the
+    // status tabs above the list.
+    const others = buildOrderFilters({ ...req.query, status: undefined });
+    const counts = await query(
+      `SELECT o.status, COUNT(*)::int AS n FROM orders o LEFT JOIN users u ON u.id = o.user_id ${others.whereSql} GROUP BY o.status`,
+      others.params
+    );
+    const status_counts = Object.fromEntries(counts.rows.map((r) => [r.status, r.n]));
+
     res.json({
       items: rowsRes.rows.map(serializeOrderRow),
       total: countRes.rows[0].total,
+      status_counts,
       page,
       limit,
     });
@@ -450,6 +487,7 @@ export async function updateOrderStatus(req, res) {
     ]);
     await recordStatusChange(client, cur.rows[0].id, from, to, note, req.user.id);
     await client.query('COMMIT');
+    if (to === 'cancelled') closeInvoices(cur.rows[0].id);
 
     await loadOrderDetail(req.params.id, req, res);
   } catch (err) {
@@ -496,6 +534,7 @@ export async function cancelMyOrder(req, res) {
       req.user.id
     );
     await client.query('COMMIT');
+    closeInvoices(order.id);
 
     await loadOrderDetail(req.params.id, req, res);
   } catch (err) {

@@ -68,7 +68,7 @@ function ConfirmDialog({ request, onClose }) {
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={request.body ? 'confirm-body' : undefined}
-        className="relative w-full max-w-md animate-[fadeUp_0.3s_cubic-bezier(0.22,1,0.36,1)] border border-line bg-background p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-foreground shadow-2xl outline-none sm:p-8"
+        className="relative w-full max-w-md animate-[fadeUp_0.3s_cubic-bezier(0.22,1,0.36,1)] border border-line bg-background p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-foreground outline-none sm:p-8"
       >
         <h2 id="confirm-title" className="heading-serif text-xl leading-snug">
           {request.title}

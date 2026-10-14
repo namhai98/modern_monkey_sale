@@ -122,6 +122,50 @@ live app's redirect URI — `localhost` only works in development mode.
 
 ---
 
+## 5. Online payment — QPay (optional)
+
+Without it, checkout works as before: the order is created as pending and the
+boutique settles payment by phone. With it, the order page shows a QPay invoice
+— a QR code plus a button for each bank app — and the order moves to **Paid**
+by itself once the money lands.
+
+1. Run `016_payments.sql` on Neon first (see *Schema upgrades*).
+2. From QPay, with the merchant contract: a **client id**, **client secret** and
+   **invoice code**. Try them on the sandbox first — locally, set in
+   `server/.env`:
+
+   ```
+   QPAY_BASE_URL=https://merchant-sandbox.qpay.mn
+   QPAY_CLIENT_ID=…
+   QPAY_CLIENT_SECRET=…
+   QPAY_INVOICE_CODE=…
+   ```
+
+3. On Render set `QPAY_CLIENT_ID`, `QPAY_CLIENT_SECRET`, `QPAY_INVOICE_CODE` and
+   `QPAY_BASE_URL=https://merchant.qpay.mn`. The base URL defaults to the
+   sandbox, so production has to name the live host on purpose.
+4. Nothing to register for the callback: each invoice carries its own signed
+   URL, `<APP_URL>/api/payments/qpay/callback?ref=…&sig=…`. QPay must be able
+   to reach it, which `APP_URL` (Netlify, proxying `/api/*` to Render)
+   already is. A callback is only ever a prompt: the server asks QPay's
+   `/v2/payment/check` before marking anything paid, and the order page polls
+   the same check, so a lost callback costs a few seconds, not a payment.
+
+How amounts work: prices are stored in USD; the invoice is the USD total at the
+live rate, rounded **down** to the thousand tögrög — the same figure the
+storefront shows. The rate and amount are stored with the invoice, so a rate
+change never alters an invoice already issued. An open invoice is reused for 20
+minutes, then replaced (the old one is cancelled at QPay), and cancelling an
+order cancels its open invoice.
+
+Not wired yet, but ready in `server/src/services/qpay.js`: refunds
+(`refundPayment`) and eBarimt 3.0 receipts (`createEbarimt`,
+`cancelEbarimt`). A payment that lands after its order was cancelled is
+recorded and logged as `needs review` — refund it from the QPay merchant
+portal.
+
+---
+
 ## Schema upgrades
 
 `db:setup` creates a fresh database. For one that already has data, the files in
@@ -143,6 +187,9 @@ pending file at once also works:
 cd server
 DATABASE_URL="<production url>" npm run db:migrate
 ```
+
+`016_payments.sql` adds `payments`, the QPay invoices. Only the `/api/payments`
+routes and order cancellation read it, and cancellation tolerates its absence.
 
 `012_oauth_identities.sql` is required by social sign-in. It also relaxes
 `users.password_hash` to nullable (accounts created through a provider have no

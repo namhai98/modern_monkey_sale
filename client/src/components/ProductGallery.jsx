@@ -135,7 +135,7 @@ function Lightbox({ pics, index, alt, main, onStep, onClose }) {
                       e.stopPropagation();
                       if (d !== 0) onStep(d);
                     }}
-                    className={`max-h-full max-w-[78vw] object-contain shadow-2xl shadow-black/50 md:max-w-[56vw] ${
+                    className={`max-h-full max-w-[78vw] object-contain md:max-w-[56vw] ${
                       far ? '' : 'pointer-events-auto'
                     } ${d === 0 ? 'cursor-default' : 'cursor-pointer'}`}
                   />

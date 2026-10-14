@@ -16,15 +16,17 @@ import { useLocale } from '../context/LocaleContext';
 // never the nav.
 //
 // The gold eyebrow anchors the admin in the same house voice as the storefront;
-// below it the spacing stays deliberately tighter than the editorial rhythm,
-// because these are working screens.
+// the spacing stays deliberately tighter than the editorial rhythm, because
+// these are working screens.
 export default function AdminLayout() {
   const { t } = useLocale();
   const { pathname } = useLocation();
   return (
-    <div className="container-lux pb-16 pt-10">
-      <p className="eyebrow">{t('admin.eyebrow')}</p>
-      <div className="mt-6 border-b border-line">
+    <div className="container-lux pb-10 pt-6">
+      {/* The eyebrow shares the tab row from a tablet up — the admin's
+          screens are meant to fit one window, and a row of its own cost that. */}
+      <div className="flex flex-col gap-3 border-b border-line md:flex-row md:items-center md:gap-8">
+        <p className="eyebrow shrink-0">{t('admin.eyebrow')}</p>
         <AdminNav />
       </div>
       {/* Suspense outside, the per-tab boundary inside: the Suspense boundary

@@ -224,6 +224,30 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
   PRIMARY KEY (user_id, product_id)
 );
 
+-- Online payments, QPay (see migration 016)
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  provider VARCHAR(20) NOT NULL DEFAULT 'qpay',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'paid', 'cancelled', 'refunded')),
+  sender_invoice_no VARCHAR(45) NOT NULL UNIQUE,
+  invoice_id VARCHAR(64) UNIQUE,
+  amount_mnt NUMERIC(14, 2) NOT NULL,
+  amount_usd NUMERIC(10, 2) NOT NULL,
+  mnt_rate NUMERIC(12, 4) NOT NULL,
+  qr_text TEXT,
+  qr_image TEXT,
+  short_url VARCHAR(255),
+  urls JSONB,
+  payment_id VARCHAR(64),
+  paid_amount NUMERIC(14, 2),
+  paid_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_payments_order ON payments (order_id, created_at DESC);
+
 -- Sample seed data — a small luxury demo catalogue (bags, watches, apparel)
 INSERT INTO categories (name, slug) VALUES
   ('Bags', 'bags'),

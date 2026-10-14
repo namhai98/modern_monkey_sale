@@ -46,7 +46,7 @@ export default function SidePanel({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute top-0 flex h-full w-full flex-col bg-background text-foreground shadow-2xl outline-none ${width} ${
+        className={`absolute top-0 flex h-full w-full flex-col bg-background text-foreground outline-none ${width} ${
           left
             ? 'left-0 border-r border-line animate-[drawerInLeft_0.35s_cubic-bezier(0.22,1,0.36,1)]'
             : 'right-0 border-l border-line animate-[drawerIn_0.35s_cubic-bezier(0.22,1,0.36,1)]'

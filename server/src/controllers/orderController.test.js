@@ -75,10 +75,56 @@ test('an order that would oversell a product is rejected and stock is untouched'
   assert.equal(orderCount.rows[0].n, 0);
 });
 
+test('an order needs a delivery address, and not an endless one', async () => {
+  const customer = await createCustomer();
+  const productId = await createProduct({ stock: 5 });
+  for (const shipping_address of [undefined, '   ', 'x'.repeat(1001)]) {
+    const res = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${customer.token}`)
+      .send({ items: [{ product_id: productId, quantity: 1 }], shipping_address });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  }
+  const { rows } = await pool.query('SELECT stock FROM products WHERE id = $1', [productId]);
+  assert.equal(rows[0].stock, 5);
+});
+
 test('creating an order requires authentication', async () => {
   const productId = await createProduct({ stock: 5 });
   const res = await request(app)
     .post('/api/orders')
     .send({ items: [{ product_id: productId, quantity: 1 }], shipping_address: 'x' });
   assert.equal(res.status, 401);
+});
+
+test('staff search finds an order by phone or number, with counts per status', async () => {
+  const customer = await createCustomer();
+  const productId = await createProduct({ stock: 10 });
+  const place = (shipping_address) =>
+    request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${customer.token}`)
+      .send({ items: [{ product_id: productId, quantity: 1 }], shipping_address });
+  const first = await place('Бат\nУтас: 99112233\nУлаанбаатар, Хан-Уул дүүрэг, 11-р хороо');
+  await place('Дорж\nУтас: 88001122\nДархан-Уул, Дархан сум');
+  await pool.query("UPDATE orders SET status = 'paid' WHERE id = $1", [first.body.id]);
+
+  await pool.query("UPDATE users SET role = 'staff' WHERE email = 'shopper@example.com'");
+  const login = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'shopper@example.com', password: 'Sup3rSecret!' });
+  const staff = { Authorization: `Bearer ${login.body.token}` };
+
+  const byPhone = await request(app).get('/api/orders').query({ search: '9911' }).set(staff);
+  assert.equal(byPhone.status, 200);
+  assert.deepEqual(byPhone.body.items.map((o) => o.id), [first.body.id]);
+
+  const byNumber = await request(app).get('/api/orders').query({ search: `#${first.body.id}` }).set(staff);
+  assert.deepEqual(byNumber.body.items.map((o) => o.id), [first.body.id]);
+
+  // Counts ignore the status filter itself, so every tab keeps its number.
+  const pending = await request(app).get('/api/orders').query({ status: 'pending' }).set(staff);
+  assert.equal(pending.body.total, 1);
+  assert.deepEqual(pending.body.status_counts, { paid: 1, pending: 1 });
 });

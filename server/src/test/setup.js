@@ -23,6 +23,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // can safely clear without also needing every other table listed.
 const TEST_TABLES = [
   'wishlist_items',
+  'payments',
   'stock_movements',
   'order_status_history',
   'order_items',

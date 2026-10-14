@@ -35,7 +35,7 @@ export default function Tooltip({ label, side = 'bottom', align = 'center', disa
       {!disabled && label && (
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute z-50 whitespace-nowrap bg-black px-2.5 py-1.5 font-sans text-xs font-medium normal-case tracking-normal text-white opacity-0 shadow-lg shadow-black/40 transition-opacity duration-200 group-hover/tip:opacity-100 group-hover/tip:delay-300 group-has-[:focus-visible]/tip:opacity-100 ${SIDE[side]} ${ALIGN[align]}`}
+          className={`pointer-events-none absolute z-50 whitespace-nowrap border border-white/10 bg-ink px-2.5 py-1.5 font-sans text-xs font-medium normal-case tracking-normal text-white opacity-0 transition-opacity duration-200 group-hover/tip:opacity-100 group-hover/tip:delay-300 group-has-[:focus-visible]/tip:opacity-100 ${SIDE[side]} ${ALIGN[align]}`}
         >
           {label}
           <span className={`absolute border-[5px] border-transparent ${ARROW_SIDE[side]} ${ARROW_ALIGN[align]}`} />

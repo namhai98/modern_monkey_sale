@@ -18,6 +18,7 @@ import settingsRoutes from './routes/settings.js';
 import newsletterRoutes from './routes/newsletter.js';
 import wishlistRoutes from './routes/wishlist.js';
 import dashboardRoutes from './routes/dashboard.js';
+import paymentRoutes from './routes/payments.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { storage, STORAGE_PROVIDER, IMMUTABLE_CACHE_CONTROL } from './storage/index.js';
 
@@ -90,6 +91,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+// The order page polls payment status every few seconds while a QR is open.
+app.use('/api/payments', rateLimit({ windowMs: 15 * 60 * 1000, max: 600 }));
+app.use('/api/payments', paymentRoutes);
 
 // 404 fallback
 app.use((req, res) => {

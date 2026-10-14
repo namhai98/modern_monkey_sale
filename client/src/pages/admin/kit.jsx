@@ -1,4 +1,4 @@
-import { Children, useEffect, useId, useState } from 'react';
+import { Children, useEffect, useId, useRef, useState } from 'react';
 import Button from '../../components/Button';
 import EmptyState from '../../components/EmptyState';
 import Field from '../../components/Field';
@@ -39,13 +39,58 @@ export function useDebounced(value, ms = 300) {
 
 /* ── Page frame ─────────────────────────────────────────────────────────── */
 
-export function AdminPage({ title, count, back, actions, children }) {
+/* What sits under an element inside <main>: the siblings after it (a pager)
+   and every ancestor's bottom padding, so the region can leave exactly that
+   much room. Floating layers (toasts, drawers) are not in the flow and don't
+   count. */
+function spaceBelow(el) {
+  let total = 0;
+  for (let node = el; node && node.parentElement && node.tagName !== 'MAIN'; node = node.parentElement) {
+    for (let sib = node.nextElementSibling; sib; sib = sib.nextElementSibling) {
+      const cs = getComputedStyle(sib);
+      if (cs.position === 'fixed' || cs.position === 'absolute' || cs.display === 'none') continue;
+      total += sib.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+    }
+    const ps = getComputedStyle(node.parentElement);
+    total += parseFloat(ps.paddingBottom) + parseFloat(ps.borderBottomWidth);
+  }
+  return total;
+}
+
+/* Lets a scrolling region end at the bottom of the window, so a page that
+   holds a long list still fits one screen: the list scrolls inside itself and
+   the title, filters and pager stay put. Whatever follows it is measured and
+   left room for; `gap` adds a little air. From md up only — a phone scrolls
+   the page as usual. Re-measured on resize and whenever `deps` change. */
+export function useFillHeight(gap = 0, deps = []) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const fit = () => {
+      const el = ref.current;
+      if (!el) return;
+      if (window.innerWidth < 768) {
+        el.style.maxHeight = '';
+        return;
+      }
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      el.style.maxHeight = `${Math.max(200, window.innerHeight - top - spaceBelow(el) - gap)}px`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gap, ...deps]);
+  return ref;
+}
+
+// `dense`: tighter spacing for a screen that should fit one window.
+export function AdminPage({ title, count, back, actions, dense = false, children }) {
   return (
-    <div className="pb-8 pt-10">
+    <div className={dense ? 'pb-6 pt-6' : 'pb-8 pt-10'}>
       {back}
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className={`flex flex-wrap items-end justify-between gap-4 ${dense ? 'mb-5' : 'mb-8'}`}>
         <div className="min-w-0">
-          <h1 className="heading-serif text-3xl text-foreground">{title}</h1>
+          <h1 className={`heading-serif text-foreground ${dense ? 'text-2xl md:text-3xl' : 'text-3xl'}`}>{title}</h1>
           {count != null && <p className="micro mt-2 tracking-meta text-muted">{count}</p>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
@@ -80,14 +125,14 @@ export function LoadError({ message, onRetry }) {
    the first screen; a leading SearchInput stays out, since searching is the
    common case. From md the row is unchanged (`md:contents` lets the folded
    group's children sit in the row as before). */
-export function Toolbar({ children, active = false, onClear }) {
+export function Toolbar({ children, active = false, onClear, dense = false }) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const list = Children.toArray(children);
   const primary = list[0]?.type === SearchInput ? list[0] : null;
   const rest = primary ? list.slice(1) : list;
   return (
-    <div className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-5 border-b border-line pb-6">
+    <div className={`flex flex-wrap items-end gap-x-6 border-b border-line ${dense ? 'mb-4 gap-y-4 pb-4' : 'mb-6 gap-y-5 pb-6'}`}>
       {primary}
       {rest.length > 0 && (
         <button

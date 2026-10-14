@@ -1,52 +1,24 @@
 import { useState } from 'react';
+import { Watch } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLocale } from '../context/LocaleContext';
 import IconButton from './IconButton';
 import Tooltip from './Tooltip';
 
-/* A wristwatch that is the theme's light switch — the house sells watches, so
-   the toggle is one. Light theme: the watch is "on", its face lit gold and
-   glowing. Dark theme: "off", an unlit outline. Each switch sweeps the hands
-   one full turn forward while the face lights or dims.
-
-   The spin is a rotation that only ever grows (+360° a click), so it always
-   turns clockwise and never unwinds. Under prefers-reduced-motion the hands
-   jump instead of sweeping; the light change alone still shows the state. */
+/* lucide's Watch as the theme's light switch — the house sells watches, so
+   the toggle is one. Light theme: the watch is "on", gold with a soft glow.
+   Dark theme: "off", an unlit outline. Each switch turns it one full
+   revolution forward; the angle only ever grows (+360° a click), so it always
+   turns clockwise and never unwinds. Under prefers-reduced-motion it simply
+   changes colour. */
 function WatchIcon({ lit, turns, className }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Watch
       aria-hidden="true"
-      className={className}
-    >
-      {/* Strap ends and crown. */}
-      <path d="M9 5.2 9.6 2h4.8l.6 3.2M9 18.8l.6 3.2h4.8l.6-3.2" />
-      <path d="M19 11v2" />
-      {/* The face — filled with a gold glow when the watch is on. */}
-      <circle
-        cx="12"
-        cy="12"
-        r="6.75"
-        className="transition-[fill,filter] duration-500"
-        style={{
-          fill: lit ? 'color-mix(in oklab, var(--gold) 35%, transparent)' : 'transparent',
-          filter: lit ? 'drop-shadow(0 0 3px var(--gold))' : 'none',
-        }}
-      />
-      {/* Hands: hour at ten past, minute at twelve. */}
-      <g
-        className="transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
-        style={{ transform: `rotate(${turns * 360}deg)`, transformOrigin: '12px 12px' }}
-      >
-        <path d="M12 12V8.2" className={`transition-colors duration-500 ${lit ? 'stroke-gold' : ''}`} />
-        <path d="M12 12l2.4 1.4" className={`transition-colors duration-500 ${lit ? 'stroke-gold' : ''}`} />
-      </g>
-    </svg>
+      strokeWidth={1.5}
+      className={`${className} transition-[transform,color,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${lit ? 'text-gold' : ''}`}
+      style={{ transform: `rotate(${turns * 360}deg)`, filter: lit ? 'drop-shadow(0 0 3px var(--gold))' : 'none' }}
+    />
   );
 }
 

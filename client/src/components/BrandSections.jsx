@@ -70,7 +70,7 @@ export function House() {
           <ImageFallback
             src={homeMedia.houseLogo}
             alt="Modern Monkey"
-            className="mx-auto aspect-square w-full max-w-sm bg-black object-cover md:max-w-md lg:aspect-[4/5] lg:max-w-none"
+            className="mx-auto aspect-square w-full max-w-sm bg-ink object-cover md:max-w-md lg:aspect-[4/5] lg:max-w-none"
           />
         </RevealScale>
         <div className="lg:pl-6">

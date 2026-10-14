@@ -38,7 +38,11 @@ export default function Field({
         </label>
       )}
       {control ? (
-        cloneElement(control, { id: fieldId })
+        cloneElement(control, {
+          id: fieldId,
+          invalid: Boolean(error),
+          'aria-describedby': error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined,
+        })
       ) : (
         <Tag
           id={fieldId}

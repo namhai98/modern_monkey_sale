@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
+import { recentOrder } from '../lib/lastOrder';
 import Button from '../components/Button';
 import LineItem, { OrderSummary } from '../components/LineItem';
 import PageHero from '../components/PageHero';
@@ -35,6 +36,7 @@ export default function Cart() {
   }, []);
 
   const count = items.reduce((n, i) => n + i.quantity, 0);
+  const placed = items.length === 0 ? recentOrder() : null;
   const subtotal = items.reduce((n, i) => n + (i.original_price ?? i.price) * i.quantity, 0);
 
   return (
@@ -47,7 +49,23 @@ export default function Cart() {
       />
 
       <Section containerClassName="max-w-3xl">
-        {items.length === 0 ? (
+        {items.length === 0 && placed ? (
+          /* Just ordered — Back from the order page lands here. The bag is
+             empty because it became that order, so lead with the way back. */
+          <EmptyState
+            inline
+            title={t('cart.placedTitle')}
+            body={t('cart.placedBody', { id: placed })}
+            actions={
+              <>
+                <Button to={`/orders/${placed}`}>{t('cart.toOrder', { id: placed })}</Button>
+                <Button to="/shop?all=1" variant="outline-dark">
+                  {t('cart.continue')}
+                </Button>
+              </>
+            }
+          />
+        ) : items.length === 0 ? (
           <EmptyState
             inline
             title={t('cart.empty')}

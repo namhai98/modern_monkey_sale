@@ -16,8 +16,12 @@ export default function Select({
   // row that already has its own rule (the shop's count/sort header).
   bare = false,
   id,
+  // Shown, muted, while the value matches no option ("Choose…").
+  placeholder,
+  invalid = false,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -52,7 +56,18 @@ export default function Select({
   }
 
   const currentValue = String(value ?? '');
-  const current = options.find((o) => o.value === currentValue) ?? options[0];
+  const current = options.find((o) => o.value === currentValue) ?? (placeholder ? null : options[0]);
+
+  // Arrow keys step through the options without opening the list, as a
+  // native select does.
+  function onKeyDown(e) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    if (!options.length) return;
+    const i = options.findIndex((o) => o.value === currentValue);
+    const next = e.key === 'ArrowDown' ? Math.min(options.length - 1, i + 1) : Math.max(0, i - 1);
+    if (next !== i) onChange({ target: { value: options[next].value } });
+  }
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -61,6 +76,9 @@ export default function Select({
         id={id}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={onKeyDown}
+        aria-invalid={invalid ? 'true' : undefined}
+        aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
@@ -68,10 +86,12 @@ export default function Select({
         /* Underline-only, like every other field in the house style — the
            presentation site applies the same treatment to its <select>s. */
         className={`flex w-full items-center justify-between gap-3 bg-transparent text-left text-sm text-foreground transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
-          bare ? 'py-1 hover:text-gold aria-expanded:text-gold' : 'border-b border-line py-3 hover:border-gold aria-expanded:border-gold'
+          bare
+            ? 'py-1 hover:text-gold aria-expanded:text-gold'
+            : `border-b py-3 hover:border-gold aria-expanded:border-gold ${invalid ? 'border-danger' : 'border-line'}`
         }`}
       >
-        <span className="truncate">{current?.label}</span>
+        <span className={`truncate ${current ? '' : 'text-muted'}`}>{current ? current.label : placeholder}</span>
         <Icon
           name="chevronDown"
           className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${
