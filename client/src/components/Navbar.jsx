@@ -322,7 +322,7 @@ export default function Navbar() {
           mobile menu below and break it. */}
       <div
         aria-hidden="true"
-        className={`absolute inset-0 -z-10 bg-ink/85 backdrop-blur-xl transition-opacity duration-500 ${
+        className={`header-glass absolute inset-0 -z-10 bg-ink/85 backdrop-blur-xl transition-opacity duration-500 ${
           solid ? 'opacity-100' : 'opacity-0'
         }`}
       />

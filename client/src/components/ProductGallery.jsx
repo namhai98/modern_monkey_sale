@@ -204,7 +204,7 @@ export default function ProductGallery({ images = [], alt = '' }) {
   return (
     <div>
       <div
-        className={`relative ${FRAME} overflow-hidden bg-surface`}
+        className={`photo-frame relative ${FRAME} overflow-hidden bg-surface`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >

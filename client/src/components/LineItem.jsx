@@ -30,7 +30,7 @@ export default function LineItem({
 
   return (
     <div className={`flex ${size === 'md' ? 'gap-5 py-7 md:gap-6' : 'gap-4 py-5'}`}>
-      <div className={`${PHOTO[size]} shrink-0 overflow-hidden bg-surface`}>
+      <div className={`photo-frame relative ${PHOTO[size]} shrink-0 overflow-hidden bg-surface`}>
         <ImageFallback
           src={resizeUnsplash(image, size === 'md' ? 240 : 160)}
           alt={name}

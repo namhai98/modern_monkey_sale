@@ -96,7 +96,7 @@ export default function Select({
             : `flex w-full items-center justify-between gap-3 bg-transparent text-left text-sm text-foreground transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
                 bare
                   ? 'py-1 hover:text-gold aria-expanded:text-gold'
-                  : `border-b py-3 hover:border-gold aria-expanded:border-gold ${invalid ? 'border-danger' : 'border-line'}`
+                  : `border-b py-3 hover:border-gold aria-expanded:border-gold ${invalid ? 'border-danger' : 'border-field'}`
               }`
         }
       >

@@ -67,6 +67,11 @@
   --color-muted: var(--muted-color);
   --color-line: var(--line);
   --color-surface: var(--surface);
+  /* The boundary of a control a shopper types into or steps (field rule,
+     select, stepper). Same as the hairline on the dark theme; on the light
+     theme a hairline is too faint to find a field by (WCAG 1.4.11), so it
+     steps up to 3:1. */
+  --color-field: var(--field-line);
 
   /* Fixed brand — identical in both themes */
   --color-ink: #0a0a0a;
@@ -130,17 +135,22 @@
   --line: rgba(243, 239, 230, 0.14);
   --surface: #121210;
   --danger: #c0664f;
+  --field-line: rgba(243, 239, 230, 0.14);
 }
 
+/* The light theme is warm ivory paper rather than screen white: a page a
+   shade off white, a surface one step deeper, ink type and warm hairlines.
+   Measured (WCAG): ink 18.8:1 on the page / 17.3:1 on the surface; muted
+   6.0 / 5.5; gold 5.2 / 4.7; danger 6.5 / 5.9; field rule 3.1 / 3.1. */
 .light {
-  /* 5.05:1 on white, 4.59:1 on the light surface. */
-  --gold: #8a6a1f;
-  --background: #ffffff;
+  --gold: #84651c;
+  --background: #fbf9f4;
   --foreground: #0a0a0a;
-  --muted-color: #6f6a5f;
-  --line: rgba(10, 10, 10, 0.12);
-  --surface: #f6f4ef;
+  --muted-color: #655f53;
+  --line: rgba(40, 30, 10, 0.13);
+  --surface: #f3efe6;
   --danger: #96412a;
+  --field-line: rgba(10, 10, 10, 0.45);
 }
 
 @layer base {
@@ -167,9 +177,17 @@
   }
 
   /* Surfaces that stay ink in the light theme too — header, footer, the dark
-     bands, overlays and photo tags — keep the bright gold. */
-  .light :where(header, footer, [class*='bg-ink']) {
+     bands, overlays and photo tags — take the dark theme's values back, so a
+     placeholder, hairline or muted line inside them is drawn for ink, not
+     for the paper around them. The admin has its own skin. */
+  .light :where(header, footer, [class*='bg-ink']):not(.admin-ui, .admin-ui *) {
     --gold: #c8a24a;
+    --background: #0a0a0a;
+    --foreground: #f3efe6;
+    --muted-color: #9a958a;
+    --line: rgba(243, 239, 230, 0.14);
+    --surface: #121210;
+    --field-line: rgba(243, 239, 230, 0.14);
   }
 
   ::selection {
@@ -317,7 +335,7 @@
    the rule gold. Used by every form in the storefront and the admin. */
 @utility field {
   width: 100%;
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--field-line);
   background: transparent;
   padding-block: 0.75rem;
   font-size: 0.875rem;
@@ -627,4 +645,25 @@
   --viz-4: #eda100;
   --viz-5: #e87ba4;
   --viz-6: #008300;
+}
+
+/* ── Light theme finish ───────────────────────────────────────────────────────
+   Unlayered, so they win over utilities; each is scoped to .light, so the
+   dark theme is untouched. */
+
+/* Over ivory the header's 85% ink glass read as a muddy grey bar; on the
+   light theme it is near-solid ink, like the dark bands it belongs with. */
+.light .header-glass {
+  background-color: rgb(10 10 10 / 0.96);
+}
+
+/* A product photo shot on white would dissolve into the page; a warm
+   hairline inside the frame keeps its edge. Drawn over the image (::after),
+   since an inset shadow would sit under it. */
+.light .photo-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
+  pointer-events: none;
 }

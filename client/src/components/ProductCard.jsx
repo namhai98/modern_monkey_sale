@@ -37,7 +37,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="group relative @container">
       <Link to={`/products/${product.id}`} className="block">
-        <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface">
+        <div className="photo-frame relative aspect-[4/5] w-full overflow-hidden bg-surface">
           <ImageFallback
             src={cardSrc}
             srcSet={unsplashSrcSet(cardSrc, [400, 600, 800])}
