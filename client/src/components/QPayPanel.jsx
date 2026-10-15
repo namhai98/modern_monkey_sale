@@ -188,7 +188,7 @@ export default function QPayPanel({ orderId, onPaid }) {
               alt={t('qpay.qrAlt', { id: orderId })}
               className="aspect-square w-full max-w-[13rem] border border-line bg-white p-3"
             />
-            <figcaption className="micro mt-3 tracking-meta text-muted">{t('qpay.scan')}</figcaption>
+            <figcaption className="micro mt-3 text-balance tracking-meta text-muted">{t('qpay.scan')}</figcaption>
           </figure>
         )}
 

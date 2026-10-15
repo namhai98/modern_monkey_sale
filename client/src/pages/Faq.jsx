@@ -72,7 +72,7 @@ export default function Faq() {
         <SectionHeading align="center" title={t('faq.more.title')} lead={t('faq.more.lead')} />
         <Reveal delay={0.15} className="mt-10 flex flex-wrap justify-center gap-5">
           <Button href={telHref(site.phones[0])}>{t('home.visit.call')}</Button>
-          <Button href={site.social.messenger} target="_blank" rel="noopener noreferrer" variant="outline">
+          <Button href={site.social.messenger} target="_blank" rel="noopener noreferrer" variant="outline-dark">
             {t('float.messenger')}
           </Button>
         </Reveal>

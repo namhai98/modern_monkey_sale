@@ -35,7 +35,7 @@ export default function ProductCard({ product }) {
   // 4/5 shape. `group` sits on the wrapper so hovering the heart still counts
   // as hovering the card.
   return (
-    <div className="group relative">
+    <div className="group relative @container">
       <Link to={`/products/${product.id}`} className="block">
         <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface">
           <ImageFallback
@@ -97,10 +97,12 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* On a phone the meta is a column — name, house, price — because a
-            two-up card is ~170px wide and a name beside a tögrög price broke
-            one word per line. From sm it is the side-by-side row. */}
-        <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        {/* A narrow card stacks its meta — name, house, price — because a name
+            beside a tögrög price broke one word per line; a card 15rem wide or
+            more has room for the side-by-side row. Measured on the card itself
+            (a container query), not the screen: the shop's four-up grid beside
+            its filter rail is as narrow on a laptop as a two-up grid on a phone. */}
+        <div className="mt-4 flex flex-col gap-2 sm:mt-5 @[15rem]:flex-row @[15rem]:items-start @[15rem]:justify-between @[15rem]:gap-4">
           <div className="min-w-0">
             {/* Montserrat carries a large x-height, so it reads a size bigger
                 than it is set — the name sits a notch below the serif it
@@ -117,7 +119,7 @@ export default function ProductCard({ product }) {
           {/* Stacked so a sale pair stays one price wide. The name owns the rest
               of the row; in a two-up grid there is no version of this row where a
               side-by-side pair and a serif name both fit. */}
-          <Price product={product} stack="sm" className="shrink-0 sm:pt-0.5 sm:text-right" />
+          <Price product={product} stack="sm" className="shrink-0 @[15rem]:pt-0.5 @[15rem]:text-right" />
         </div>
       </Link>
       <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[4/5]">

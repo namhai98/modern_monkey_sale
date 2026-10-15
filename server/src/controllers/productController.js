@@ -1,6 +1,7 @@
 import { query, pool } from '../config/db.js';
 import { EFFECTIVE_STOCK_SQL, serializeProduct } from '../utils/serializeProduct.js';
 import { isNonNegativeNumber, isNonNegativeInt } from '../utils/validators.js';
+import { purgeProductImages } from './productImageController.js';
 
 const SORTABLE = {
   name: 'p.name',
@@ -516,3 +517,42 @@ export async function listStockMovements(req, res) {
   }
 }
 
+
+// DELETE /api/products/:id — gone for good: the row, its sizes, images (rows
+// and stored files), discount links, saved hearts and stock history.
+// A piece that appears in any order is refused instead: order history and
+// receipts point at it, so it is hidden from the shop (is_active = false)
+// rather than deleted.
+export async function deleteProduct(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid product id' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT id FROM products WHERE id = $1 FOR UPDATE', [id]);
+    if (found.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    const ordered = await client.query('SELECT 1 FROM order_items WHERE product_id = $1 LIMIT 1', [id]);
+    if (ordered.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: 'This product is part of past orders and cannot be deleted. Hide it from the shop instead.',
+        code: 'PRODUCT_HAS_ORDERS',
+      });
+    }
+    // Stock history is the one reference without ON DELETE CASCADE.
+    await client.query('DELETE FROM stock_movements WHERE product_id = $1', [id]);
+    await client.query('DELETE FROM products WHERE id = $1', [id]);
+    await client.query('COMMIT');
+    res.status(204).end();
+    purgeProductImages(id);
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete product' });
+  } finally {
+    client.release();
+  }
+}

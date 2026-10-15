@@ -7,6 +7,7 @@ import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
+import { parseShippingAddress } from '../lib/orderAddress';
 import PageHero from '../components/PageHero';
 import QPayPanel from '../components/QPayPanel';
 import Breadcrumb from '../components/Breadcrumb';
@@ -17,6 +18,46 @@ import LineItem, { OrderSummary } from '../components/LineItem';
 import Section from '../components/Section';
 import Skeleton from '../components/Skeleton';
 import TextButton from '../components/TextButton';
+
+// "2026.10.15 11:16" — one unambiguous shape in both languages, no seconds.
+function fmtPlaced(value) {
+  const d = new Date(value);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* Where the order is going, field by field. The address is stored as one
+   block of text (see Checkout); it is read back into labelled rows so it sits
+   beside the order list in the same hairlines and rhythm. An older address
+   that doesn't follow that shape still shows, line by line, under Address. */
+function DeliveryDetails({ address, createdAt, className = '' }) {
+  const { t } = useLocale();
+  const a = parseShippingAddress(address);
+  const detail = a.lines.filter((l) => l !== a.area);
+  const rows = [
+    ['recipient', a.name],
+    ['phone', a.phone],
+    ['area', a.area || (detail.length ? null : '—')],
+    [a.area ? 'detail' : 'area', detail.join('\n')],
+    ['addressName', a.label],
+    ['placedAt', fmtPlaced(createdAt)],
+  ].filter(([, v]) => v);
+  return (
+    <div className={className}>
+      <p className="eyebrow mb-3">{t('orderDetail.shippingAddress')}</p>
+      <dl className="border-t border-line">
+        {rows.map(([key, value]) => (
+          <div key={key} className="grid grid-cols-[9rem_minmax(0,1fr)] gap-4 border-b border-line py-2.5">
+            <dt className="micro pt-0.5 text-muted">{t(`orderDetail.${key}`)}</dt>
+            <dd className={`whitespace-pre-line text-sm leading-relaxed text-foreground ${key === 'phone' || key === 'placedAt' ? 'tabular-nums' : ''}`}>
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -109,6 +150,12 @@ export default function OrderDetail() {
   const crumbs = [{ label: t('orders.title'), to: '/orders' }, { label }];
   const eyebrow = justPlaced ? t('checkout.confirmedEyebrow') : t('account.eyebrow');
 
+  const pieceCount = order.items.reduce((n, it) => n + it.quantity, 0);
+  const itemsTitle = (
+    <p className="eyebrow mb-3">
+      {t('checkout.yourOrder')} · {t('checkout.itemCount', { n: pieceCount })}
+    </p>
+  );
   const items = (
     <div className="divide-y divide-line border-y border-line">
       {order.items.map((it) => (
@@ -125,21 +172,26 @@ export default function OrderDetail() {
     </div>
   );
   const subtotal = order.items.reduce((n, it) => n + it.original_price * it.quantity, 0);
-  const placed = t('orderDetail.placed', { date: new Date(order.created_at).toLocaleString() });
+  const header = (
+    <>
+      <Breadcrumb items={crumbs} className="mb-6" />
+      <p className="eyebrow">{eyebrow}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <h1 className="heading-serif text-3xl leading-[1.05] md:text-4xl">{label}</h1>
+        <OrderStatusBadge status={order.status} />
+      </div>
+    </>
+  );
 
-  /* Awaiting payment: one screen on a tablet or computer — the order on the
-     left, the way to pay it on the right, using the page's full width. On a
-     phone they stack, payment first. Once paid, the page returns to its usual
-     single column with the timeline. */
+  /* Every status fits one screen on a tablet or computer, using the page's
+     full width; a phone stacks and scrolls.
+
+     Awaiting payment: the order on the left, the way to pay it on the right
+     (payment first on a phone). */
   if (order.status === 'pending') {
     return (
       <section className="container-lux py-8 md:py-10">
-        <Breadcrumb items={crumbs} className="mb-6" />
-        <p className="eyebrow">{eyebrow}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <h1 className="heading-serif text-3xl leading-[1.05] md:text-4xl">{label}</h1>
-          <OrderStatusBadge status={order.status} />
-        </div>
+        {header}
 
         <div className="mt-8 grid gap-10 md:grid-cols-2 md:items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-16">
           <div className="order-first min-w-0 md:order-last">
@@ -149,18 +201,11 @@ export default function OrderDetail() {
           <div className="min-w-0">
             {/* A long order scrolls inside its own list, so the column never
                 pushes the page past the screen. */}
+            {itemsTitle}
             <div className="md:max-h-[34svh] md:overflow-y-auto">{items}</div>
             <OrderSummary className="mt-6" subtotal={subtotal} total={order.total} />
 
-            <div className="mt-8 grid gap-6 border-t border-line pt-6 lg:grid-cols-2">
-              <div>
-                <p className="eyebrow mb-3">{t('orderDetail.shippingAddress')}</p>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
-                  {order.shipping_address || '—'}
-                </p>
-              </div>
-              <p className="micro tracking-meta text-muted lg:self-end lg:text-right">{placed}</p>
-            </div>
+            <DeliveryDetails className="mt-8" address={order.shipping_address} createdAt={order.created_at} />
 
             <div className="mt-6">
               <TextButton onClick={cancel} disabled={cancelling}>
@@ -173,31 +218,29 @@ export default function OrderDetail() {
     );
   }
 
+  /* Paid and onwards: where the order stands across the top, then what was
+     ordered beside where it is going. A long order scrolls inside its own
+     list, so the page never runs past the screen. */
   return (
-    <>
-      <PageHero compact eyebrow={eyebrow} title={label} crumbs={crumbs}>
-        <div className="mt-4">
-          <OrderStatusBadge status={order.status} />
-        </div>
-      </PageHero>
+    <section className="container-lux py-8 md:py-10">
+      {header}
 
-      <Section containerClassName="max-w-3xl">
+      <div className="mt-6">
         <OrderTimeline status={order.status} history={order.status_history} createdAt={order.created_at} />
+      </div>
 
+      <div className="mt-6 grid gap-10 md:grid-cols-2 md:items-start lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16">
         {/* The same order line as the bag and checkout — photo, name, size,
             quantity and price — instead of a four-column table that would not
             fit a phone. */}
-        <div className="mt-14">{items}</div>
-        <OrderSummary className="mt-8" subtotal={subtotal} total={order.total} />
-
-        <div className="mt-14">
-          <p className="eyebrow mb-4">{t('orderDetail.shippingAddress')}</p>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
-            {order.shipping_address || '—'}
-          </p>
-          <p className="micro mt-5 tracking-meta text-muted">{placed}</p>
+        <div className="min-w-0">
+          {itemsTitle}
+          <div className="md:max-h-[26svh] md:overflow-y-auto">{items}</div>
+          <OrderSummary className="mt-6" subtotal={subtotal} total={order.total} />
         </div>
-      </Section>
-    </>
+
+        <DeliveryDetails className="min-w-0" address={order.shipping_address} createdAt={order.created_at} />
+      </div>
+    </section>
   );
 }

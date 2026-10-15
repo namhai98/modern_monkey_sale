@@ -14,7 +14,7 @@ export default function NotFound() {
       actions={
         <>
           <Button to="/">{t('notFound.home')}</Button>
-          <Button to="/shop?all=1" variant="outline">
+          <Button to="/shop?all=1" variant="outline-dark">
             {t('notFound.shop')}
           </Button>
         </>

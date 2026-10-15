@@ -1,5 +1,6 @@
 import { Children, isValidElement, useEffect, useRef, useState } from 'react';
 import Icon from './Icon';
+import { useSkin } from '../context/SkinContext';
 
 /* Custom dropdown — a native <select>'s open popup can't be styled and always
    renders with the OS's own colours, which breaks badly against a dark page.
@@ -24,6 +25,8 @@ export default function Select({
   'aria-describedby': ariaDescribedBy,
 }) {
   const [open, setOpen] = useState(false);
+  // The admin's select is a boxed Flowbite field with a rounded dropdown.
+  const admin = useSkin() === 'admin' && !bare;
   const ref = useRef(null);
 
   // A native <select> always stringifies both an <option value={...}> and the
@@ -81,15 +84,21 @@ export default function Select({
         aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={ariaLabel}
+        /* A named select also says what it is set to ("Sort: Newest"), so the
+           name contains the visible text a voice-control user would say. */
+        aria-label={ariaLabel && typeof current?.label === 'string' ? `${ariaLabel}: ${current.label}` : ariaLabel}
         aria-labelledby={ariaLabelledBy}
         /* Underline-only, like every other field in the house style — the
            presentation site applies the same treatment to its <select>s. */
-        className={`flex w-full items-center justify-between gap-3 bg-transparent text-left text-sm text-foreground transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
-          bare
-            ? 'py-1 hover:text-gold aria-expanded:text-gold'
-            : `border-b py-3 hover:border-gold aria-expanded:border-gold ${invalid ? 'border-danger' : 'border-line'}`
-        }`}
+        className={
+          admin
+            ? 'admin-field flex items-center justify-between gap-3 text-left aria-expanded:border-gold aria-expanded:shadow-[0_0_0_1px_var(--gold)]'
+            : `flex w-full items-center justify-between gap-3 bg-transparent text-left text-sm text-foreground transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
+                bare
+                  ? 'py-1 hover:text-gold aria-expanded:text-gold'
+                  : `border-b py-3 hover:border-gold aria-expanded:border-gold ${invalid ? 'border-danger' : 'border-line'}`
+              }`
+        }
       >
         <span className={`truncate ${current ? '' : 'text-muted'}`}>{current ? current.label : placeholder}</span>
         <Icon
@@ -105,9 +114,13 @@ export default function Select({
           role="listbox"
           /* A floating layer is held by a border and a blur rather than a drop
              shadow — the house rule for elevation. */
-          className={`drop-in absolute z-30 max-h-60 w-full min-w-max overflow-y-auto border border-line bg-background/95 py-2 backdrop-blur-xl ${
-            bare ? 'right-0 mt-3' : 'mt-1'
-          }`}
+          className={
+            admin
+              ? 'drop-in absolute z-30 mt-1 max-h-60 w-full min-w-max overflow-y-auto rounded-lg border border-line bg-surface py-1 shadow-lg'
+              : `drop-in absolute z-30 max-h-60 w-full min-w-max overflow-y-auto border border-line bg-background/95 py-2 backdrop-blur-xl ${
+                  bare ? 'right-0 mt-3' : 'mt-1'
+                }`
+          }
         >
           {options.map((o) => (
             <li
@@ -115,9 +128,15 @@ export default function Select({
               role="option"
               aria-selected={o.value === currentValue}
               onClick={() => choose(o.value)}
-              className={`cursor-pointer whitespace-nowrap px-4 py-2 text-sm transition-colors duration-300 ${
-                o.value === currentValue ? 'text-gold' : 'text-foreground hover:text-gold'
-              }`}
+              className={
+                admin
+                  ? `cursor-pointer whitespace-nowrap px-3 py-2 text-sm transition-colors duration-150 hover:bg-admin-hover ${
+                      o.value === currentValue ? 'font-medium text-gold' : 'text-foreground'
+                    }`
+                  : `cursor-pointer whitespace-nowrap px-4 py-2 text-sm transition-colors duration-300 ${
+                      o.value === currentValue ? 'text-gold' : 'text-foreground hover:text-gold'
+                    }`
+              }
             >
               {o.label}
             </li>

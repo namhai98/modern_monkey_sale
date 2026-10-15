@@ -5,7 +5,9 @@
 
 const PHONE = /^(?:Утас|Утасны дугаар|Phone number|Phone)\s*:\s*(.+)$/i;
 const LABEL = /^(?:Хаягийн нэр|Address name)\s*:\s*(.+)$/i;
-const AREA = /(дүүрэг|сум)\b/i;
+// Not \b: JavaScript's word boundary only knows Latin letters, so "дүүрэг,"
+// never matched. A district or sum word followed by a comma, a space or the end.
+const AREA = /(дүүрэг|сум)(?=[\s,]|$)/i;
 
 export function parseShippingAddress(text) {
   const lines = String(text || '')

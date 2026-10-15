@@ -24,7 +24,7 @@ export default function ImageFallback({ src, alt = '', className = '', priority 
         aria-label={alt || t('image.unavailable')}
         className={`@container flex select-none items-center justify-center bg-surface text-foreground/15 ${className}`}
       >
-        <span className="heading-serif text-[clamp(0.8rem,20cqw,3rem)] uppercase leading-none tracking-[0.12em]">
+        <span aria-hidden="true" className="heading-serif text-[clamp(0.8rem,20cqw,3rem)] uppercase leading-none tracking-[0.12em]">
           MM
         </span>
       </div>

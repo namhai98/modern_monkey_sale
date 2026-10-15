@@ -81,9 +81,9 @@ export default function App() {
                   <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                   <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  {/* AdminNav stays mounted across every /admin/* navigation — only
+                  {/* The admin shell (AdminLayout: top bar + sidebar) stays mounted across every /admin/* navigation — only
                       the Outlet content below it swaps while a page's chunk loads. */}
-                  <Route path="/admin" element={<AdminLayout />}>
+                  <Route path="/admin" element={<ProtectedRoute roles={STAFF}><AdminLayout /></ProtectedRoute>}>
                     <Route index element={<ProtectedRoute roles={STAFF}><AdminDashboard /></ProtectedRoute>} />
                     <Route path="orders" element={<ProtectedRoute roles={STAFF}><AdminOrders /></ProtectedRoute>} />
                     <Route path="orders/:id" element={<ProtectedRoute roles={STAFF}><AdminOrderDetail /></ProtectedRoute>} />

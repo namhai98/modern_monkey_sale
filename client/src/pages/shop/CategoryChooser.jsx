@@ -52,7 +52,7 @@ export function CategoryChooser({ categories }) {
         </form>
         <div className="mt-8 flex flex-wrap gap-5">
           <Button to="/shop?all=1">{t('shop.everything')}</Button>
-          <Button to="/shop?sale=1" variant="outline">
+          <Button to="/shop?sale=1" variant="outline-dark">
             {t('nav.sale')}
           </Button>
         </div>

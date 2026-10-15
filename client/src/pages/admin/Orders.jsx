@@ -17,9 +17,9 @@ const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refun
 const LIMIT = 20;
 // Rows a little tighter than the admin default, so a page of orders scans in
 // one look; heads stick to the top of the scrolling list.
-const TH = 'sticky top-0 z-10 bg-background';
-const TD = 'px-4 py-2.5 align-middle first:pl-0 last:pr-0';
-const TD_NUM = 'px-4 py-2.5 text-right align-middle tabular-nums first:pl-0 last:pr-0';
+const TH = 'sticky top-0 z-10 bg-admin-thead';
+const TD = 'px-4 py-2.5 align-middle';
+const TD_NUM = 'px-4 py-2.5 text-right align-middle tabular-nums';
 
 const fmtDateTime = (d) =>
   new Date(d).toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -34,7 +34,7 @@ function StatusTabs({ value, onChange, counts }) {
     <div
       role="tablist"
       aria-label={t('admin.orders.statusTabs')}
-      className="-mx-6 mb-4 flex gap-1 overflow-x-auto px-6 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+      className="-mx-4 mb-4 flex gap-1 overflow-x-auto border-b border-line px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
     >
       {tabs.map((tab) => {
         const on = tab.value === value;
@@ -45,12 +45,20 @@ function StatusTabs({ value, onChange, counts }) {
             role="tab"
             aria-selected={on}
             onClick={() => onChange(tab.value)}
-            className={`micro inline-flex shrink-0 items-center gap-2 border px-3.5 py-2 tracking-meta transition-colors duration-300 ${
-              on ? 'border-gold text-gold' : 'border-line text-muted hover:text-foreground'
+            className={`-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+              on ? 'border-gold text-gold' : 'border-transparent text-muted hover:border-admin-field-border hover:text-foreground'
             }`}
           >
             {tab.label}
-            <span className={`tabular-nums ${on ? 'text-gold' : tab.n && (tab.value === 'pending' || tab.value === 'paid') ? 'text-foreground' : 'text-muted/70'}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                on
+                  ? 'bg-gold-fill/15 text-gold'
+                  : tab.n && (tab.value === 'pending' || tab.value === 'paid')
+                    ? 'bg-admin-hover text-foreground'
+                    : 'bg-admin-hover text-muted'
+              }`}
+            >
               {tab.n}
             </span>
           </button>
@@ -163,7 +171,7 @@ export default function AdminOrders() {
 
       {!loading && !error && data.items.length > 0 && (
         <>
-          <div ref={listRef} className="-mx-1 overflow-auto border-b border-line px-1">
+          <div ref={listRef} className="admin-card overflow-auto">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className={trCls}>
@@ -184,7 +192,7 @@ export default function AdminOrders() {
                     <tr
                       key={o.id}
                       onClick={() => navigate(`/admin/orders/${o.id}`)}
-                      className={`${trCls} group cursor-pointer transition-colors last:border-b-0 hover:bg-surface`}
+                      className={`${trCls} group cursor-pointer transition-colors hover:bg-admin-hover`}
                     >
                       <td className={`${TD} whitespace-nowrap`}>
                         <a

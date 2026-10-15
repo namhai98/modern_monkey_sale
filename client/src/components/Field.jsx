@@ -1,4 +1,5 @@
 import { cloneElement, useId } from 'react';
+import { useSkin } from '../context/SkinContext';
 
 /* Underline-only fields are the house input style — no box, no fill, no radius,
    focus turns the rule gold. The visual treatment lives in the `field` utility
@@ -26,13 +27,18 @@ export default function Field({
   ...props
 }) {
   const auto = useId();
+  // The admin draws Flowbite fields: a sentence-case label, a boxed input.
+  const admin = useSkin() === 'admin';
   const fieldId = id || auto;
   const Tag = as;
 
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={fieldId} className="micro mb-1 block text-muted">
+        <label
+          htmlFor={fieldId}
+          className={admin ? 'mb-2 block text-sm font-medium text-foreground' : 'micro mb-1 block text-muted'}
+        >
           {label}
           {required && <span aria-hidden="true" className="text-gold"> *</span>}
         </label>
@@ -49,7 +55,7 @@ export default function Field({
           required={required}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-          className={`field ${error ? 'border-danger' : ''}`}
+          className={admin ? 'admin-field' : `field ${error ? 'border-danger' : ''}`}
           {...props}
         >
           {children}

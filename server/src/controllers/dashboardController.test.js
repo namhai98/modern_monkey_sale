@@ -67,6 +67,17 @@ test('dashboard sales leave out cancelled orders and count today', async () => {
   assert.equal(res.body.status_counts.cancelled, 1);
   assert.equal(res.body.top_products[0].units, 2);
   assert.equal(res.body.recent_orders.length, 2);
+
+  // The chart series: 30 days ending today, empty days as zeros, the
+  // cancelled order left out; category revenue over the same window.
+  assert.equal(res.body.daily.length, 30);
+  const last = res.body.daily.at(-1);
+  assert.deepEqual([last.revenue, last.orders], [200, 1]);
+  assert.equal(res.body.daily.reduce((n, d) => n + d.orders, 0), 1);
+  assert.match(last.day, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(res.body.by_category.length, 1);
+  assert.equal(res.body.by_category[0].revenue, 200);
+  assert.equal(res.body.by_category[0].category, null);
 });
 
 test('low stock counts the sizes of a piece sold in sizes', async () => {

@@ -155,11 +155,11 @@ export default function Checkout() {
        hero, the fields in a grid rather than a column, and the order beside
        them. A phone scrolls, as it must. */
     <section className="container-lux py-6 md:py-8">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 border-b border-line pb-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 pb-5 lg:border-b lg:border-line">
         <h1 className="heading-serif text-3xl leading-[1.05] md:text-4xl">{t('checkout.title')}</h1>
         {/* Step rail — micro-type with the current step in gold, the single
             signal this design uses for "you are here". */}
-        <ol className="micro flex flex-wrap items-center gap-x-5 gap-y-2 text-muted">
+        <ol className="micro flex flex-wrap items-center gap-x-4 gap-y-2 text-muted max-sm:tracking-[0.14em] sm:gap-x-5">
           <li className="inline-flex items-center gap-2">
             <span className="tabular-nums">1</span>
             {t('checkout.step.bag')}

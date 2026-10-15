@@ -12,7 +12,7 @@
 // Underline-only field, the house input: the `field` utility in index.css, the
 // same one the storefront's <Field> uses. A string so the few hand-placed admin
 // inputs (inline rename, the rate input) can add width classes to it.
-export const inputCls = 'field';
+export const inputCls = 'admin-field';
 
 // Buttons are the shared <Button> (components/Button.jsx), size="xs" in the
 // admin's toolbars and forms, variant="danger" for irreversible actions.
@@ -24,11 +24,11 @@ export const okCls = 'border-l-2 border-gold py-1 pl-4 text-sm text-foreground';
 // and no zebra striping — same as the storefront's order table.
 // Both sides padded: a right-aligned number next to a left-aligned column
 // would otherwise run straight into it.
-export const thCls = 'micro px-4 py-3 text-left font-normal text-muted first:pl-0 last:pr-0';
-export const thNumCls = 'micro px-4 py-3 text-right font-normal text-muted first:pl-0 last:pr-0';
-export const tdCls = 'px-4 py-4 align-middle first:pl-0 last:pr-0';
-export const tdNumCls = 'px-4 py-4 text-right align-middle tabular-nums first:pl-0 last:pr-0';
-export const trCls = 'border-b border-line';
+export const thCls = 'px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted';
+export const thNumCls = 'px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted';
+export const tdCls = 'px-4 py-3 align-middle';
+export const tdNumCls = 'px-4 py-3 text-right align-middle tabular-nums';
+export const trCls = 'border-b border-line last:border-b-0';
 
 /* Row state, expressed the way the storefront expresses status: gold when it is
    live, muted when it is not. No green/red pair. */

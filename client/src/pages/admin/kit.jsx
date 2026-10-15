@@ -86,12 +86,12 @@ export function useFillHeight(gap = 0, deps = []) {
 // `dense`: tighter spacing for a screen that should fit one window.
 export function AdminPage({ title, count, back, actions, dense = false, children }) {
   return (
-    <div className={dense ? 'pb-6 pt-6' : 'pb-8 pt-10'}>
+    <div className="pb-2">
       {back}
-      <div className={`flex flex-wrap items-end justify-between gap-4 ${dense ? 'mb-5' : 'mb-8'}`}>
+      <div className={`flex flex-wrap items-end justify-between gap-4 ${dense ? 'mb-4' : 'mb-6'}`}>
         <div className="min-w-0">
-          <h1 className={`heading-serif text-foreground ${dense ? 'text-2xl md:text-3xl' : 'text-3xl'}`}>{title}</h1>
-          {count != null && <p className="micro mt-2 tracking-meta text-muted">{count}</p>}
+          <h1 className="text-xl font-semibold text-foreground sm:text-2xl">{title}</h1>
+          {count != null && <p className="mt-1 text-sm text-muted">{count}</p>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
       </div>
@@ -132,14 +132,14 @@ export function Toolbar({ children, active = false, onClear, dense = false }) {
   const primary = list[0]?.type === SearchInput ? list[0] : null;
   const rest = primary ? list.slice(1) : list;
   return (
-    <div className={`flex flex-wrap items-end gap-x-6 border-b border-line ${dense ? 'mb-4 gap-y-4 pb-4' : 'mb-6 gap-y-5 pb-6'}`}>
+    <div className={`flex flex-wrap items-end gap-x-4 gap-y-3 ${dense ? 'mb-4' : 'mb-5'}`}>
       {primary}
       {rest.length > 0 && (
         <button
           type="button"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="micro inline-flex items-center gap-2 border border-line px-3.5 py-2.5 tracking-meta text-muted transition-colors duration-300 hover:text-foreground md:hidden"
+          className="inline-flex items-center gap-2 rounded-lg border border-admin-field-border bg-surface px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-admin-hover md:hidden"
         >
           <Icon name="filter" className="h-3.5 w-3.5" />
           {t('admin.ui.filters')}
@@ -148,13 +148,13 @@ export function Toolbar({ children, active = false, onClear, dense = false }) {
         </button>
       )}
       {rest.length > 0 && (
-        <div className={`${open ? 'flex' : 'hidden'} w-full flex-wrap items-end gap-x-6 gap-y-5 md:contents`}>{rest}</div>
+        <div className={`${open ? 'flex' : 'hidden'} w-full flex-wrap items-end gap-x-4 gap-y-3 md:contents`}>{rest}</div>
       )}
       {active && onClear && (
         <button
           type="button"
           onClick={onClear}
-          className="link-lux micro mb-2.5 ml-auto inline-flex items-center gap-1.5 text-gold"
+          className="mb-2 ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gold transition-colors hover:bg-admin-hover"
         >
           <Icon name="x" className="h-3 w-3" />
           {t('admin.ui.clearFilters')}
@@ -168,7 +168,7 @@ export function Toolbar({ children, active = false, onClear, dense = false }) {
 export function FilterField({ label, htmlFor, className = '', children }) {
   return (
     <div className={className}>
-      <label htmlFor={htmlFor} className="micro mb-1 block text-muted">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-medium text-muted">
         {label}
       </label>
       {children}
@@ -182,11 +182,11 @@ export function SearchInput({ value, onChange, placeholder, label, className = '
   return (
     <FilterField label={label || t('admin.ui.search')} htmlFor={id} className={className}>
       <div className="relative">
-        <Icon name="search" className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         <input
           id={id}
           type="search"
-          className={`${inputCls} pl-6 pr-6`}
+          className={`${inputCls} pl-9! pr-8!`}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -196,7 +196,7 @@ export function SearchInput({ value, onChange, placeholder, label, className = '
             type="button"
             onClick={() => onChange('')}
             aria-label={t('admin.ui.clearSearch')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-muted transition-colors hover:text-gold"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted transition-colors hover:text-foreground"
           >
             <Icon name="x" className="h-3.5 w-3.5" />
           </button>
@@ -230,7 +230,7 @@ export function DateFilter({ label, value, onChange, className = 'w-40' }) {
 export function Segmented({ label, value, onChange, options }) {
   return (
     <FilterField label={label} className="max-w-full">
-      <div role="radiogroup" aria-label={label} className="flex max-w-full overflow-x-auto">
+      <div role="radiogroup" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-lg border border-admin-field-border shadow-xs">
         {options.map((o) => {
           const on = o.value === value;
           return (
@@ -240,8 +240,8 @@ export function Segmented({ label, value, onChange, options }) {
               role="radio"
               aria-checked={on}
               onClick={() => onChange(o.value)}
-              className={`micro -ml-px shrink-0 whitespace-nowrap border px-3.5 py-2 tracking-meta transition-colors duration-300 first:ml-0 ${
-                on ? 'relative z-10 border-gold text-gold' : 'border-line text-muted hover:text-foreground'
+              className={`shrink-0 whitespace-nowrap border-l border-admin-field-border px-3.5 py-2 text-sm font-medium transition-colors first:border-l-0 ${
+                on ? 'bg-admin-hover text-gold' : 'bg-surface text-foreground hover:bg-admin-hover'
               }`}
             >
               {o.label}
@@ -261,11 +261,11 @@ export function ToggleChip({ checked, onChange, children }) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`micro mb-0.5 inline-flex items-center gap-2 border px-3.5 py-2 tracking-meta transition-colors duration-300 ${
-        checked ? 'border-gold text-gold' : 'border-line text-muted hover:text-foreground'
+      className={`mb-0.5 inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors ${
+        checked ? 'border-gold bg-gold-fill/10 text-gold' : 'border-admin-field-border bg-surface text-foreground hover:bg-admin-hover'
       }`}
     >
-      <span className={`flex h-3.5 w-3.5 items-center justify-center border ${checked ? 'border-gold-fill bg-gold-fill text-ink' : 'border-line'}`}>
+      <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? 'border-gold-fill bg-gold-fill text-ink' : 'border-admin-field-border bg-admin-field'}`}>
         {checked && <Icon name="check" className="h-2.5 w-2.5" strokeWidth={2.5} />}
       </span>
       {children}
@@ -281,10 +281,10 @@ export { default as Drawer } from '../../components/SidePanel';
 // A titled group of fields inside a form.
 export function FormSection({ title, hint, children, cols = 2 }) {
   return (
-    <section className="border-b border-line pb-8 pt-2 last:border-b-0 [&+&]:pt-8">
-      <h3 className="micro tracking-button text-gold">{title}</h3>
-      {hint && <p className="mt-2 text-xs leading-relaxed text-muted">{hint}</p>}
-      <div className={`mt-5 grid gap-x-6 gap-y-6 ${cols === 2 ? 'sm:grid-cols-2' : ''}`}>{children}</div>
+    <section className="border-b border-line pb-6 pt-1 last:border-b-0 [&+&]:pt-6">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      {hint && <p className="mt-1 text-sm leading-relaxed text-muted">{hint}</p>}
+      <div className={`mt-4 grid gap-x-4 gap-y-4 ${cols === 2 ? 'sm:grid-cols-2' : ''}`}>{children}</div>
     </section>
   );
 }
@@ -318,12 +318,12 @@ export function SelectField({ label, hint, value, onChange, children, className 
 // the table (sr-only labels, tooltips) are clipped too instead of widening the page.
 // `stickyFirst`: the first column (the order or product name) stays put while
 // a wide table scrolls sideways on a phone, so a row never loses what it is.
-export function TableWrap({ children, stickyFirst = false }) {
+export function TableWrap({ children, stickyFirst = false, plain = false }) {
   return (
     <div
-      className={`relative -mx-1 overflow-x-auto px-1 ${
+      className={`${plain ? '-mx-4 -mb-4 border-t border-line sm:-mx-6 sm:-mb-6' : 'admin-card'} relative overflow-x-auto [&_thead]:bg-admin-thead [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-admin-hover ${
         stickyFirst
-          ? '[&_tr>*:first-child]:sticky [&_tr>*:first-child]:left-0 [&_tr>*:first-child]:z-10 [&_tr>*:first-child]:bg-background max-md:[&_tr>*:first-child]:border-r max-md:[&_tr>*:first-child]:border-line'
+          ? '[&_tbody_tr>*:first-child]:sticky [&_tbody_tr>*:first-child]:left-0 [&_tbody_tr>*:first-child]:z-10 [&_tbody_tr>*:first-child]:bg-surface [&_thead_tr>*:first-child]:sticky [&_thead_tr>*:first-child]:left-0 [&_thead_tr>*:first-child]:z-10 [&_thead_tr>*:first-child]:bg-admin-thead max-md:[&_tr>*:first-child]:border-r max-md:[&_tr>*:first-child]:border-line'
           : ''
       }`}
     >
@@ -340,8 +340,8 @@ export function RowAction({ icon, label, onClick, danger = false, disabled = fal
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        className={`inline-flex h-9 w-9 items-center justify-center transition-colors duration-300 disabled:opacity-40 ${
-          danger ? 'text-danger hover:opacity-70' : 'text-muted hover:text-gold'
+        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${
+          danger ? 'text-danger hover:bg-danger/10' : 'text-muted hover:bg-admin-hover hover:text-foreground'
         }`}
       >
         <Icon name={icon} className="h-4 w-4" />

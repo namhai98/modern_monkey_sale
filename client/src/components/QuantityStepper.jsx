@@ -1,4 +1,5 @@
 import { useLocale } from '../context/LocaleContext';
+import Icon from './Icon';
 
 /* One quantity control for the bag, the drawer and the product page — all three
    had their own hand-rolled version with different padding and hit areas.
@@ -9,8 +10,8 @@ import { useLocale } from '../context/LocaleContext';
    drawer, which is mostly opened on phones. */
 
 const SIZES = {
-  sm: { btn: 'h-11 w-11 text-sm', val: 'w-8 text-sm' },
-  md: { btn: 'h-12 w-12 text-base', val: 'w-10 text-sm' },
+  sm: { btn: 'h-11 w-11', val: 'w-8 text-sm', icon: 'h-3.5 w-3.5' },
+  md: { btn: 'h-12 w-12', val: 'w-10 text-sm', icon: 'h-4 w-4' },
 };
 
 export default function QuantityStepper({
@@ -41,7 +42,7 @@ export default function QuantityStepper({
         disabled={value <= min}
         aria-label={decrease}
       >
-        −
+        <Icon name="minus" className={s.icon} />
       </button>
       <span className={`text-center tabular-nums text-foreground ${s.val}`} aria-live="polite">
         {value}
@@ -53,7 +54,7 @@ export default function QuantityStepper({
         disabled={value >= max}
         aria-label={increase}
       >
-        +
+        <Icon name="plus" className={s.icon} />
       </button>
     </span>
   );

@@ -502,3 +502,129 @@
 @utility z-lightbox { z-index: 90; }
 @utility z-toast { z-index: 95; }
 @utility z-skip { z-index: 100; }
+
+/* ── Admin skin ───────────────────────────────────────────────────────────────
+   The admin follows the Flowbite admin dashboard: a white top bar and sidebar,
+   a grey page, white rounded cards with a hairline and a soft shadow, boxed
+   inputs, grey table heads — in the house gold instead of Flowbite's blue.
+
+   It is done by re-pointing the theme tokens inside `.admin-ui` (set by
+   AdminLayout), so every admin screen built on bg-surface / border-line /
+   text-muted takes Flowbite's greys without being rewritten, in both themes.
+   The storefront never sees any of this. */
+:root {
+  --a-hover: #374151;
+  --a-field: #374151;
+  --a-field-border: #4b5563;
+  --a-thead: #273244;
+}
+.light {
+  --a-hover: #f3f4f6;
+  --a-field: #f9fafb;
+  --a-field-border: #d1d5db;
+  --a-thead: #f3f4f6;
+}
+.admin-ui {
+  --background: #111827;
+  --foreground: #ffffff;
+  --muted-color: #9ca3af;
+  --line: #374151;
+  --surface: #1f2937;
+  font-family: var(--font-sans);
+}
+.light .admin-ui,
+.light.admin-ui {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --muted-color: #6b7280;
+  --line: #e5e7eb;
+  --surface: #ffffff;
+}
+
+@theme inline {
+  --color-admin-hover: var(--a-hover);
+  --color-admin-field: var(--a-field);
+  --color-admin-field-border: var(--a-field-border);
+  --color-admin-thead: var(--a-thead);
+}
+
+/* Headings in the admin are Inter semibold, as in the template. (Utilities
+   layer, so this outranks heading-serif's own declarations.) */
+@layer utilities {
+  .admin-ui .heading-serif {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* The admin's boxed field: grey ground, full border, rounded corners, a gold
+   ring on focus — Flowbite's input in the house gold. Field switches to it
+   inside the admin (SkinContext); hand-placed admin inputs use it directly. */
+@utility admin-field {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--a-field-border);
+  border-radius: 0.5rem;
+  background: var(--a-field);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &::placeholder {
+    color: var(--muted-color);
+  }
+  &:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold);
+  }
+  &[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  appearance: textfield;
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+  }
+}
+
+/* A Flowbite card: the surface, a hairline, rounded corners, a soft shadow.
+   Raw variables, not --color-*: the theme aliases resolve at :root, which would
+   read the storefront's values instead of the admin's. */
+@utility admin-card {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Chart colours for the admin dashboard (pages/admin/charts.jsx), validated
+   with the dataviz palette checker against the admin card surfaces (#ffffff
+   light, #1f2937 dark). --viz-gold carries single-series charts (>= 3:1 on
+   the card in both modes); --viz-1…6 are the categorical slots, in fixed
+   order, for the order-status mix. */
+.admin-ui {
+  --viz-gold: #c8a24a;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+}
+.light .admin-ui,
+.light.admin-ui {
+  --viz-gold: #a07d26;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+}

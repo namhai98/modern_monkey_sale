@@ -204,13 +204,13 @@ export default function AdminUsers() {
                     <tr key={u.id} className={`${trCls} transition-colors hover:bg-surface ${u.is_active ? '' : 'opacity-60'}`}>
                       <td className={tdCls}>
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-line text-xs uppercase text-muted">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold-fill/15 text-sm font-semibold uppercase text-gold">
                             {(u.name || u.email || '?').trim().slice(0, 1)}
                           </span>
                           <div className="min-w-0">
                             <div className="text-foreground">
                               {u.name}
-                              {u.id === user.id && <span className="micro ml-2 text-badge text-gold">{t('admin.users.you')}</span>}
+                              {u.id === user.id && <span className="ml-2 rounded bg-gold-fill/15 px-1.5 py-0.5 text-xs font-medium text-gold">{t('admin.users.you')}</span>}
                             </div>
                             <div className="truncate text-xs text-muted">{u.email}</div>
                           </div>

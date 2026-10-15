@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSkin } from '../context/SkinContext';
 import Icon from './Icon';
 import IconButton from './IconButton';
 import { useLocale } from '../context/LocaleContext';
@@ -36,9 +37,11 @@ export default function SidePanel({
     };
   }, [open, onClose]);
 
+  // Hooks above any early return.
+  const admin = useSkin() === 'admin';
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-panel">
+    <div className={`fixed inset-0 z-panel ${admin ? 'admin-ui' : ''}`}>
       <div className="absolute inset-0 animate-[fadeIn_0.2s_ease-out] bg-ink/70 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={ref}
@@ -46,7 +49,7 @@ export default function SidePanel({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute top-0 flex h-full w-full flex-col bg-background text-foreground outline-none ${width} ${
+        className={`absolute top-0 flex h-full w-full flex-col text-foreground outline-none ${admin ? 'bg-surface' : 'bg-background'} ${width} ${
           left
             ? 'left-0 border-r border-line animate-[drawerInLeft_0.35s_cubic-bezier(0.22,1,0.36,1)]'
             : 'right-0 border-l border-line animate-[drawerIn_0.35s_cubic-bezier(0.22,1,0.36,1)]'
@@ -54,14 +57,27 @@ export default function SidePanel({
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 py-5 md:px-8">
           <div className="min-w-0">
-            <h2 className="heading-serif truncate text-xl">{title}</h2>
-            {subtitle && <p className="micro mt-1.5 tracking-meta text-muted">{subtitle}</p>}
+            <h2 className={admin ? 'truncate text-lg font-semibold' : 'heading-serif truncate text-xl'}>{title}</h2>
+            {subtitle && (
+              <p className={admin ? 'mt-1 text-sm text-muted' : 'micro mt-1.5 tracking-meta text-muted'}>{subtitle}</p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-4">
             {actions}
-            <IconButton tone="theme" size="sm" onClick={onClose} aria-label={t('nav.close')}>
-              <Icon name="x" className="h-4 w-4" />
-            </IconButton>
+            {admin ? (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t('nav.close')}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-admin-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+              >
+                <Icon name="x" className="h-5 w-5" />
+              </button>
+            ) : (
+              <IconButton tone="theme" size="sm" onClick={onClose} aria-label={t('nav.close')}>
+                <Icon name="x" className="h-4 w-4" />
+              </IconButton>
+            )}
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8">{children}</div>

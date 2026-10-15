@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useSkin } from '../context/SkinContext';
 
 /* The house button, matching the presentation site's components/ui/button.tsx:
    sharp corners, no radius, no shadow, ~11px uppercase label at 0.32em, and —
@@ -50,6 +51,26 @@ const sizes = {
   lg: 'px-7 py-[1.15rem] tracking-button sm:px-10',
 };
 
+/* The admin skin (Flowbite): rounded-lg, sentence-case medium text, a soft
+   focus ring, no champagne sweep. Same variant and size names, so admin call
+   sites don't change. */
+const ADMIN_BASE =
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium select-none ' +
+  'transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/30 ' +
+  'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50';
+const ADMIN_VARIANTS = {
+  gold: 'bg-gold-fill text-ink hover:bg-[#b8933f]',
+  outline: 'border border-admin-field-border bg-surface text-foreground hover:bg-admin-hover',
+  'outline-dark': 'border border-admin-field-border bg-surface text-foreground hover:bg-admin-hover',
+  danger: 'bg-danger text-white hover:opacity-90',
+};
+const ADMIN_SIZES = {
+  xs: 'px-3 py-2 text-xs',
+  sm: 'px-3.5 py-2 text-sm',
+  md: 'px-5 py-2.5 text-sm',
+  lg: 'px-5 py-3 text-base',
+};
+
 export default function Button({
   to,
   href,
@@ -62,13 +83,21 @@ export default function Button({
   ...props
 }) {
   const key = ALIASES[variant] || variant;
-  const cls = [base, variants[key] || variants.gold, sizes[size], full ? 'w-full' : '', className]
+  const admin = useSkin() === 'admin';
+  const cls = (
+    admin
+      ? [ADMIN_BASE, ADMIN_VARIANTS[key] || ADMIN_VARIANTS.gold, ADMIN_SIZES[size] || ADMIN_SIZES.md]
+      : [base, variants[key] || variants.gold, sizes[size]]
+  )
+    .concat(full ? 'w-full' : '', className)
     .filter(Boolean)
     .join(' ');
 
   // The sweep sits under a `relative z-10` label so the text stays readable
   // as the champagne layer slides across beneath it.
-  const inner = (
+  const inner = admin ? (
+    children
+  ) : (
     <>
       {key === 'gold' && (
         <span

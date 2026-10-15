@@ -114,7 +114,7 @@ export function Craftsmanship() {
               <Reveal key={s.title} delay={i * 0.12}>
                 <div className="group flex gap-5 border-b border-white/10 pb-7 md:gap-8 md:pb-10">
                   {/* A fixed column, so every title starts on the same line. */}
-                  <span className="heading-serif w-12 shrink-0 text-3xl text-gold/50 transition-colors duration-500 group-hover:text-gold md:w-14">
+                  <span className="heading-serif w-12 shrink-0 text-3xl text-gold/65 transition-colors duration-500 group-hover:text-gold md:w-14">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div>
@@ -201,7 +201,7 @@ export function Visit() {
               <Icon name="phone" className="h-4 w-4 text-gold" />
               {site.phones.map((p, i) => (
                 <span key={p}>
-                  {i > 0 && <span className="mr-2 text-white/30">·</span>}
+                  {i > 0 && <span aria-hidden="true" className="mr-2 text-white/30">·</span>}
                   <a href={telHref(p)} className="transition-colors hover:text-gold">
                     {p}
                   </a>

@@ -18,8 +18,8 @@ const fmtDateTime = (d) =>
 // the forms.
 function Panel({ title, children }) {
   return (
-    <section className="border border-line bg-surface p-5">
-      <h2 className="micro tracking-button text-gold">{title}</h2>
+    <section className="admin-card p-4 sm:p-5">
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -91,7 +91,7 @@ function StatusActions({ order, onChange }) {
   }
   return (
     <>
-      <p id={groupId} className="micro mb-3 text-muted">{t('admin.orderDetail.changeStatus')}</p>
+      <p id={groupId} className="mb-2 text-sm font-medium text-muted">{t('admin.orderDetail.changeStatus')}</p>
       <div role="group" aria-labelledby={groupId} className="flex flex-wrap gap-2">
         {order.allowed_transitions.map((s) => {
           const on = target === s;
@@ -102,12 +102,12 @@ function StatusActions({ order, onChange }) {
               type="button"
               aria-pressed={on}
               onClick={() => setTarget(on ? null : s)}
-              className={`micro border px-3.5 py-2 tracking-meta transition-colors duration-300 ${
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                 on
-                  ? danger ? 'border-danger text-danger' : 'border-gold text-gold'
+                  ? danger ? 'border-danger bg-danger/10 text-danger' : 'border-gold bg-gold-fill/10 text-gold'
                   : danger
-                    ? 'border-line text-muted hover:border-danger hover:text-danger'
-                    : 'border-line text-muted hover:border-gold hover:text-foreground'
+                    ? 'border-admin-field-border text-foreground hover:border-danger hover:text-danger'
+                    : 'border-admin-field-border text-foreground hover:bg-admin-hover'
               }`}
             >
               {t(`status.${s}`)}
@@ -147,7 +147,7 @@ export default function AdminOrderDetail() {
   useEffect(() => { load(); }, [load]);
 
   const back = (
-    <Link to="/admin/orders" className="link-lux micro mb-4 inline-flex items-center gap-2 text-muted hover:text-gold">
+    <Link to="/admin/orders" className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-foreground">
       <Icon name="arrowLeft" className="h-3.5 w-3.5" />
       {t('admin.orderDetail.back')}
     </Link>
@@ -194,7 +194,7 @@ export default function AdminOrderDetail() {
         /* The way back sits beside the status rather than on a row of its own,
            which the one-screen layout can't spare. */
         <>
-          <Link to="/admin/orders" className="link-lux micro mr-3 inline-flex items-center gap-2 text-muted hover:text-gold">
+          <Link to="/admin/orders" className="mr-1 inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-admin-hover hover:text-foreground">
             <Icon name="arrowLeft" className="h-3.5 w-3.5" />
             {t('admin.orderDetail.back')}
           </Link>
@@ -204,11 +204,12 @@ export default function AdminOrderDetail() {
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="min-w-0">
-          <h2 className="micro mb-2 tracking-button text-gold">{t('admin.orderDetail.items')}</h2>
-          <ul className="max-h-[38svh] divide-y divide-line overflow-y-auto border-y border-line">
+          <section className="admin-card p-4 sm:p-5">
+          <h2 className="mb-3 text-base font-semibold text-foreground">{t('admin.orderDetail.items')}</h2>
+          <ul className="max-h-[30svh] divide-y divide-line overflow-y-auto border-y border-line">
             {order.items.map((it) => (
               <li key={it.id} className="flex items-center gap-4 py-2.5">
-                <div className="h-14 w-11 shrink-0 overflow-hidden border border-line bg-surface">
+                <div className="h-14 w-11 shrink-0 overflow-hidden rounded-md border border-line bg-admin-hover">
                   {it.image_url ? (
                     <ImageFallback src={it.image_url} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -256,10 +257,11 @@ export default function AdminOrderDetail() {
               </>
             )}
             <div className="flex items-baseline justify-between border-t border-line pt-2">
-              <dt className="micro text-muted">{t('admin.orderDetail.total')}</dt>
-              <dd className="heading-serif text-2xl text-foreground">{usd(order.total)}</dd>
+              <dt className="text-sm font-medium text-muted">{t('admin.orderDetail.total')}</dt>
+              <dd className="text-2xl font-bold text-foreground">{usd(order.total)}</dd>
             </div>
           </dl>
+          </section>
 
           {/* Who and where, side by side: the phone is what staff reach for,
               so it is a link that dials. */}
@@ -290,7 +292,7 @@ export default function AdminOrderDetail() {
                   <p className="text-muted">—</p>
                 )}
                 {addr.label && (
-                  <p className="micro pt-1 tracking-meta text-muted">
+                  <p className="pt-1 text-xs text-muted">
                     {t('admin.orderDetail.addressName')}: <span className="text-foreground">{addr.label}</span>
                   </p>
                 )}

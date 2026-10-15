@@ -8,6 +8,7 @@ import Pager from '../../components/Pager';
 import Skeleton from '../../components/Skeleton';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { useLocale } from '../../context/LocaleContext';
 import { categoryLabel } from '../../lib/i18n';
 import { resizeUnsplash } from '../../lib/media';
@@ -73,7 +74,7 @@ function AdjustStock({ product, onDone, onCancel }) {
   }
 
   return (
-    <form onSubmit={submit} className="my-2 grid items-end gap-4 border border-line bg-surface p-4 text-sm sm:grid-cols-[10rem_7rem_10rem_1fr_auto_auto]">
+    <form onSubmit={submit} className="my-2 grid items-end gap-4 rounded-lg border border-line bg-admin-hover p-4 text-sm sm:grid-cols-[10rem_7rem_10rem_1fr_auto_auto]">
       <SelectField label={t('admin.stock.how')} value={mode} onChange={(e) => setMode(e.target.value)}>
         <option value="delta">{t('admin.stock.changeBy')}</option>
         <option value="set">{t('admin.stock.setTo')}</option>
@@ -98,7 +99,8 @@ function AdjustStock({ product, onDone, onCancel }) {
 
 export default function AdminProducts() {
   const { t, locale } = useLocale();
-  const { error: toastError } = useToast();
+  const { error: toastError, success } = useToast();
+  const confirm = useConfirm();
   const [data, setData] = useState({ items: [], total: 0 });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -156,6 +158,41 @@ export default function AdminProducts() {
       load();
     } catch (err) {
       toastError(err.response?.data?.error || t('admin.products.updateFailed'));
+    }
+  }
+
+  /* Delete for good — but only a product nobody has ordered. One that has
+     been ordered is refused by the server (order history points at it), and
+     the admin is offered the safe alternative: hide it from the shop. */
+  async function remove(p) {
+    const ok = await confirm({
+      title: t('admin.products.deleteTitle', { name: p.name }),
+      body: t('admin.products.deleteBody'),
+      confirmLabel: t('admin.products.delete'),
+      cancelLabel: t('common.cancel'),
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await client.delete(`/products/${p.id}`);
+      success(t('admin.products.deleted', { name: p.name }));
+      load();
+    } catch (err) {
+      if (err.response?.data?.code !== 'PRODUCT_HAS_ORDERS') {
+        toastError(err.response?.data?.error || t('admin.products.deleteFailed'));
+        return;
+      }
+      if (!p.is_active) {
+        toastError(t('admin.products.hasOrdersHidden'));
+        return;
+      }
+      const hide = await confirm({
+        title: t('admin.products.hasOrdersTitle'),
+        body: t('admin.products.hasOrdersBody'),
+        confirmLabel: t('admin.products.deactivate'),
+        cancelLabel: t('common.cancel'),
+      });
+      if (hide) toggleActive(p);
     }
   }
 
@@ -236,7 +273,7 @@ export default function AdminProducts() {
                   const thumb = p.images?.[0]?.thumbnail || resizeUnsplash(p.image_url, 120);
                   return (
                     <Fragment key={p.id}>
-                      <tr className={`${trCls} transition-colors hover:bg-surface ${p.is_active ? '' : 'opacity-60'}`}>
+                      <tr className={`${trCls} transition-colors hover:bg-admin-hover ${p.is_active ? '' : 'opacity-60'}`}>
                         <td className={tdCls}>
                           <div className="flex items-center gap-3">
                             <ImageFallback src={thumb} alt="" className="h-14 w-11 shrink-0 bg-surface object-cover" />
@@ -259,13 +296,13 @@ export default function AdminProducts() {
                         <td className={`${tdNumCls} whitespace-nowrap`}>
                           <div className={`tabular-nums ${p.low_stock ? 'font-medium text-gold' : 'text-foreground'}`}>
                             {p.stock}
-                            {p.low_stock && <span className="micro ml-1.5 text-badge">{t('admin.products.low')}</span>}
+                            {p.low_stock && <span className="ml-1.5 rounded bg-gold-fill/15 px-1.5 py-0.5 text-xs font-medium text-gold">{t('admin.products.low')}</span>}
                           </div>
                           {p.has_variants ? (
                             <div className="text-xs text-muted">{t('admin.products.perSize')}</div>
                           ) : (
                             <button onClick={() => setAdjustId(adjustId === p.id ? null : p.id)}
-                              className="link-lux text-xs text-muted hover:text-gold">
+                              className="text-xs font-medium text-gold hover:underline">
                               {t('admin.products.adjust')}
                             </button>
                           )}
@@ -280,7 +317,10 @@ export default function AdminProducts() {
                           </StatusToggle>
                         </td>
                         <td className={tdNumCls}>
-                          <RowAction icon="edit" label={t('admin.products.edit')} onClick={() => setFormFor(toForm(p))} />
+                          <div className="inline-flex items-center">
+                            <RowAction icon="edit" label={t('admin.products.edit')} onClick={() => setFormFor(toForm(p))} />
+                            <RowAction icon="trash" danger label={t('admin.products.delete')} onClick={() => remove(p)} />
+                          </div>
                         </td>
                       </tr>
                       {adjustId === p.id && (

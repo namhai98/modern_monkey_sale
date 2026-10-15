@@ -6,8 +6,8 @@ import Tooltip from './Tooltip';
 // Tile sizes: the header, the footer's legal bar, and the phone menu (sized
 // for a thumb).
 const SIZES = {
-  sm: 'h-5 w-9 text-[0.6rem]',
-  md: 'h-[22px] w-10 text-[0.62rem]',
+  sm: 'h-5 w-10 text-[0.66rem]',
+  md: 'h-[22px] w-11 text-[0.68rem]',
   lg: 'h-7 w-[52px] text-[0.7rem]',
 };
 
@@ -17,6 +17,7 @@ const SIZES = {
 function Face({ label, back = false }) {
   return (
     <span
+      aria-hidden="true"
       className="absolute inset-0 flex items-center justify-center border border-gold/70 bg-ink font-medium tracking-[0.12em] text-white/85 transition-colors duration-300 [backface-visibility:hidden] group-hover/flag:text-gold"
       style={back ? { transform: 'rotateY(180deg)' } : undefined}
     >
@@ -52,13 +53,13 @@ export default function LangSwitch({ className = '', tipSide = 'bottom', tipAlig
   }, [locale]);
 
   const label = t('lang.switchTo', { name: next.name });
+  const current = locale === front.code ? front : back;
 
   return (
     <Tooltip label={label} side={tipSide} align={tipAlign} className={className}>
       <button
         type="button"
         onClick={() => setLocale(next.code)}
-        aria-label={label}
         className="group/flag inline-flex h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center focus-visible:outline-none"
       >
         <span className={`relative block [perspective:300px] ${SIZES[size]}`}>
@@ -70,6 +71,9 @@ export default function LangSwitch({ className = '', tipSide = 'bottom', tipAlig
             <Face label={back.label} back />
           </span>
         </span>
+        {/* The name starts with the code on the tile, so someone who says
+            "МОН" to voice control reaches this button (WCAG 2.5.3). */}
+        <span className="sr-only">{`${current.label}: ${label}`}</span>
       </button>
     </Tooltip>
   );

@@ -1,5 +1,7 @@
+import Icon from './Icon';
+
 /* A hairline-divided accordion — the same shape as the presentation site's FAQ:
-   micro-type title, a +/– that rotates into an × as it opens, and the open row
+   micro-type title, a plus that rotates into an × as it opens, and the open row
    in gold. The body stays in the DOM and is collapsed with grid-template-rows,
    so it is always findable by in-page search and never JS-gated.
 
@@ -19,12 +21,12 @@ export default function Accordion({ id, title, body, open, onToggle, bodyClassNa
         }`}
       >
         {title}
-        <span
-          aria-hidden="true"
-          className={`shrink-0 text-base leading-none transition-transform duration-300 ${open ? 'rotate-45' : ''}`}
-        >
-          +
-        </span>
+        {/* A lucide plus that turns into an ×: a typed "+" sat a pixel or two
+            off-centre depending on the font's metrics. */}
+        <Icon
+          name="plus"
+          className={`h-4 w-4 shrink-0 transition-transform duration-300 ${open ? 'rotate-45' : ''}`}
+        />
       </button>
       <div
         id={panelId}

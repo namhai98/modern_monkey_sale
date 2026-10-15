@@ -125,7 +125,7 @@ function ProductPicker({ selected, onChange }) {
       <div className="flex items-end gap-4">
         <SearchInput value={term} onChange={setTerm} placeholder={t('admin.picker.searchPlaceholder')} label={t('admin.picker.search')} className="flex-1" />
         {results.length > 0 && (
-          <button type="button" onClick={toggleShown} className="link-lux micro mb-2.5 shrink-0 text-gold">
+          <button type="button" onClick={toggleShown} className="mb-2 shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gold transition-colors hover:bg-admin-hover">
             {allShownSelected ? t('admin.picker.clearShown') : t('admin.picker.selectShown')}
           </button>
         )}

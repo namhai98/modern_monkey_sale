@@ -168,8 +168,8 @@ export default function TaxonomyPage({ endpoint, ns, localize = false }) {
         </div>
 
         {/* Add — a small panel beside the list rather than a bare field above it. */}
-        <form onSubmit={create} className="border border-line bg-surface p-6 lg:sticky lg:top-[calc(var(--header-h)+2rem)]">
-          <p className="micro tracking-button text-gold">{t(`admin.${ns}.addTitle`)}</p>
+        <form onSubmit={create} className="admin-card p-5 lg:sticky lg:top-24">
+          <p className="text-base font-semibold text-foreground">{t(`admin.${ns}.addTitle`)}</p>
           <TextField className="mt-5" label={t(`admin.${ns}.colName`)} required value={name}
             placeholder={t(`admin.${ns}.newPlaceholder`)} onChange={(e) => setName(e.target.value)} />
           <p className="mt-2 text-xs leading-relaxed text-muted">{t('admin.ui.slugHint')}</p>

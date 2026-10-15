@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
+import { SkinProvider } from './SkinContext';
 import Button from '../components/Button';
 import { useLocale } from './LocaleContext';
 import { useFocusTrap } from '../lib/useFocusTrap';
@@ -34,16 +36,21 @@ export function ConfirmProvider({ children }) {
   }, []);
 
   const value = useMemo(() => confirm, [confirm]);
+  const admin = useLocation().pathname.startsWith('/admin');
 
   return (
     <ConfirmContext.Provider value={value}>
       {children}
-      {request && <ConfirmDialog request={request} onClose={close} />}
+      {request && (
+        <SkinProvider value={admin ? 'admin' : 'house'}>
+          <ConfirmDialog request={request} onClose={close} admin={admin} />
+        </SkinProvider>
+      )}
     </ConfirmContext.Provider>
   );
 }
 
-function ConfirmDialog({ request, onClose }) {
+function ConfirmDialog({ request, onClose, admin = false }) {
   const { t } = useLocale();
   const cancelRef = useRef(null);
   const ref = useFocusTrap(true, { initialFocus: cancelRef });
@@ -56,7 +63,7 @@ function ConfirmDialog({ request, onClose }) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-dialog flex items-end justify-center sm:items-center sm:p-6">
+    <div className={`fixed inset-0 z-dialog flex items-end justify-center sm:items-center sm:p-6 ${admin ? 'admin-ui' : ''}`}>
       <div
         className="absolute inset-0 animate-[fadeIn_0.2s_ease-out] bg-ink/70 backdrop-blur-sm"
         onClick={() => onClose(false)}
@@ -68,9 +75,11 @@ function ConfirmDialog({ request, onClose }) {
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={request.body ? 'confirm-body' : undefined}
-        className="relative w-full max-w-md animate-[fadeUp_0.3s_cubic-bezier(0.22,1,0.36,1)] border border-line bg-background p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-foreground outline-none sm:p-8"
+        className={`relative w-full max-w-md animate-[fadeUp_0.3s_cubic-bezier(0.22,1,0.36,1)] border border-line p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-foreground outline-none sm:p-8 ${
+          admin ? 'rounded-t-lg bg-surface shadow-xl sm:rounded-lg' : 'bg-background'
+        }`}
       >
-        <h2 id="confirm-title" className="heading-serif text-xl leading-snug">
+        <h2 id="confirm-title" className={admin ? 'text-lg font-semibold leading-snug' : 'heading-serif text-xl leading-snug'}>
           {request.title}
         </h2>
         {request.body && (

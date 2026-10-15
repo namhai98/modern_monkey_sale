@@ -54,11 +54,11 @@ export default function AdminSettings() {
         <Skeleton className="h-48 w-full max-w-xl" />
       ) : (
         <div className="max-w-xl">
-          <section className="border border-line bg-surface p-6 md:p-8">
-            <h2 className="micro tracking-button text-gold">{t('admin.settings.liveTitle')}</h2>
+          <section className="admin-card p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-foreground">{t('admin.settings.liveTitle')}</h2>
             <p className="mb-6 mt-2 text-sm leading-relaxed text-muted">{t('admin.settings.liveBody')}</p>
 
-            <p className="heading-serif text-3xl tabular-nums text-foreground">
+            <p className="text-3xl font-bold tabular-nums text-foreground">
               {effective > 0 ? t('admin.settings.liveRate', { value: fmtRate(effective) }) : '—'}
             </p>
             <p className={`mt-2 inline-flex items-center gap-2 text-xs ${sourceHealthy ? 'text-muted' : 'text-gold'}`}>

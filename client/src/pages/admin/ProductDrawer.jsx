@@ -65,7 +65,7 @@ function ProductImageManager({ productId, images: initialImages }) {
                 className={`aspect-[4/5] w-full border object-cover ${i === 0 ? 'border-gold' : 'border-line'}`}
               />
               {i === 0 && (
-                <span className="micro absolute left-0 top-0 bg-gold-fill px-1.5 py-0.5 text-badge text-ink">
+                <span className="absolute left-1 top-1 rounded bg-gold-fill px-1.5 py-0.5 text-[0.65rem] font-semibold text-ink">
                   {t('admin.images.primary')}
                 </span>
               )}

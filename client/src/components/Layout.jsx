@@ -36,6 +36,12 @@ export default function Layout({ children }) {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  // The admin has its own shell (AdminLayout: top bar + sidebar) and none of
+  // the storefront's furniture — no header, footer, bag, search or contact.
+  if (pathname.startsWith('/admin')) {
+    return <Suspense fallback={<div className="min-h-svh" aria-busy="true" />}>{children}</Suspense>;
+  }
+
   return (
     <>
       {/* The presentation site opens with a gold-on-ink skip link; a storefront

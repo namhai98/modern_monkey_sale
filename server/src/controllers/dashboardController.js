@@ -13,13 +13,17 @@ const SOLD = `o.status NOT IN ('cancelled', 'refunded')`;
 const LOW_STOCK_LIMIT = 8;
 const TOP_LIMIT = 5;
 const RECENT_LIMIT = 5;
+// Days in the daily series behind the dashboard's charts.
+const SERIES_DAYS = 30;
 
 /* One request for the admin landing page: sales for today / 7 / 30 days, how
    many orders sit in each status, the latest orders, the best sellers of the
-   last 30 days, and the pieces running low. */
+   last 30 days, the pieces running low — and, for the charts, revenue and
+   orders for each of the last 30 days (empty days included, as zeros) and
+   revenue by category over the same 30 days. */
 export async function getDashboard(req, res) {
   try {
-    const [sales, statuses, recent, top, low] = await Promise.all([
+    const [sales, statuses, recent, top, low, daily, byCategory] = await Promise.all([
       query(
         `SELECT
            COALESCE(SUM(o.total) FILTER (WHERE ${UB_TIME}::date = ${UB_TODAY}), 0)::float AS today_revenue,
@@ -56,6 +60,30 @@ export async function getDashboard(req, res) {
          ORDER BY ${EFFECTIVE_STOCK_SQL} ASC, p.name
          LIMIT ${LOW_STOCK_LIMIT}`
       ),
+      query(
+        `WITH days AS (
+           SELECT generate_series(${UB_TODAY} - ${SERIES_DAYS - 1}, ${UB_TODAY}, interval '1 day')::date AS day
+         )
+         SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+                COALESCE(SUM(o.total), 0)::float AS revenue,
+                COUNT(o.id)::int AS orders
+         FROM days d
+         LEFT JOIN orders o ON ${UB_TIME}::date = d.day AND ${SOLD}
+         GROUP BY d.day
+         ORDER BY d.day`
+      ),
+      query(
+        `SELECT c.id, c.name, c.slug,
+                SUM(i.price * i.quantity)::float AS revenue,
+                SUM(i.quantity)::int AS units
+         FROM order_items i
+         JOIN orders o ON o.id = i.order_id
+         LEFT JOIN products p ON p.id = i.product_id
+         LEFT JOIN categories c ON c.id = p.category_id
+         WHERE ${SOLD} AND ${UB_TIME}::date > ${UB_TODAY} - ${SERIES_DAYS}
+         GROUP BY c.id, c.name, c.slug
+         ORDER BY revenue DESC`
+      ),
     ]);
 
     const s = sales.rows[0];
@@ -78,6 +106,13 @@ export async function getDashboard(req, res) {
       })),
       top_products: top.rows,
       low_stock: low.rows,
+      daily: daily.rows,
+      // A piece with no category (or one since deleted) lands in a null row.
+      by_category: byCategory.rows.map((r) => ({
+        category: r.id ? { id: r.id, name: r.name, slug: r.slug } : null,
+        revenue: r.revenue,
+        units: r.units,
+      })),
     });
   } catch (err) {
     console.error(err);

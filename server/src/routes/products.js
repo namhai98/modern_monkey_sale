@@ -7,6 +7,7 @@ import {
   updateProduct,
   adjustStock,
   listStockMovements,
+  deleteProduct,
 } from '../controllers/productController.js';
 import productImageRoutes from './productImages.js';
 import productVariantRoutes from './productVariants.js';
@@ -29,5 +30,6 @@ router.get('/:id', optionalAuth, getProduct);
 router.get('/:id/movements', requireAuth, canManage, listStockMovements);
 router.patch('/:id', requireAuth, canManage, updateProduct);
 router.patch('/:id/stock', requireAuth, canManage, adjustStock);
+router.delete('/:id', requireAuth, canManage, deleteProduct);
 
 export default router;

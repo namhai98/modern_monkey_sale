@@ -10,9 +10,9 @@ import IconButton from './IconButton';
    Floating above the page is the one place this design allows a shadow, and
    IconButton's `floating` tone is exactly that treatment.
 
-   Below the desktop width a column of three sat over the product grid's right
-   edge (and its heart buttons), so there the three fold into one contact
-   button that opens them. `--float-lift` raises the whole stack while the
+   A column of three sat over the product grid's right edge (and its heart
+   buttons) — the shop runs full-bleed, so even a laptop has no margin for it —
+   so below 1600px the three fold into one contact button that opens them. `--float-lift` raises the whole stack while the
    product page's sticky buy bar is up. */
 export default function FloatingContact() {
   const { t } = useLocale();
@@ -79,11 +79,11 @@ export default function FloatingContact() {
         </IconButton>
       )}
 
-      {/* Desktop: the three, always out. */}
-      <div className="hidden lg:contents">{links.map((l) => linkButton(l))}</div>
+      {/* Wide screens: the three, always out. */}
+      <div className="hidden min-[1600px]:contents">{links.map((l) => linkButton(l))}</div>
 
-      {/* Phone and tablet: one button; the three open above it. */}
-      <div className="contents lg:hidden">
+      {/* Everywhere else: one button; the three open above it. */}
+      <div className="contents min-[1600px]:hidden">
         {open && links.map((l) => linkButton(l, 'pop-in'))}
         <IconButton
           tone="floating"
